@@ -1,0 +1,907 @@
+// Common Variables
+$primary-color: #0167f3;
+$hover-color: #081828;
+$light-gray: #f9f9f9;
+$border-color: #eee;
+$text-color: #333;
+$text-light: #666;
+$star-active: #FFC107;
+$rating-btn-color: $primary-color;
+$purchased-color: #28a745;
+
+//---------------------------------------------------------------
+// Comments Component Styles
+//---------------------------------------------------------------
+.tps-comments-section {
+  background-color: #f9f9f9;
+  margin-bottom: 40px;
+
+  .tps-comments-header {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 4px;
+    border: 1px solid $border-color;
+
+    .tps-comments-icon {
+      flex-shrink: 0;
+      width: 60px;
+      height: 60px;
+      margin-right: 1rem;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+    }
+
+    .tps-comments-title {
+      h3 {
+        font-size: 1.5rem;
+        color: $primary-color;
+        margin-bottom: 0.5rem;
+      }
+
+      p {
+        font-size: 1.1rem;
+        color: $text-color;
+        margin-bottom: 0.5rem;
+      }
+
+      small {
+        color: $text-light;
+        display: block;
+        line-height: 1.4;
+      }
+    }
+  }
+
+  .tps-comment-form {
+    display: flex;
+    margin-bottom: 2rem;
+    border: 1px solid $border-color;
+    border-radius: 4px;
+    overflow: hidden;
+
+    input {
+      flex: 1;
+      padding: 0.8rem 1rem;
+      border: none;
+      outline: none;
+      font-size: 1rem;
+
+      &:focus {
+        border-color: $primary-color;
+      }
+    }
+
+    button {
+      background-color: $primary-color;
+      color: #fff;
+      border: none;
+      padding: 0 1.5rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.3s;
+      display: flex;
+      align-items: center;
+
+      &:hover {
+        background-color: $hover-color;
+      }
+
+      svg {
+        margin-left: 0.5rem;
+      }
+    }
+  }
+
+  .tps-comments-list {
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 4px;
+    border: 1px solid $border-color;
+
+    .tps-comment-item {
+      display: flex;
+      padding: 1.5rem 0;
+      border-bottom: 1px solid $border-color;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .tps-comment-avatar {
+        width: 40px;
+        height: 40px;
+        background-color: $primary-color;
+        color: #fff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 1rem;
+        flex-shrink: 0;
+      }
+
+      .tps-comment-content {
+        flex: 1;
+
+        .tps-comment-header {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 0.5rem;
+
+          h4 {
+            color: $text-color;
+            margin: 0;
+            font-weight: 600;
+          }
+
+          .tps-comment-date {
+            color: $text-light;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+
+            svg {
+              margin-right: 0.25rem;
+              font-size: 0.75rem;
+            }
+          }
+        }
+
+        p {
+          color: $text-color;
+          margin-bottom: 1rem;
+          line-height: 1.5;
+        }
+
+        .tps-comment-actions {
+          display: flex;
+          align-items: center;
+          margin-bottom: 1rem;
+
+          button {
+            background: none;
+            border: none;
+            color: $primary-color;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            margin-right: 1rem;
+            padding: 0;
+
+            &:hover {
+              color: $hover-color;
+              text-decoration: underline;
+            }
+
+            svg {
+              margin-right: 0.25rem;
+              font-size: 0.85rem;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .tps-comment-replies {
+    margin-left: 1.5rem;
+    margin-top: 1rem;
+    padding-left: 1rem;
+    border-left: 2px solid $border-color;
+
+    .tps-reply-item {
+      display: flex;
+      margin-bottom: 1.5rem;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .tps-reply-avatar {
+        width: 32px;
+        height: 32px;
+        background-color: $primary-color;
+        color: #fff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 1rem;
+        flex-shrink: 0;
+
+        &.tps-admin {
+          background-color: #e74c3c;
+
+          img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+          }
+        }
+      }
+
+      .tps-reply-content {
+        flex: 1;
+
+        .tps-reply-header {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 0.5rem;
+
+          h4 {
+            color: $text-color;
+            margin: 0;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+          }
+
+          .tps-admin-badge {
+            background-color: #e74c3c;
+            color: white;
+            font-size: 0.7rem;
+            padding: 0.1rem 0.3rem;
+            border-radius: 4px;
+            margin-left: 0.5rem;
+          }
+
+          .tps-reply-date {
+            color: $text-light;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+
+            svg {
+              margin-right: 0.25rem;
+              font-size: 0.75rem;
+            }
+          }
+        }
+
+        p {
+          color: $text-color;
+          margin-bottom: 0.5rem;
+          line-height: 1.5;
+        }
+
+        .tps-reply-actions {
+          button {
+            background: none;
+            border: none;
+            color: $primary-color;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            padding: 0;
+
+            &:hover {
+              color: $hover-color;
+              text-decoration: underline;
+            }
+
+            svg {
+              margin-right: 0.25rem;
+              font-size: 0.8rem;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .tps-reply-form {
+    display: flex;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid $border-color;
+    border-radius: 4px;
+    overflow: hidden;
+
+    input {
+      flex: 1;
+      padding: 0.7rem 1rem;
+      border: none;
+      outline: none;
+      font-size: 0.95rem;
+
+      &:focus {
+        border-color: $primary-color;
+      }
+    }
+
+    button {
+      background-color: $primary-color;
+      color: #fff;
+      border: none;
+      padding: 0 1.2rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.3s;
+
+      &:hover {
+        background-color: $hover-color;
+      }
+    }
+  }
+}
+
+//---------------------------------------------------------------
+// Rating Modal Component Styles
+//---------------------------------------------------------------
+.tps-rating-modal {
+  .modal-dialog {
+    max-width: 600px;
+  }
+
+  .tps-rating-modal-content {
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .tps-rating-modal-header {
+    border-bottom: 1px solid $border-color;
+    padding: 15px 20px;
+
+    h3 {
+      margin: 0;
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: $text-color;
+    }
+  }
+
+  .tps-rating-product-info {
+    display: flex;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid $border-color;
+    margin-bottom: 15px;
+
+    .tps-rating-product-image {
+      width: 60px;
+      height: 60px;
+      margin-right: 15px;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        border: 1px solid $border-color;
+        border-radius: 4px;
+      }
+    }
+
+    h4 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 500;
+      color: $text-color;
+      flex: 1;
+    }
+  }
+
+  .tps-rating-form {
+    .tps-rating-stars-section {
+      margin-bottom: 20px;
+
+      h5 {
+        margin: 0 0 15px;
+        font-size: 1rem;
+        color: $text-color;
+        font-weight: 500;
+      }
+
+      .tps-rating-stars-container {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+
+        .tps-rating-star-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          cursor: pointer;
+          padding: 5px;
+          flex: 1;
+          min-width: 60px;
+          transition: transform 0.2s;
+
+          &:hover {
+            transform: translateY(-3px);
+          }
+
+          .tps-star-icon {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+            color: #d4d4d4;
+
+            .active {
+              color: $star-active;
+            }
+          }
+
+          .tps-star-label {
+            font-size: 0.8rem;
+            color: $text-light;
+            text-align: center;
+          }
+        }
+      }
+    }
+
+    .tps-rating-comment-section {
+      margin-bottom: 20px;
+
+      .tps-rating-comment {
+        width: 100%;
+        border: 1px solid $border-color;
+        border-radius: 4px;
+        padding: 12px;
+        font-size: 0.95rem;
+        resize: none;
+        font-family: inherit;
+
+        &:focus {
+          outline: none;
+          border-color: $primary-color;
+          box-shadow: 0 0 0 0.2rem rgba(1, 103, 243, 0.25);
+        }
+
+        &::placeholder {
+          color: #aaa;
+        }
+      }
+    }
+
+    .tps-rating-upload-section {
+      margin-bottom: 20px;
+
+      .tps-rating-upload-btn {
+        display: flex;
+        align-items: center;
+        background: none;
+        border: 1px dashed $border-color;
+        border-radius: 4px;
+        padding: 10px 15px;
+        color: $text-light;
+        cursor: pointer;
+        transition: all 0.3s;
+
+        &:hover {
+          border-color: $primary-color;
+          color: $primary-color;
+        }
+
+        svg {
+          margin-right: 8px;
+          font-size: 1.2rem;
+        }
+      }
+    }
+  }
+
+  .tps-rating-submit-section {
+    padding: 15px 20px;
+    justify-content: center;
+
+    .tps-rating-submit-btn {
+      width: 100%;
+      background-color: $rating-btn-color;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 10px 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s;
+
+      &:hover {
+        background-color: darken($rating-btn-color, 10%);
+      }
+    }
+  }
+}
+
+//---------------------------------------------------------------
+// Ratings Component Styles
+//---------------------------------------------------------------
+.tps-ratings-section {
+  background-color: $light-gray;
+  margin-bottom: 70px;
+
+  .tps-top-half-section, .tps-bottom-half-section{
+    background-color: #fff;
+    border-radius: 4px;
+    border: 1px solid $border-color;
+    padding: 20px 20px 0 20px;
+    margin-bottom: 20px;
+  }
+  
+  .tps-ratings-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid $border-color;
+
+    h3 {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: $text-color;
+    }
+  }
+
+  .tps-ratings-summary {
+    padding: 20px;
+    display: flex;
+    border-bottom: 1px solid $border-color;
+
+    .tps-ratings-score {
+      padding-right: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      border-right: 1px solid $border-color;
+      min-width: 200px;
+
+      .tps-ratings-average {
+        display: flex;
+        align-items: baseline;
+        margin-bottom: 10px;
+
+        .tps-average-number {
+          font-size: 2.5rem;
+          font-weight: 700;
+          color: $text-color;
+        }
+
+        .tps-average-total {
+          font-size: 2rem;
+          color: $text-light;
+          margin-left: 2px;
+        }
+      }
+
+      .tps-ratings-stars {
+        margin-bottom: 10px;
+
+        svg {
+          color: #d4d4d4;
+          font-size: 1.2rem;
+          margin: 0 2px;
+
+          &.active {
+            color: $star-active;
+          }
+        }
+      }
+
+      .tps-ratings-count {
+        margin-bottom: 15px;
+        color: $text-light;
+        font-size: 0.9rem;
+      }
+
+      .tps-ratings-write {
+        width: 100%;
+
+        .tps-write-review-btn {
+          width: 100%;
+          background-color: $primary-color; // Changed to primary-color (blue)
+          color: white;
+          border: none;
+          border-radius: 4px;
+          padding: 10px 15px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background-color 0.3s;
+
+          &:hover {
+            background-color: darken($primary-color, 10%);
+          }
+        }
+      }
+    }
+
+    .tps-ratings-breakdown {
+      flex: 1;
+      padding-left: 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+
+      .tps-rating-bar {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+
+        .tps-rating-label {
+          width: 45px;
+          text-align: right;
+          margin-right: 10px;
+          font-size: 0.9rem;
+          color: $text-light;
+        }
+
+        .tps-rating-progress {
+          flex: 1;
+          height: 8px;
+          background-color: #e9ecef;
+          border-radius: 4px;
+          overflow: hidden;
+          margin-right: 10px;
+
+          .tps-rating-progress-bar {
+            height: 100%;
+            background-color: $star-active; // Changed to yellow color (FFC107)
+            border-radius: 4px;
+          }
+        }
+
+        .tps-rating-count {
+          width: 80px;
+          font-size: 0.9rem;
+          color: $text-light;
+        }
+      }
+    }
+  }
+
+  .tps-ratings-filter {
+    padding: 15px 20px;
+    border-bottom: 1px solid $border-color;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+
+    span {
+      color: $text-light;
+      margin-right: 10px;
+      font-size: 0.9rem;
+    }
+
+    .tps-filter-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+
+      button {
+        background-color: white;
+        border: 1px solid $border-color;
+        border-radius: 4px;
+        padding: 5px 10px;
+        font-size: 0.85rem;
+        color: $text-color;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover, &.active {
+          background-color: $primary-color;
+          color: white;
+          border-color: $primary-color;
+        }
+      }
+    }
+  }
+
+  .tps-ratings-list {
+    padding: 0 20px;
+
+    .tps-rating-item {
+      display: flex;
+      padding: 20px 0;
+      border-bottom: 1px solid $border-color;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .tps-rating-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background-color: $primary-color;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        margin-right: 15px;
+        flex-shrink: 0;
+      }
+
+      .tps-rating-content {
+        flex: 1;
+
+        .tps-rating-info {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 5px;
+
+          .tps-rating-username {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1rem;
+            color: $text-color;
+          }
+
+          .tps-rating-stars {
+            display: flex;
+            align-items: center;
+
+            svg {
+              color: #d4d4d4;
+              font-size: 0.9rem;
+              margin-right: 2px;
+
+              &.active {
+                color: $star-active;
+              }
+            }
+
+            .tps-rating-text {
+              margin-left: 5px;
+              font-size: 0.9rem;
+              color: $text-light;
+            }
+          }
+        }
+
+        .tps-rating-comment {
+          margin: 10px 0;
+          color: $text-color;
+        }
+
+        .tps-rating-purchase {
+          margin-bottom: 5px;
+          
+          span {
+            display: inline-block;
+            color: $purchased-color;
+            font-size: 0.85rem;
+            padding: 3px 0;
+          }
+        }
+
+        .tps-rating-date {
+          font-size: 0.85rem;
+          color: $text-light;
+          display: flex;
+          align-items: center;
+
+          svg {
+            margin-right: 5px;
+            font-size: 0.8rem;
+          }
+        }
+      }
+    }
+  }
+
+  .tps-ratings-more {
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    border-top: 1px solid $border-color;
+
+    .tps-view-more-btn {
+      background-color: white;
+      border: 1px solid $primary-color;
+      color: $primary-color;
+      padding: 8px 20px;
+      border-radius: 4px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.3s;
+
+      &:hover {
+        background-color: $primary-color;
+        color: white;
+      }
+    }
+  }
+}
+
+//---------------------------------------------------------------
+// Responsive Adjustments
+//---------------------------------------------------------------
+@media (max-width: 768px) {
+  .tps-comments-section {
+    padding: 1.5rem;
+
+    .tps-comment-form {
+      flex-direction: column;
+
+      input {
+        border-bottom: 1px solid $border-color;
+        padding: 0.7rem;
+      }
+
+      button {
+        padding: 0.7rem;
+      }
+    }
+
+    .tps-reply-form {
+      flex-direction: column;
+
+      input {
+        border-bottom: 1px solid $border-color;
+        padding: 0.7rem;
+      }
+
+      button {
+        padding: 0.7rem;
+      }
+    }
+
+    .tps-comments-header {
+      flex-direction: column;
+
+      .tps-comments-icon {
+        margin-bottom: 1rem;
+      }
+    }
+  }
+
+  .tps-ratings-section {
+    .tps-ratings-summary {
+      flex-direction: column;
+
+      .tps-ratings-score {
+        border-right: none;
+        border-bottom: 1px solid $border-color;
+        padding-right: 0;
+        padding-bottom: 15px;
+        margin-bottom: 15px;
+      }
+
+      .tps-ratings-breakdown {
+        padding-left: 0;
+      }
+    }
+  }
+}
+
+@media (max-width: 576px) {
+  .tps-rating-modal {
+    .tps-rating-stars-section {
+      .tps-rating-stars-container {
+        .tps-rating-star-item {
+          min-width: 45px;
+
+          .tps-star-icon {
+            font-size: 1.5rem;
+          }
+
+          .tps-star-label {
+            font-size: 0.7rem;
+          }
+        }
+      }
+    }
+  }
+
+  .tps-ratings-section {
+    .tps-ratings-list {
+      .tps-rating-item {
+        .tps-rating-content {
+          .tps-rating-info {
+            flex-direction: column;
+          }
+        }
+      }
+    }
+  }
+}
