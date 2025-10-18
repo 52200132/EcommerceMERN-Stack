@@ -1,8 +1,17 @@
-import { useState } from 'react';
-import { Form, Button, Container, Row, Col, Card, InputGroup, Table } from 'react-bootstrap';
-import EditDetailsModal from './Modal/EditDetailsModal';
+import { useEffect, useState } from 'react';
+import { Form, Button, Container, Row, Col, Card } from 'react-bootstrap';
+import { useDispatch } from 'react-redux';
+
+import MultiImageUpload from './multi-image-upload';
+import Variants from './components/variants';
+
+import { setImages } from 'redux-tps/features/product-slice';
+import { setShow, changeContent } from 'redux-tps/features/modal-slice';
+import { createTriggerAction } from 'redux-tps/features/component-action-slice';
+// import TinyMCE from '../tiny-mce';
 
 const AddProduct = () => {
+  const dispatch = useDispatch();
   const [product, setProduct] = useState({
     product_name: '',
     brand_id: '',
@@ -23,102 +32,21 @@ const AddProduct = () => {
     is_active: true,
   });
 
-  const [showEditModal, setShowEditModal] = useState(false);
+  useEffect(() => {
+    dispatch(createTriggerAction({ triggerKey: 'upload_action' }))
+  }, [dispatch])
 
+  const handleShowModalForEditDetails = () => {
+    dispatch(changeContent({
+      title: 'Thêm mô tả chi tiết',
+      componentName: 'TinyMCE'
+    }));
+    dispatch(setShow());
+  };
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setProduct({ ...product, [name]: value });
   };
-
-  const handleImageChange = (index, field, value) => {
-    const updatedImages = [...product.Images];
-    updatedImages[index] = { ...updatedImages[index], [field]: value };
-    setProduct({ ...product, Images: updatedImages });
-  };
-
-  const addImage = () => {
-    setProduct({
-      ...product,
-      Images: [...product.Images, { url: '', is_primary: false }]
-    });
-  };
-
-  const removeImage = (index) => {
-    const updatedImages = [...product.Images];
-    updatedImages.splice(index, 1);
-    setProduct({ ...product, Images: updatedImages });
-  };
-
-  const handleVariantChange = (variantIndex, field, value) => {
-    const updatedVariants = [...product.Variants];
-    updatedVariants[variantIndex] = { ...updatedVariants[variantIndex], [field]: value };
-    setProduct({ ...product, Variants: updatedVariants });
-  };
-
-  const handleVariantImageChange = (variantIndex, imageIndex, field, value) => {
-    const updatedVariants = [...product.Variants];
-    updatedVariants[variantIndex].Images[imageIndex] = {
-      ...updatedVariants[variantIndex].Images[imageIndex],
-      [field]: value
-    };
-    setProduct({ ...product, Variants: updatedVariants });
-  };
-
-  const addVariantImage = (variantIndex) => {
-    const updatedVariants = [...product.Variants];
-    updatedVariants[variantIndex].Images.push({ url: '', is_primary: false });
-    setProduct({ ...product, Variants: updatedVariants });
-  };
-
-  const removeVariantImage = (variantIndex, imageIndex) => {
-    const updatedVariants = [...product.Variants];
-    updatedVariants[variantIndex].Images.splice(imageIndex, 1);
-    setProduct({ ...product, Variants: updatedVariants });
-  };
-
-  const handleAttributeChange = (variantIndex, attrIndex, field, value) => {
-    const updatedVariants = [...product.Variants];
-    updatedVariants[variantIndex].Attributes[attrIndex] = {
-      ...updatedVariants[variantIndex].Attributes[attrIndex],
-      [field]: value
-    };
-    setProduct({ ...product, Variants: updatedVariants });
-  };
-
-  const addAttribute = (variantIndex) => {
-    const updatedVariants = [...product.Variants];
-    updatedVariants[variantIndex].Attributes.push({ attribute: '', value: '', type: 'appearance' });
-    setProduct({ ...product, Variants: updatedVariants });
-  };
-
-  const removeAttribute = (variantIndex, attrIndex) => {
-    const updatedVariants = [...product.Variants];
-    updatedVariants[variantIndex].Attributes.splice(attrIndex, 1);
-    setProduct({ ...product, Variants: updatedVariants });
-  };
-
-  const addVariant = () => {
-    setProduct({
-      ...product,
-      Variants: [
-        ...product.Variants,
-        {
-          sku: '',
-          price: 0,
-          stock: 0,
-          Images: [{ url: '', is_primary: true }],
-          Attributes: [{ attribute: '', value: '', type: 'appearance' }]
-        }
-      ]
-    });
-  };
-
-  const removeVariant = (index) => {
-    const updatedVariants = [...product.Variants];
-    updatedVariants.splice(index, 1);
-    setProduct({ ...product, Variants: updatedVariants });
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     // Here you would typically send the product data to your API
@@ -126,6 +54,7 @@ const AddProduct = () => {
     // Call API to save product
   };
 
+  console.log('RENDER: add-product');
   return (
     <Container className="my-4">
       <h2 className="mb-4">Thêm sản phẩm mới</h2>
@@ -172,17 +101,6 @@ const AddProduct = () => {
                   />
                 </Form.Group>
               </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Số lượng đã bán</Form.Label>
-                  <Form.Control
-                    type="number"
-                    name="quantity_sold"
-                    value={product.quantity_sold}
-                    onChange={handleInputChange}
-                  />
-                </Form.Group>
-              </Col>
             </Row>
 
             <Row>
@@ -212,7 +130,7 @@ const AddProduct = () => {
                     rows={4}
                   />
                 </Form.Group> */}
-                <Button variant="outline-primary" onClick={() => setShowEditModal(true)}>Chỉnh sửa mô tả chi tiết</Button>
+                <Button variant="outline-primary" onClick={handleShowModalForEditDetails}>Chỉnh sửa mô tả chi tiết</Button>
               </Col>
             </Row>
 
@@ -231,50 +149,18 @@ const AddProduct = () => {
 
         <Card className="mb-4">
           <Card.Header>Hình ảnh sản phẩm</Card.Header>
-          <Card.Body>
-            {product.Images.map((image, index) => (
-              <Row key={`image-${index}`} className="mb-3 align-items-center">
-                <Col md={5}>
-                  <Form.Group>
-                    <Form.Label>URL hình ảnh</Form.Label>
-                    <Form.Control
-                      type="text"
-                      value={image.url}
-                      onChange={(e) => handleImageChange(index, 'url', e.target.value)}
-                      required
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={5}>
-                  <Form.Group>
-                    <Form.Check
-                      type="checkbox"
-                      label="Ảnh chính"
-                      checked={image.is_primary}
-                      onChange={(e) => handleImageChange(index, 'is_primary', e.target.checked)}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={2} className="text-end">
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={() => removeImage(index)}
-                    disabled={product.Images.length === 1}
-                  >
-                    Xoá
-                  </Button>
-                </Col>
-              </Row>
-            ))}
-            <Button variant="secondary" onClick={addImage}>+ Thêm ảnh</Button>
-          </Card.Body>
+          <MultiImageUpload
+            {...{ uploadsApi: true, uploadToServer: true }}
+            selector={(state) => state.product.Images}
+            action={images => setImages({ images })}
+          />
+          {/* <button onClick={() => { dispatch(setImages([])) }}>Lưu hình ảnh</button> */}
         </Card>
 
         <Card className="mb-4">
           <Card.Header>Phiên bản sản phẩm</Card.Header>
           <Card.Body>
-            {product.Variants.map((variant, variantIndex) => (
+            {/* {product.Variants.map((variant, variantIndex) => (
               <div key={`variant-${variantIndex}`} className="border rounded p-3 mb-4">
                 <h5>Phiên bản {variantIndex + 1}</h5>
                 <Row>
@@ -420,7 +306,8 @@ const AddProduct = () => {
                 )}
               </div>
             ))}
-            <Button variant="secondary" onClick={addVariant}>+ Thêm phiên bản sản phẩm</Button>
+            <Button variant="secondary" onClick={addVariant}>+ Thêm phiên bản sản phẩm</Button> */}
+            <Variants />
           </Card.Body>
         </Card>
 
@@ -430,12 +317,6 @@ const AddProduct = () => {
         </div>
       </Form>
 
-      {/* Các modal */}
-      <EditDetailsModal
-        show={showEditModal}
-        setShow={setShowEditModal}
-        setHide={setShowEditModal}
-      />
     </Container>
   );
 };

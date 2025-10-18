@@ -13,8 +13,8 @@ import Layout from './components/Layout/Layout';
 import ProductDetails from './components/ProductDetails/ProductDetails';
 
 import AdminLayout from './Admin/components/Layout';
-import ManageProducts from './Admin/components/Product/ManageProducts';
-import AddProduct from './Admin/components/Product/AddProduct';
+import ManageProducts from 'Admin/components/Product/manage-products';
+import AddProduct from './Admin/components/Product/add-product';
 
 // import NotFoundPage from './pages/NotFoundPage'; // Optional: Create a 404 page component
 import './App.css';

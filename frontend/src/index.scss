@@ -32,3 +32,9 @@ code {
 .tps-hover-animation {
   transition: all 0.4s ease-in-out;
 }
+
+
+// fix for tinymce editor in modal
+.tox-tinymce-aux {
+  z-index: 999999 !important;
+}

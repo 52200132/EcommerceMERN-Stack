@@ -1,4 +1,4 @@
-import { readAsDataURL, compressToDataURL } from './image-utils';
+import { readAsDataURL, compressToDataURL } from '../image-utils';
 
 export default class Base64UploadAdapter {
   constructor(loader, opts) {
