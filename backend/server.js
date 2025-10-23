@@ -1,7 +1,15 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const dotenv = require('dotenv');
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import dotenv from "dotenv";
+import passport from "passport";
+import "./passport.js";
+// Import route files
+import authRoutes from "./routes/auth.js";
+import productRoutes from "./routes/products.js";
+import orderRoutes from "./routes/orders.js";
+import userRoutes from "./routes/users.js";
+import discountCodeRoutes from "./routes/discount_code.js";
 
 // Load environment variables
 dotenv.config();
@@ -13,6 +21,15 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Cho phép frontend truy cập API
+app.use(cors({
+  origin: process.env.FRONTEND_URL,  // http://localhost:3000
+  credentials: true
+}));
+
+// Passport middleware
+app.use(passport.initialize());
+
 // MongoDB connection
 const connectDB = async () => {
   try {
@@ -22,30 +39,30 @@ const connectDB = async () => {
     });
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
-    console.error('Database connection error:', error);
+    console.error("Database connection error:", error.message);
     process.exit(1);
   }
 };
 
 // Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/products', require('./routes/products'));
-app.use('/api/orders', require('./routes/orders'));
-app.use('/api/users', require('./routes/users'));
+app.use("/api/auth", authRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/discount_codes", discountCodeRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
-  res.status(statusCode);
-  res.json({
+  res.status(statusCode).json({
     message: err.message,
-    stack: process.env.NODE_ENV === 'production' ? null : err.stack,
+    stack: process.env.NODE_ENV === "production" ? null : err.stack,
   });
 });
 
 // Default route
-app.get('/', (req, res) => {
-  res.json({ message: 'Ecommerce API is running!' });
+app.get("/", (req, res) => {
+  res.json({ message: "Ecommerce API is running!" });
 });
 
 // Connect to database and start server

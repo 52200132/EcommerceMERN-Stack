@@ -1,6 +1,6 @@
-const express = require('express');
-const Order = require('../models/Order');
-const { protect, admin } = require('../middleware/auth');
+import express from 'express';
+import Order from '../models/Order.js';
+import { protect, admin } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -22,22 +22,21 @@ router.post('/', protect, async (req, res) => {
     if (orderItems && orderItems.length === 0) {
       res.status(400).json({ message: 'No order items' });
       return;
-    } else {
-      const order = new Order({
-        orderItems,
-        user: req.user._id,
-        shippingAddress,
-        paymentMethod,
-        itemsPrice,
-        taxPrice,
-        shippingPrice,
-        totalPrice,
-      });
-
-      const createdOrder = await order.save();
-
-      res.status(201).json(createdOrder);
     }
+
+    const order = new Order({
+      orderItems,
+      user: req.user._id,
+      shippingAddress,
+      paymentMethod,
+      itemsPrice,
+      taxPrice,
+      shippingPrice,
+      totalPrice,
+    });
+
+    const createdOrder = await order.save();
+    res.status(201).json(createdOrder);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -81,7 +80,6 @@ router.put('/:id/pay', protect, async (req, res) => {
       };
 
       const updatedOrder = await order.save();
-
       res.json(updatedOrder);
     } else {
       res.status(404).json({ message: 'Order not found' });
@@ -103,7 +101,6 @@ router.put('/:id/deliver', protect, admin, async (req, res) => {
       order.deliveredAt = Date.now();
 
       const updatedOrder = await order.save();
-
       res.json(updatedOrder);
     } else {
       res.status(404).json({ message: 'Order not found' });
@@ -137,4 +134,4 @@ router.get('/', protect, admin, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

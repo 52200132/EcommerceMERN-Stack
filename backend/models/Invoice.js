@@ -1,9 +1,11 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
-const invoiceSchema = new mongoose.Schema({
+const { Schema, model } = mongoose;
+
+const invoiceSchema = new Schema({
   invoice_code: { type: String, required: true, trim: true },
-  user_id: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  order_id: { type: mongoose.Schema.Types.ObjectId, ref: "Order", required: true },
+  user_id: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  order_id: { type: Schema.Types.ObjectId, ref: "Order", required: true },
   create_at: { type: Date, required: true, default: Date.now },
   payment_method: { type: String, enum: ["COD", "banking", "credit_card"], required: true },
   payment_status: { type: String, enum: ["pending", "paid", "failed", "refunded"], required: true, default: "pending" },
@@ -20,6 +22,6 @@ invoiceSchema.pre("save", function (next) {
   next();
 });
 
-const Invoice = mongoose.model("Invoice", invoiceSchema);
+const Invoice = mongoose.models.Invoice || model("Invoice", invoiceSchema);
 
-module.exports = Invoice;
+export default Invoice;
