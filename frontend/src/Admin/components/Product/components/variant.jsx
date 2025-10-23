@@ -1,26 +1,21 @@
 import { useDispatch } from "react-redux";
 import { Button, Col, Form, InputGroup, Row } from "react-bootstrap";
-
+// component imports
 import MultiImageUpload from "../multi-image-upload";
-
+//
 import { setImagesVariant, deleteVariant } from "redux-tps/features/product-slice";
 import { useTpsSelector } from "utils/selector-utils";
 import { setShow, changeContent } from "redux-tps/features/modal-slice";
 import { useAContext } from "Admin/a-context";
+import { VARIANTSELECTOR_INDEX } from "Admin/selectors/product";
 
-
-const Variant = (props) => {
-  const { variantIndex, selector } = props;
-
+const Variant = ({ variantIndex, selector }) => {
+  selector = selector || VARIANTSELECTOR_INDEX(variantIndex);
   const dispatch = useDispatch()
   const variant = useTpsSelector(selector, { excludeProps: ['Images', 'Attributes', 'html_text_attributes'] });
   const variantsImgsSelector = (state) => state.product.Variants[variantIndex].Images
   const attributesSelector = (state) => state.product.Variants[variantIndex].Attributes
-  const { setSELECTORS } = useAContext();
-
-  const handleDeletVariant = () => {
-    dispatch(deleteVariant({ variantIndex }))
-  }
+  const { setSELECTORS } = useAContext();  
 
   const handleShowModalForCreateAttribute = () => {
     const selectorKey = `attributesSelector-${variantIndex}`
@@ -95,12 +90,6 @@ const Variant = (props) => {
           selector={variantsImgsSelector}
           action={(images) => setImagesVariant({ variantIndex, images })}
         />
-
-        {
-          <div className="text-end">
-            <Button variant="danger" onClick={handleDeletVariant}>Xoá phiên bản</Button>
-          </div>
-        }
       </div>
     </>
   )

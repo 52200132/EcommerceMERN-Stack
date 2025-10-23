@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import { Button } from "react-bootstrap";
-import { addVariant } from 'redux-tps/features/product-slice';
+import { addVariant, deleteVariant } from 'redux-tps/features/product-slice';
 import Variant from "./variant";
 
 const Variants = (props) => {
@@ -25,11 +25,16 @@ const Variants = (props) => {
       ))} */}
       {variantLength > 0 &&
         [...Array(variantLength).keys()].map((_, variantIndex) =>
-          <Variant
-            key={`variant-${variantIndex}`}
-            variantIndex={variantIndex}
-            selector={variantsSelector(variantIndex)}
-          />
+          <>
+            <Variant
+              key={`variant-${variantIndex}`}
+              variantIndex={variantIndex}
+              selector={variantsSelector(variantIndex)}
+            />
+            <div className="text-end">
+              <Button variant="danger" onClick={() => dispatch(deleteVariant({ variantIndex }))}>Xoá phiên bản</Button>
+            </div>
+          </>
         )
       }
 

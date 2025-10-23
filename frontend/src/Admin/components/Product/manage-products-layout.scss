@@ -1,0 +1,374 @@
+// Manage Products Layout Styles
+// Bootstrap-based design for product & variant management
+
+.manage-products-layout {
+  padding: 24px;
+  background: #f8f9fa;
+  min-height: 100vh;
+
+  // ============ Page Header ============
+  .page-header {
+    margin-bottom: 24px;
+
+    .breadcrumbs {
+      font-size: 14px;
+      color: #6c757d;
+      margin-bottom: 8px;
+
+      .separator {
+        margin: 0 8px;
+      }
+
+      .current {
+        color: #212529;
+        font-weight: 500;
+      }
+    }
+
+    .page-title {
+      font-size: 28px;
+      font-weight: 600;
+      color: #212529;
+      margin: 0;
+    }
+  }
+
+  // ============ Toolbar ============
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 16px;
+    flex-wrap: wrap;
+
+    .toolbar-left,
+    .toolbar-right {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+  }
+
+  // ============ Buttons ============
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+
+    &.active {
+      background: #e9ecef !important;
+      color: #212529 !important;
+      border-color: #dee2e6 !important;
+    }
+  }
+
+  // ============ Filters Panel ============
+  .filters-panel {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .filter-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+
+      label {
+        font-size: 13px;
+        font-weight: 500;
+        color: #495057;
+      }
+
+      input,
+      select {
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+        transition: border-color 0.2s;
+
+        &:focus {
+          outline: none;
+          border-color: #0d6efd;
+          box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+        }
+      }
+
+      select[multiple] {
+        min-height: 80px;
+      }
+
+      input[type="text"] {
+        &::placeholder {
+          color: #adb5bd;
+        }
+      }
+    }
+
+    .filters-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+  }
+
+  // ============ Bulk Actions Bar ============
+  .bulk-actions-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #e7f3ff;
+    border: 1px solid #b6d4fe;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+
+    .selected-count {
+      font-size: 14px;
+      font-weight: 500;
+      color: #084298;
+    }
+
+    .bulk-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+  }
+
+  // ============ Table Container ============
+  .table-container {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+    // Bootstrap table enhancements
+    .table {
+      margin-bottom: 0;
+
+      thead {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+
+        th {
+          vertical-align: middle;
+          white-space: nowrap;
+
+          &.sortable {
+            cursor: pointer;
+            user-select: none;
+
+            &:hover {
+              background: #e2e6ea !important;
+            }
+
+            .sort-indicator {
+              color: #0d6efd;
+              font-weight: bold;
+            }
+          }
+        }
+      }
+
+      tbody {
+        tr {
+          td {
+            vertical-align: middle;
+          }
+        }
+      }
+    }
+  }
+
+  // ============ Variants Container ============
+  .variants-container {
+    .table {
+      font-size: 13px;
+
+      thead th {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      code {
+        padding: 2px 6px;
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 3px;
+        font-size: 12px;
+        font-family: 'Courier New', monospace;
+      }
+    }
+  }
+
+  // ============ Pagination ============
+  .pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    flex-wrap: wrap;
+    gap: 16px;
+
+    .pagination-info {
+      font-size: 14px;
+      color: #6c757d;
+    }
+
+    .pagination-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .page-number {
+        font-size: 14px;
+        font-weight: 500;
+        color: #212529;
+      }
+    }
+
+    .page-size-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      label {
+        font-size: 14px;
+        color: #6c757d;
+      }
+
+      select {
+        padding: 6px 10px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+
+        &:focus {
+          outline: none;
+          border-color: #0d6efd;
+        }
+      }
+    }
+  }
+
+  // ============ States ============
+  .loading-state,
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    text-align: center;
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #e9ecef;
+      border-top-color: #0d6efd;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+
+    svg {
+      color: #adb5bd;
+      margin-bottom: 16px;
+    }
+
+    h3 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #212529;
+      margin: 0 0 8px 0;
+    }
+
+    p {
+      font-size: 14px;
+      color: #6c757d;
+      margin: 0 0 20px 0;
+    }
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  // ============ Responsive ============
+  @media (max-width: 1200px) {
+    .table {
+      thead th:nth-child(8),
+      tbody td:nth-child(8) {
+        display: none;
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 16px;
+
+    .page-header {
+      .page-title {
+        font-size: 24px;
+      }
+    }
+
+    .toolbar {
+      flex-direction: column;
+      align-items: stretch;
+
+      .toolbar-left,
+      .toolbar-right {
+        width: 100%;
+        justify-content: space-between;
+      }
+    }
+
+    .filters-panel {
+      .filters-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .table-container {
+      overflow-x: auto;
+
+      .table {
+        min-width: 900px;
+      }
+    }
+
+    .pagination {
+      flex-direction: column;
+      align-items: stretch;
+
+      .pagination-info,
+      .pagination-controls,
+      .page-size-selector {
+        justify-content: center;
+      }
+    }
+  }
+}

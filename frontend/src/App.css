@@ -144,10 +144,10 @@ main {
 }
 
 /* Navigation active state */
-.nav-link.active {
+/* .nav-link.active {
   color: #007bff !important;
   font-weight: bold;
-}
+} */
 
 /* Product grid improvements */
 .single-product {
