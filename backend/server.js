@@ -10,6 +10,7 @@ import productRoutes from "./routes/products.js";
 import orderRoutes from "./routes/orders.js";
 import userRoutes from "./routes/users.js";
 import discountCodeRoutes from "./routes/discount_code.js";
+import commentRoutes from "./routes/comment.js";
 
 // Load environment variables
 dotenv.config();
@@ -50,6 +51,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/discount_codes", discountCodeRoutes);
+app.use("/api/comments", commentRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
