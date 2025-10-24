@@ -1,32 +1,31 @@
 import express from 'express';
 import Product from '../models/Product.js';
 import { protect, admin } from '../middleware/auth.js';
-import { getProductById, deleteProductById, createProduct, updateProduct, getAllProducts, deleteVariantBySku } from '../controller/productController.js';
+import { getArrangeChar, getArrangePrice, createWarehouseByProductId, createVariantByProductId , updateWarehouseById, getAllWarehouseByProduct, getProductById, deleteProductById, createProduct, updateProduct, getAllProducts, deleteVariantBySku, updateVariantBySku } from '../controller/productController.js';
 
 const router = express.Router();
 
 // @desc    Fetch all products
-// @route   GET /api/products
+// @route   GET /api/products/
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    const pageSize = 12;
+    const pageSize = Number(req.query.pageSize) || 12;
     const page = Number(req.query.pageNumber) || 1;
-
     const keyword = req.query.keyword
       ? {
-          name: {
+          product_name: {
             $regex: req.query.keyword,
             $options: 'i',
           },
         }
       : {};
 
-    const category = req.query.category
-      ? { category: req.query.category }
+    const hastag = req.query.hastag
+      ? { hastag: req.query.hastag }
       : {};
 
-    const query = { ...keyword, ...category };
+    const query = { ...keyword, ...hastag };
 
     const count = await Product.countDocuments(query);
     const products = await Product.find(query)
@@ -40,11 +39,20 @@ router.get('/', async (req, res) => {
       total: count,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ ec: 500, em: error.message });
   }
 });
 
-
+// Sắp xếp sản phẩm A-Z, Z-A
+// @desc    Arrange all products A-Z, Z-A
+// @route   GET /api/products/order_char
+// @access  Public
+router.get('/order_char', getArrangeChar);
+// Sắp xếp sản phẩm theo giá thấp đến cao, cao đến thấp
+// @desc    Arrange all products Price Low to High, Price High to Low
+// @route   GET /api/products/order_price
+// @access  Public
+router.get('/order_price', getArrangePrice);
 
 // @desc    Create a product
 // @route   POST /api/products
@@ -67,14 +75,39 @@ router.get('/:id', getProductById); // đã check ok
 router.delete('/:id', protect, admin, deleteProductById);
 
 // @desc    Delete a variant by SKU
-// @route   DELETE /api/products/:id/variants
+// @route   DELETE /api/products/:id/variant?sku=<sku>
 // @access  Private/Admin
-router.delete('/:id/variants', protect, admin, deleteVariantBySku);
+router.delete('/:id/variant', protect, admin, deleteVariantBySku);
 
 // @desc    Update a product
 // @route   PUT /api/products/:id
 // @access  Private/Admin
 router.put('/:id', protect, admin, updateProduct);
+
+// @desc    Create A variant by product ID
+// @route   POST /api/products/:id/variant
+// @access  Private/Admin
+router.post('/:id/variant', protect, admin, createVariantByProductId);
+
+// @desc    Update A variant
+// @route   PUT /api/products/:id/variant?sku=<sku>
+// @access  Private/Admin
+router.put('/:id/variant', protect, admin, updateVariantBySku);
+
+// @desc    Get all warehouses by product
+// @route   GET /api/products/:id/warehouses
+// @access  Private/Admin
+router.get('/:id/warehouses', protect, admin, getAllWarehouseByProduct);
+
+// @desc    Create warehouse by product ID
+// @route   POST /api/products/:id/warehouses
+// @access  Private/Admin
+router.post('/:id/warehouses', protect, admin, createWarehouseByProductId);
+
+// @desc    Update warehouse by ID
+// @route   PUT /api/products/:id/warehouses/:warehouseId
+// @access  Private/Admin
+router.put('/:id/warehouses/:warehouseId', protect, admin, updateWarehouseById);
 
 // @desc    Create new review
 // @route   POST /api/products/:id/reviews
@@ -121,14 +154,17 @@ router.post('/:id/reviews', protect, async (req, res) => {
 });
 
 // @desc    Get top rated products
-// @route   GET /api/products/top
+// @route   GET /api/products/top?number=<number>
 // @access  Public
+
+// chưa xong đâu, còn rating để nó sắp xếp
 router.get('/top', async (req, res) => {
   try {
-    const products = await Product.find({}).sort({ rating: -1 }).limit(3);
-    res.json(products);
+    const number = Number(req.query.number) || 10;
+    const products = await Product.find({}).sort({ rating: -1 }).limit(number);
+    res.json({ec: 0, em: "Get Top Products Successfully", dt: products });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ ec: 500, em: error.message });
   }
 });
 
