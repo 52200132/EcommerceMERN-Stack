@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, use } from 'react';
+import { Dropdown } from 'react-bootstrap';
 import {
   IoSearch,
   IoAdd,
@@ -17,9 +18,11 @@ import {
   IoAlertCircle,
   IoImage
 } from 'react-icons/io5';
+
 import './manage-products-layout.scss';
+import TableProducts from './table-products';
+
 import { useDispatch } from 'react-redux';
-import { changeContent, setShow } from 'redux-tps/features/modal-slice';
 
 /**
  * Component quản lý sản phẩm với biến thể
@@ -28,6 +31,7 @@ import { changeContent, setShow } from 'redux-tps/features/modal-slice';
 const ManageProductsLayout = () => {
   const dispatch = useDispatch()
   // State management
+
   const [products, setProducts] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [expandedRows, setExpandedRows] = useState([]);
@@ -48,13 +52,13 @@ const ManageProductsLayout = () => {
     updatedAt: { from: '', to: '' }
   });
 
-  useEffect(() => {
-    dispatch(changeContent({
-      componentName: 'EditVariant',
-      title: 'Chỉnh sửa biến thể'
-    }))
-    dispatch(setShow())
-  }, []);
+  // useEffect(() => {
+  //   dispatch(changeContent({
+  //     componentName: 'EditVariant',
+  //     title: 'Chỉnh sửa biến thể'
+  //   }))
+  //   dispatch(setShow())
+  // }, []);
 
   // Mock data - Replace with API call
   useEffect(() => {
@@ -129,17 +133,6 @@ const ManageProductsLayout = () => {
     }).format(new Date(dateString));
   };
 
-  // Get price display
-  const getPriceDisplay = (product) => {
-    if (product.price != null) {
-      return formatCurrency(product.price);
-    }
-    if (product.minVariantPrice === product.maxVariantPrice) {
-      return formatCurrency(product.minVariantPrice);
-    }
-    return `${formatCurrency(product.minVariantPrice)} – ${formatCurrency(product.maxVariantPrice)}`;
-  };
-
   // Get stock badge
   const getStockBadge = (stock) => {
     if (stock <= 0) {
@@ -159,8 +152,8 @@ const ManageProductsLayout = () => {
   };
 
   const variantStatusMap = {
-    active: { label: 'Active', color: 'success' },
-    inactive: { label: 'Inactive', color: 'secondary' }
+    true: { label: 'Active', color: 'success' },
+    false: { label: 'Inactive', color: 'secondary' }
   };
 
   return (
@@ -195,7 +188,7 @@ const ManageProductsLayout = () => {
         </div>
 
         <div className="toolbar-right">
-          <button 
+          <button
             className={`btn btn-secondary ${showFilters ? 'active' : ''}`}
             onClick={() => setShowFilters(!showFilters)}
           >
@@ -308,288 +301,8 @@ const ManageProductsLayout = () => {
       )}
 
       {/* Products Table */}
-      <div className="table-container">
-        {loading ? (
-          <div className="loading-state">
-            <div className="spinner"></div>
-            <p>Đang tải...</p>
-          </div>
-        ) : products.length === 0 ? (
-          <div className="empty-state">
-            <IoAlertCircle size={48} />
-            <h3>Chưa có sản phẩm</h3>
-            <p>Tạo sản phẩm đầu tiên để bắt đầu bán hàng.</p>
-            <button className="btn btn-primary" onClick={() => console.log('Create product')}>
-              <IoAdd size={16} />
-              Thêm sản phẩm
-            </button>
-          </div>
-        ) : (
-          <table className="table table-hover">
-            <thead className="table-light">
-              <tr>
-                <th style={{ width: '40px' }}>
-                  <input
-                    type="checkbox"
-                    className="form-check-input"
-                    checked={selectedProducts.length === products.length}
-                    onChange={toggleSelectAll}
-                  />
-                </th>
-                <th style={{ width: '80px' }}>Ảnh</th>
-                <th className="sortable" onClick={() => handleSort('name')}>
-                  Tên sản phẩm
-                  {sortConfig.key === 'name' && (
-                    <span className="sort-indicator ms-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
-                  )}
-                </th>
-                <th style={{ width: '160px' }} className="sortable" onClick={() => handleSort('price')}>
-                  Giá
-                  {sortConfig.key === 'price' && (
-                    <span className="sort-indicator ms-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
-                  )}
-                </th>
-                <th style={{ width: '120px' }} className="sortable" onClick={() => handleSort('stock')}>
-                  Tồn kho
-                  {sortConfig.key === 'stock' && (
-                    <span className="sort-indicator ms-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
-                  )}
-                </th>
-                <th style={{ width: '100px' }}>Biến thể</th>
-                <th style={{ width: '140px' }}>Trạng thái</th>
-                <th style={{ width: '160px' }} className="sortable" onClick={() => handleSort('updatedAt')}>
-                  Cập nhật
-                  {sortConfig.key === 'updatedAt' && (
-                    <span className="sort-indicator ms-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
-                  )}
-                </th>
-                <th style={{ width: '80px' }}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((product) => (
-                <React.Fragment key={product.id}>
-                  {/* Main Product Row */}
-                  <tr className={selectedProducts.includes(product.id) ? 'table-active' : ''}>
-                    <td>
-                      <input
-                        type="checkbox"
-                        className="form-check-input"
-                        checked={selectedProducts.includes(product.id)}
-                        onChange={() => toggleProductSelection(product.id)}
-                      />
-                    </td>
-                    <td>
-                      {product.mainImageUrl ? (
-                        <img 
-                          src={product.mainImageUrl} 
-                          alt={product.name}
-                          className="img-thumbnail"
-                          style={{ width: '50px', height: '50px', objectFit: 'cover' }}
-                        />
-                      ) : (
-                        <div className="bg-light text-muted d-flex align-items-center justify-content-center" 
-                             style={{ width: '50px', height: '50px', borderRadius: '4px' }}>
-                          <IoImage size={24} />
-                        </div>
-                      )}
-                    </td>
-                    <td>
-                      <div className="d-flex align-items-center gap-2">
-                        {product.variantsCount > 0 && (
-                          <button
-                            className="btn btn-sm btn-link p-0 text-muted"
-                            onClick={() => toggleRowExpansion(product.id)}
-                            aria-label="Mở rộng biến thể"
-                          >
-                            {expandedRows.includes(product.id) ? (
-                              <IoChevronDown size={16} />
-                            ) : (
-                              <IoChevronForward size={16} />
-                            )}
-                          </button>
-                        )}
-                        <div>
-                          <div className="fw-semibold">{product.name}</div>
-                          <small className="text-muted">
-                            SKU: {product.sku || '—'} · Slug: {product.slug}
-                          </small>
-                        </div>
-                      </div>
-                    </td>
-                    <td>{getPriceDisplay(product)}</td>
-                    <td>
-                      <span className={`badge bg-${getStockBadge(product.totalStock).variant === 'destructive' ? 'danger' : getStockBadge(product.totalStock).variant === 'warning' ? 'warning' : 'secondary'}`}>
-                        {getStockBadge(product.totalStock).label}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="badge bg-light text-dark">{product.variantsCount}</span>
-                    </td>
-                    <td>
-                      <span className={`badge bg-${statusMap[product.status].color === 'success' ? 'success' : statusMap[product.status].color === 'secondary' ? 'secondary' : 'light text-dark'}`}>
-                        {statusMap[product.status].label}
-                      </span>
-                    </td>
-                    <td>{formatDateTime(product.updatedAt)}</td>
-                    <td>
-                      <div className="dropdown">
-                        <button 
-                          className="btn btn-sm btn-link text-muted p-0" 
-                          type="button" 
-                          data-bs-toggle="dropdown" 
-                          aria-expanded="false"
-                        >
-                          <IoEllipsisVertical size={16} />
-                        </button>
-                        <ul className="dropdown-menu">
-                          <li>
-                            <button className="dropdown-item" onClick={() => console.log('Edit', product.id)}>
-                              <IoPencil size={14} className="me-2" />
-                              Sửa
-                            </button>
-                          </li>
-                          <li>
-                            <button className="dropdown-item" onClick={() => console.log('Duplicate', product.id)}>
-                              <IoCopy size={14} className="me-2" />
-                              Nhân bản
-                            </button>
-                          </li>
-                          <li><hr className="dropdown-divider" /></li>
-                          <li>
-                            <button
-                              className="dropdown-item text-danger"
-                              onClick={() => {
-                                if (window.confirm('Bạn có chắc muốn xóa sản phẩm này? Hành động không thể hoàn tác.')) {
-                                  console.log('Delete', product.id);
-                                }
-                              }}
-                            >
-                              <IoTrash size={14} className="me-2" />
-                              Xóa
-                            </button>
-                          </li>
-                        </ul>
-                      </div>
-                    </td>
-                  </tr>
-
-                  {/* Expanded Variants Table */}
-                  {expandedRows.includes(product.id) && (
-                    <tr>
-                      <td colSpan="9" className="p-3 bg-light">
-                        <div className="variants-container">
-                          <div className="d-flex justify-content-between align-items-center mb-3">
-                            <h5 className="mb-0">Biến thể</h5>
-                            <button
-                              className="btn btn-sm btn-outline-primary"
-                              onClick={() => console.log('Add variant', product.id)}
-                            >
-                              <IoAdd size={14} className="me-1" />
-                              Thêm biến thể
-                            </button>
-                          </div>
-
-                          {product.variants && product.variants.length > 0 ? (
-                            <table className="table table-sm table-bordered bg-white mb-0">
-                              <thead className="table-light">
-                                <tr>
-                                  <th style={{ width: '60px' }}>Ảnh</th>
-                                  <th>Tên biến thể</th>
-                                  <th style={{ width: '140px' }}>SKU</th>
-                                  <th style={{ width: '120px' }}>Giá</th>
-                                  <th style={{ width: '80px' }}>Tồn</th>
-                                  <th style={{ width: '120px' }}>Trạng thái</th>
-                                  <th style={{ width: '80px' }}></th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {product.variants.map((variant) => (
-                                  <tr key={variant.id}>
-                                    <td>
-                                      {variant.mainImageUrl ? (
-                                        <img 
-                                          src={variant.mainImageUrl} 
-                                          alt={variant.name}
-                                          className="img-thumbnail"
-                                          style={{ width: '40px', height: '40px', objectFit: 'cover' }}
-                                        />
-                                      ) : (
-                                        <div className="bg-light text-muted d-flex align-items-center justify-content-center" 
-                                             style={{ width: '40px', height: '40px', borderRadius: '4px' }}>
-                                          <IoImage size={16} />
-                                        </div>
-                                      )}
-                                    </td>
-                                    <td>
-                                      <div>
-                                        <div className="fw-medium">{variant.name}</div>
-                                        <small className="text-muted">
-                                          {variant.options.Color && `${variant.options.Color} `}
-                                          {variant.options.Size && variant.options.Size}
-                                        </small>
-                                      </div>
-                                    </td>
-                                    <td>
-                                      <code className="text-dark">{variant.sku}</code>
-                                    </td>
-                                    <td>{formatCurrency(variant.price)}</td>
-                                    <td className="text-center">{variant.stock}</td>
-                                    <td>
-                                      <span className={`badge bg-${variantStatusMap[variant.status].color === 'success' ? 'success' : 'secondary'}`}>
-                                        {variantStatusMap[variant.status].label}
-                                      </span>
-                                    </td>
-                                    <td>
-                                      <div className="d-flex gap-1">
-                                        <button
-                                          className="btn btn-sm btn-link text-muted p-0"
-                                          title="Sửa biến thể"
-                                          onClick={() => console.log('Edit variant', variant.id)}
-                                        >
-                                          <IoPencil size={14} />
-                                        </button>
-                                        <button
-                                          className="btn btn-sm btn-link text-danger p-0"
-                                          title="Xóa biến thể"
-                                          onClick={() => {
-                                            if (window.confirm('Xóa biến thể này?')) {
-                                              console.log('Delete variant', variant.id);
-                                            }
-                                          }}
-                                        >
-                                          <IoTrash size={14} />
-                                        </button>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          ) : (
-                            <div className="text-center py-5 bg-white rounded">
-                              <IoAlertCircle size={32} className="text-muted mb-2" />
-                              <h5>Chưa có biến thể</h5>
-                              <p className="text-muted mb-3">Thêm biến thể để quản lý tồn kho và giá theo tùy chọn.</p>
-                              <button
-                                className="btn btn-sm btn-outline-primary"
-                                onClick={() => console.log('Add variant', product.id)}
-                              >
-                                <IoAdd size={14} className="me-1" />
-                                Thêm biến thể
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </React.Fragment>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      <TableProducts />
+      
 
       {/* Pagination */}
       {!loading && products.length > 0 && (

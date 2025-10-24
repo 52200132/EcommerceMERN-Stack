@@ -7,7 +7,7 @@ export const productApi = createApi({
   tagTypes: ['Product'],
   endpoints: (build) => ({
     getProducts: build.query({
-      query: () => ({ url: '/products', method: 'GET' }),
+      query: () => ({ url: '/products/all', method: 'GET' }),
       providesTags: (result) =>
         result
           ? [...result.map(({ id }) => ({ type: 'Product', id })), { type: 'Product', id: 'LIST' }, ]
