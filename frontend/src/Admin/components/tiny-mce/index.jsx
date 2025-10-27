@@ -7,8 +7,8 @@ import Loading from '../loading';
 
 const API_KEY = 'v4fkl7lvajd9wuh5hdbzxikukislbijz1fmcj6mvt9ki6yxu'; // để trống nghĩa là dùng bản miễn phí
 
-export default function TinyMCE(props) {
-  const editorRef = useRef(null);
+export default function TinyMCE({ initialValue = '', editorRef }) {
+  const tinyRef = useRef(null);
 
   const [loading, setLoading] = useState(true);
 
@@ -17,8 +17,8 @@ export default function TinyMCE(props) {
   }, []);
 
   const handleLog = () => {
-    if (editorRef.current) {
-      console.log(editorRef.current.getContent());
+    if (tinyRef.current) {
+      console.log(tinyRef.current.getContent());
     }
   };
 
@@ -32,7 +32,8 @@ export default function TinyMCE(props) {
     <div>
       <Editor
         apiKey={API_KEY}
-        onInit={(evt, editor) => editorRef.current = editor}
+        initialValue={initialValue}
+        onInit={(evt, editor) => tinyRef.current = editor}
         init={{
           height: 500,
           menubar: true,

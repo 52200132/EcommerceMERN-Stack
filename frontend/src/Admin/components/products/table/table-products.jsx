@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
+import { Button, Dropdown } from 'react-bootstrap';
 import {
   useReactTable,
   getCoreRowModel,
@@ -6,7 +7,6 @@ import {
   createColumnHelper,
   getExpandedRowModel,
 } from '@tanstack/react-table';
-import { Button, Dropdown } from 'react-bootstrap';
 import {
   IoAdd,
   IoEllipsisVertical,
@@ -19,7 +19,6 @@ import {
   IoImage,
 } from 'react-icons/io5';
 
-import { useGetProductsQuery } from 'services/product-api';
 import { formatDateTime, formatCurrency } from 'utils/format';
 import TableExpandVariants from './table-expand-variants';
 
@@ -34,6 +33,12 @@ const getStockBadge = (stock) => {
   }
   return { variant: 'default', label: stock };
 };
+// Status map
+const statusMap = {
+  draft: { label: 'Nháp', color: 'secondary' },
+  published: { label: 'Đã xuất bản', color: 'success' },
+  archived: { label: 'Lưu trữ', color: 'muted' }
+};
 
 const columns = [
   columnHelper.display({
@@ -43,7 +48,7 @@ const columns = [
         name="select-all"
         type="checkbox"
         className="form-check-input"
-        ref={el => { if (typeof el?.indeterminate === 'boolean') el.indeterminate = !el.checked && table.getIsSomeRowsSelected()}}
+        ref={el => { if (typeof el?.indeterminate === 'boolean') el.indeterminate = !el.checked && table.getIsSomeRowsSelected() }}
         checked={table.getIsAllRowsSelected()}
         onChange={table.getToggleAllRowsSelectedHandler()}
       />
@@ -194,17 +199,12 @@ const columns = [
   }
 ]
 
-const TableProducts = () => {
-
-  const { data: products, isLoading } = useGetProductsQuery();
-  console.log('Products data:', products);
-
+const TableProducts = ({products, isLoading}) => {
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [expanded, setExpanded] = useState([]);
-  const [sortConfig, setSortConfig] = useState({ key: 'updatedAt', direction: 'desc' });
 
   const table = useReactTable({
-    data: products || [],
+    data: products,
     columns,
     state: {
       expanded,
@@ -217,13 +217,6 @@ const TableProducts = () => {
     getRowCanExpand: (row) => row.original.Variants && row.original.Variants.length > 0,
   });
 
-  // Status map
-  const statusMap = {
-    draft: { label: 'Nháp', color: 'secondary' },
-    published: { label: 'Đã xuất bản', color: 'success' },
-    archived: { label: 'Lưu trữ', color: 'muted' }
-  };
-
   console.log('RENDER: table-products');
   return (
     <>
@@ -233,7 +226,7 @@ const TableProducts = () => {
             <div className="spinner"></div>
             <p>Đang tải...</p>
           </div>
-        ) : products.length === 0 ? (
+        ) : products && products.length === 0 ? (
           <div className="empty-state">
             <IoAlertCircle size={48} />
             <h3>Chưa có sản phẩm</h3>
@@ -262,8 +255,8 @@ const TableProducts = () => {
             </thead>
             <tbody>
               {table.getRowModel().rows.map((row) => (
-                <>
-                  <tr key={row.id}
+                <Fragment key={row.id}>
+                  <tr
                     onDoubleClick={row.getToggleExpandedHandler()}
                   >
                     {row.getVisibleCells().map((cell) => (
@@ -282,7 +275,7 @@ const TableProducts = () => {
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>

@@ -1,24 +1,67 @@
 import express from 'express';
 import Product from '../models/Product.js';
 import { protect, admin } from '../middleware/auth.js';
-import { getArrangeChar, getArrangePrice, createWarehouseByProductId, createVariantByProductId , updateWarehouseById, getAllWarehouseByProduct, getProductById, deleteProductById, createProduct, updateProduct, getAllProducts, deleteVariantBySku, updateVariantBySku } from '../controller/productController.js';
+import { getArrangeChar, getArrangePrice, createWarehouseByProductId, createVariantByProductId, updateWarehouseById, getAllWarehouseByProduct, getProductById, deleteProductById, createProduct, updateProduct, getAllProducts, deleteVariantBySku, updateVariantBySku } from '../controller/productController.js';
 
 const router = express.Router();
 
-// @desc    Fetch all products
-// @route   GET /api/products/
+// Sắp xếp sản phẩm A-Z, Z-A
+// @desc    Arrange all products A-Z, Z-A
+// @route   GET /api/products/order_char
 // @access  Public
-router.get('/', async (req, res) => {
+router.get('/order_char', getArrangeChar);
+
+// Sắp xếp sản phẩm theo giá thấp đến cao, cao đến thấp
+// @desc    Arrange all products Price Low to High, Price High to Low
+// @route   GET /api/products/order_price
+// @access  Public
+router.get('/order_price', getArrangePrice);
+
+// @desc    Fetch all products
+// @route   GET /api/products/all
+// @access  Admin
+router.get('/all', protect, admin, getAllProducts);
+
+// @desc    Get top rated products
+// @route   GET /api/products/top?number=<number>
+// @access  Public
+// chưa xong đâu, còn rating để nó sắp xếp
+router.get('/top', async (req, res) => {
+  try {
+    const number = Number(req.query.number) || 10;
+    const products = await Product.find({}).sort({ rating: -1 }).limit(number);
+    res.json({ ec: 0, em: "Get Top Products Successfully", dt: products });
+  } catch (error) {
+    res.status(500).json({ ec: 500, em: error.message });
+  }
+});
+
+// @desc    Get product categories
+// @route   GET /api/products/categories
+// @access  Public
+router.get('/categories', async (req, res) => {
+  try {
+    const categories = await Product.distinct('category');
+    res.json(categories);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @desc    Fetch all products
+// @route   GET /api/products
+// @access  Public
+router.get('', async (req, res) => {
   try {
     const pageSize = Number(req.query.pageSize) || 12;
-    const page = Number(req.query.pageNumber) || 1;
+    const page = Number(req.query.page) || 1;
     const keyword = req.query.keyword
       ? {
-          product_name: {
-            $regex: req.query.keyword,
-            $options: 'i',
-          },
-        }
+        product_name: {
+          $regex: req.query.keyword,
+          $options: 'i',
+        },
+      }
       : {};
 
     const hastag = req.query.hastag
@@ -27,42 +70,34 @@ router.get('/', async (req, res) => {
 
     const query = { ...keyword, ...hastag };
 
-    const count = await Product.countDocuments(query);
-    const products = await Product.find(query)
-      .limit(pageSize)
-      .skip(pageSize * (page - 1));
+    const [count, products] = await Promise.all([
+      Product.countDocuments(query),
+      Product.find(query)
+        .select('-Warehouses -detail_description -created_at -short_description') // Loại bỏ các trường không cần thiết
+        // .lean() // Quan trọng: trả về plain objects thay vì Mongoose documents
+        .limit(pageSize)
+        .skip(pageSize * (page - 1))
+    ]);
 
     res.json({
-      products,
-      page,
-      pages: Math.ceil(count / pageSize),
-      total: count,
+      ec: 0,
+      em: "Get Products Successfully",
+      dt: {
+        products,
+        page,
+        pages: Math.ceil(count / pageSize),
+        total: count,
+      }
     });
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
   }
 });
 
-// Sắp xếp sản phẩm A-Z, Z-A
-// @desc    Arrange all products A-Z, Z-A
-// @route   GET /api/products/order_char
-// @access  Public
-router.get('/order_char', getArrangeChar);
-// Sắp xếp sản phẩm theo giá thấp đến cao, cao đến thấp
-// @desc    Arrange all products Price Low to High, Price High to Low
-// @route   GET /api/products/order_price
-// @access  Public
-router.get('/order_price', getArrangePrice);
-
 // @desc    Create a product
 // @route   POST /api/products
 // @access  Private/Admin
 router.post('/', protect, admin, createProduct);
-
-// @desc    Fetch all products
-// @route   GET /api/products/all
-// @access  Admin
-router.get('/all', protect, admin, getAllProducts);
 
 // @desc    Fetch single product
 // @route   GET /api/products/:id
@@ -148,33 +183,6 @@ router.post('/:id/reviews', protect, async (req, res) => {
     } else {
       res.status(404).json({ message: 'Product not found' });
     }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// @desc    Get top rated products
-// @route   GET /api/products/top?number=<number>
-// @access  Public
-
-// chưa xong đâu, còn rating để nó sắp xếp
-router.get('/top', async (req, res) => {
-  try {
-    const number = Number(req.query.number) || 10;
-    const products = await Product.find({}).sort({ rating: -1 }).limit(number);
-    res.json({ec: 0, em: "Get Top Products Successfully", dt: products });
-  } catch (error) {
-    res.status(500).json({ ec: 500, em: error.message });
-  }
-});
-
-// @desc    Get product categories
-// @route   GET /api/products/categories
-// @access  Public
-router.get('/categories', async (req, res) => {
-  try {
-    const categories = await Product.distinct('category');
-    res.json(categories);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

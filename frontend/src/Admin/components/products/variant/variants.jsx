@@ -2,6 +2,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Button } from "react-bootstrap";
 import { addVariant, deleteVariant } from 'redux-tps/features/product-slice';
 import Variant from "./variant";
+import { Fragment } from "react";
 
 const Variants = (props) => {
   // const { selector, actions } = props;
@@ -18,14 +19,9 @@ const Variants = (props) => {
 
   return (
     <>
-      {/* {variants.map((variant, variantIndex) => (
-        <Variants 
-          selector={variantsImgsSelector(variantIndex)}
-        />
-      ))} */}
       {variantLength > 0 &&
         [...Array(variantLength).keys()].map((_, variantIndex) =>
-          <>
+          <Fragment key={`variant-fragment-${variantIndex}`}>
             <Variant
               key={`variant-${variantIndex}`}
               variantIndex={variantIndex}
@@ -34,7 +30,7 @@ const Variants = (props) => {
             <div className="text-end">
               <Button variant="danger" onClick={() => dispatch(deleteVariant({ variantIndex }))}>Xoá phiên bản</Button>
             </div>
-          </>
+          </Fragment>
         )
       }
 

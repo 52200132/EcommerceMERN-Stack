@@ -7,7 +7,7 @@ import parse from 'html-react-parser';
 
 import Loading from "Admin/components/loading";
 import { addAttribute, changeAttributeValue, deleteAttribute } from "redux-tps/features/product-slice";
-import { useTpsSelector } from "utils/selector-utils";
+import { useTpsSelector } from "custom-hooks/use-tps-selector";
 
 const AttributesVariant = (props) => {
   const { selector, variantIndex } = props;
@@ -40,9 +40,7 @@ const AttributesVariant = (props) => {
   // console.log('HTML-RENDER: ', html_text_attributes);
 
   console.log('RENDER: attributes-variant');
-
   if (loading) return <Loading />;
-
   return (
     <>
       <Row className="mb-3">

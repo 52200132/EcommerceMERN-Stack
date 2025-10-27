@@ -1,8 +1,8 @@
 
 import { Button } from "react-bootstrap";
 
-import Variant from "./components/variant";
-import ComponentNotFound from "../component-not-found";
+import Variant from "./variant";
+import ComponentNotFound from "../../component-not-found";
 
 import { useDispatch } from "react-redux";
 import { changeContent } from "redux-tps/features/modal-slice";
@@ -16,7 +16,6 @@ const EditVariant = ({ variantIndex }) => {
   if (variantIndex === undefined) {
     return <ComponentNotFound />;
   }
-
   return (
     <>
       <div>EditVariant Component</div>

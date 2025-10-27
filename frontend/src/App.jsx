@@ -7,18 +7,17 @@ import ContactPage from './pages/ContactPage';
 import AboutPage from './pages/AboutPage';
 import LoginPage from './components/Auth/LoginPage';
 import RegisterPage from './components/Auth/RegisterPage';
-import Layout from './components/Layout/Layout';
 import ProductDetails from './components/ProductDetails/ProductDetails';
 
-import ManageProducts from 'Admin/components/Product/manage-products';
-import ManageProductsLayout from 'Admin/components/Product/manage-products-layout';
-import AddProduct from 'Admin/components/Product/add-product';
+import ManageProductsLayout from 'Admin/pages/product/manage-products-layout';
+import ManageProductsPage from 'Admin/pages/product/manage-products-page'
+import CRUProduct from 'Admin/pages/product/cru-product-page';
 
 // import NotFoundPage from './pages/NotFoundPage'; // Optional: Create a 404 page component
-import './App.css';
+// import './App.css';
 
-const AdminLayout = lazy(() => import('./Admin/Layout'))
-
+const AdminLayout = lazy(() => import('./Admin/layout'))
+const Layout = lazy(() => import('./components/Layout/Layout'))
 
 const App = () => {
   const allowedCategorySlugs = ['may-tinh', 'dien-thoai'];
@@ -60,9 +59,9 @@ const App = () => {
 
         <Route path="/admin/*" element={<AdminLayout />}>
           <Route index element={<div>Admin Home</div>} />
-          <Route path="manage-products" element={<ManageProducts />}>
-            <Route index element={<ManageProductsLayout />} />
-            <Route path="add-product" element={<AddProduct />} />
+          <Route path="manage-products" element={<ManageProductsLayout />}>
+            <Route index element={<ManageProductsPage />} />
+            <Route path="add-product" element={<CRUProduct />} />
           </Route>
         </Route>
 

@@ -1,11 +1,11 @@
-import ImageUploading from "react-images-uploading";
 import { useDispatch, useSelector } from "react-redux";
 import _ from 'lodash'
 import { useEffect, useState } from "react";
-// import { Ratio } from "react-bootstrap";
 import { Form } from "react-bootstrap";
 import { nanoid } from "@reduxjs/toolkit";
-import { useTpsSelector } from "utils/selector-utils";
+
+import ImageUploading from "react-images-uploading";
+import { useTpsSelector } from "custom-hooks/use-tps-selector";
 
 /**
  * @param {object} props -

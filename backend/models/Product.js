@@ -67,13 +67,14 @@ const productSchema = new Schema({
 productSchema.methods.recalculateStock = function() {
   this.Variants.forEach(variant => {
     let totalStock = 0;
-    this.Warehouses.forEach(warehouse => {
-      warehouse.warehouse_variants.forEach(wv => {
-        if (wv.sku === variant.sku) {
-          totalStock += (wv.quantity - wv.waiting_for_delivery);
-        }
-      });
-    });
+    // this.Warehouses.forEach(warehouse => {
+    //   warehouse.warehouse_variants.forEach(wv => {
+    //     if (wv.sku === variant.sku) {
+    //       totalStock += (wv.quantity - wv.waiting_for_delivery);
+    //     }
+    //   });
+    // });
+    totalStock = this.getStockBySku(variant.sku);
     variant.stock = totalStock;
   });
 };

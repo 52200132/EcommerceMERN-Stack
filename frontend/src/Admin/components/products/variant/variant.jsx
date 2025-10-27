@@ -4,7 +4,7 @@ import { Button, Col, Form, InputGroup, Row } from "react-bootstrap";
 import MultiImageUpload from "../multi-image-upload";
 //
 import { setImagesVariant, deleteVariant } from "redux-tps/features/product-slice";
-import { useTpsSelector } from "utils/selector-utils";
+import { useTpsSelector } from "custom-hooks/use-tps-selector";
 import { setShow, changeContent } from "redux-tps/features/modal-slice";
 import { useAContext } from "Admin/a-context";
 import { VARIANTSELECTOR_INDEX } from "Admin/selectors/product";

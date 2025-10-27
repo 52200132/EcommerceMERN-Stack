@@ -1,9 +1,9 @@
 import { Button, Modal } from 'react-bootstrap';
 import { useSelector, useDispatch } from 'react-redux';
 
-import AttributesVariant from './Product/components/attributes-variant';
+import AttributesVariant from './products/variant/attributes-variant';
 import TinyMCE from './tiny-mce';
-import EditVariant from './Product/edit-variant';
+import EditVariant from './products/variant/edit-variant';
 
 import { goBack, setHide } from 'redux-tps/features/modal-slice';
 import { useAContext } from '../a-context';

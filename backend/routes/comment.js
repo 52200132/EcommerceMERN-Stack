@@ -23,3 +23,5 @@ router.put("/product/:product_id", protect, updateUserComment);
 // @route DELETE /api/comments/product/:product_id
 // @access Private/User
 router.delete("/product/:product_id", protect, deleteUserComment);
+
+export default router;
