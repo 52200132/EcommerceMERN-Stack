@@ -1,0 +1,10 @@
+backend/node_modules
+frontend/node_modules
+.gitignore
+.gitattributes
+backend/Dockerfile
+backend/dockerignore
+backend/.env
+frontend/Dockerfile
+frontend/dockerignore
+docker-compose.yml

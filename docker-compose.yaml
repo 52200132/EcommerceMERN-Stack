@@ -1,0 +1,92 @@
+networks:
+  # 1. Mạng nội bộ cho giao tiếp giữa các services (Back-end, DB)
+  app-network:
+    driver: bridge
+  # 2. Mạng cho Traefik và các dịch vụ cần truy cập từ bên ngoài (Front-end, Traefik)
+  web_network:
+    driver: bridge
+services:
+  traefik:
+    image: traefik:v2.11
+    container_name: traefik_proxy
+    command:
+      # Kích hoạt Docker Provider (tự động đọc labels)
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false # Bỏ qua label traefik.enable=false
+      # Kích hoạt API và Dashboard (port 8080)
+      - --api.insecure=true 
+      # Cấu hình entrypoint (port 80)
+      - --entrypoints.web.address=:80
+    ports:
+      - "80:80"     # Cổng HTTP chính cho lưu lượng truy cập
+      - "8080:8080" # Cổng Dashboard (kiểm tra cấu hình)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Cho phép Traefik đọc trạng thái Docker
+    networks:
+      - web_network
+  mongo:
+    image: mongo:7
+    container_name: mongodb_db
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
+      - MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE}
+    networks:
+      - app-network
+      - web_network
+    volumes:
+      - mongo-data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    ports:
+      - "29017:27017"
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    # ports:
+    # - "5000:5000" # Không cần port để có thể dùng bản sao
+    environment:
+      - PORT=${PORT}
+      - MONGODB_URI=${MONGODB_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASS=${EMAIL_PASS}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - FACEBOOK_APP_ID=${FACEBOOK_APP_ID}
+      - FACEBOOK_APP_SECRET=${FACEBOOK_APP_SECRET}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - RESET_PASSWORD_SECRET=${RESET_PASSWORD_SECRET}
+    networks:
+      - app-network
+      - web_network
+    labels:
+    - "traefik.enable=true"
+    - "traefik.http.routers.backend.rule=Host(`localhost`) && PathPrefix(`/api`)"
+    - "traefik.http.routers.backend.entrypoints=web"
+    - "traefik.http.routers.backend.priority=2"
+    - "traefik.http.services.backend.loadbalancer.server.port=5000"
+    # deploy:
+    #   mode: replicated
+    #   replicas: 3 # Tao 3 bản sao của dịch vụ backend
+    depends_on:
+      - mongo
+  frontend:
+    container_name: frontend_app
+    build:
+      context: .
+      dockerfile: frontend/dockerfile
+    networks:
+      - web_network
+    labels:
+      - "traefik.enable=true"
+      # Định tuyến: Yêu cầu tới 'localhost' sẽ đi vào dịch vụ này
+      - "traefik.http.routers.frontend.rule=Host(`localhost`) && !PathPrefix(`/api`)"
+      - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.routers.frontend.priority=1"
+      # Service: Traefik định tuyến tới port 80 nội bộ của Nginx/Front-end
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+volumes:
+  mongo-data:

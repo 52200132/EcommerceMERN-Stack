@@ -1,0 +1,10 @@
+.tps-register-container, .tps-login-container {
+  .section-title {
+    padding: 0 30px;
+  }
+  @media only screen and (min-width: 992px) and (max-width: 1199px) {
+    .section-title {
+        padding: 0px 20px;
+    }
+}
+}
