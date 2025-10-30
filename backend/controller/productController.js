@@ -85,9 +85,9 @@ const getProductById = async (req, res) => {
 
     if (product) {
       product.recalculateStock();
-      res.json({ ec: 0, em: "Get Product Successfully", dt: product });
+      res.json({ ec: 0, em: "Lấy sản phẩm thành công", dt: product });
     } else {
-      res.status(404).json({ ec: 404, em: 'Product not found' });
+      res.status(404).json({ ec: 404, em: 'Không tìm thấy sản phẩm' });
     }
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
