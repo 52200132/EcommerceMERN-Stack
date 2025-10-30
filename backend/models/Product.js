@@ -19,7 +19,7 @@ const attributeSchema = new Schema({
 
 //  Subschema: warehouse_variant
 const warehouseVariantSchema = new Schema({
-  sku: { type: String, required: true, unique: true },
+  sku: { type: String, required: true},
   quantity: { type: Number, required: true, min: 0 },
   waiting_for_delivery: { type: Number, required: true, min: 0 },
 }, { _id: false });

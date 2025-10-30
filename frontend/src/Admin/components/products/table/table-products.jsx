@@ -1,6 +1,6 @@
 import { Fragment, useRef, useState } from 'react';
 import { Button, Dropdown } from 'react-bootstrap';
-import { isArray, isObject, update } from 'lodash';
+import { isArray, isObject } from 'lodash';
 import {
   useReactTable,
   getCoreRowModel,
@@ -28,6 +28,7 @@ import { useDispatch } from 'react-redux';
 import { useLazyGetProductByIdQuery } from 'services/product-api';
 import { useNavigate } from 'react-router-dom';
 import { updateProduct } from 'redux-tps/features';
+import { confirmation } from 'utils/confirmation';
 
 const columnHelper = createColumnHelper();
 // Get stock badge
@@ -199,15 +200,7 @@ const TableProducts = ({ products, isLoading }) => {
             <Dropdown.Divider />
             <Dropdown.Item as="li"
               className="text-danger"
-              onClick={() => {
-                if (
-                  window.confirm(
-                    "Bạn có chắc muốn xóa sản phẩm này? Hành động không thể hoàn tác."
-                  )
-                ) {
-                  console.log("Delete", row.original._id);
-                }
-              }}
+              onClick={() => handleDeleteProductClick(row.original._id, row.original.product_name)}
             >
               <IoTrash size={14} className="me-2" />
               Xóa
@@ -245,6 +238,21 @@ const TableProducts = ({ products, isLoading }) => {
       .catch((error) => {
         console.error('Failed to fetch product:', error);
       });
+  }
+  const handleDeleteProductClick = async (productId, productName) => {
+    const confirmed = await confirmation({
+      title: 'Xác nhận xóa sản phẩm',
+      message: (<p>Bạn có chắc chắn muốn xóa sản phẩm <strong>{productName}</strong> không?</p>),
+      confirmText: 'Có',
+      cancelText: 'Không',
+      variant: 'danger',
+    })
+
+    console.log('User confirmed:', confirmed);
+
+    if (confirmed) {
+      console.log('Delete product', productId);
+    }
   }
 
   console.log('RENDER: table-products');

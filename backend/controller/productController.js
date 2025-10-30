@@ -1,4 +1,3 @@
-import e from "express";
 import Product from "../models/Product.js";
 
 // Cập nhật số lượng sau khi đặt hàng thành công đẩy vào waiting_for_delivery
@@ -118,22 +117,27 @@ const createProduct = async (req, res) => {
       product_name,
       hashtag,
       short_description,
-      detailed_description,
-      Warehouse,
+      detail_description,
+      is_active,
+      Warehouses,
       Images,
       Variants
     } = req.body;
+
+    console.log(Warehouses);
 
     const product = new Product({
       brand_id,
       product_name,
       hashtag,
       short_description,
-      detailed_description,
-      Warehouse,
+      detail_description,
+      Warehouses,
       Images,
       Variants,
-      createdAt: Date.now()
+      price_min: 0,
+      price_max: 0,
+      is_active,
     });
 
     const createdProduct = await product.save();

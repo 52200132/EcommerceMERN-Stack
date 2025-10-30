@@ -33,14 +33,7 @@ const optionActions = {
 
 const basicInfoSchema = z.object({
   product_name: z.string().min(1, 'Vui lòng nhập tên sản phẩm'),
-  brand_id: z.preprocess((val) => {
-    if (typeof val === 'object' && val !== null) {
-      return { brand_name: val.brand_name };
-    }
-    return {brand_name: ''};
-  }, z.object({
-    brand_name: z.string().min(1, 'Vui lòng chọn thương hiệu')
-  })),
+  brand_id: z.string().min(1, 'Vui lòng chọn thương hiệu'),
   hashtag: z.string().optional(),
   short_description: z.string().min(1, 'Vui lòng nhập mô tả ngắn'),
   detail_description: z.string().optional(),
@@ -50,15 +43,20 @@ const basicInfoSchema = z.object({
 let rerenderCount = 0
 const BasicInfo = ({ selector, action = 'create' }) => {
   const dispatch = useDispatch();
-  const brands = useLiveQuery(async () => await db.brands.toArray(), [], []);
-  const hashtags = useLiveQuery(async () => await db.hashtags.toArray(), [], []);
   const product = useTpsGetState(selector, { includeProps: ['product_name', 'brand_id', 'hashtag', 'short_description', 'detail_description', 'is_active'] });
+  const brands = useLiveQuery(async () => {
+    const [array, defaultValue] = await Promise.all([
+      db.brands.toArray(),
+      product?.brand_id ? db.brands.get(product.brand_id) : null
+    ]);
+    return { array, defaultValue };
+  }, [], { array: [], defaultValue: {} });
+  const hashtags = useLiveQuery(async () => await db.hashtags.toArray(), [], []);
   const { register, control, getValues, subscribe, formState: { errors } } = useForm({
     resolver: zodResolver(basicInfoSchema),
     mode: 'all',
     defaultValues: product
   });
-
 
   const onHashtagsChange = (option) => {
     const target = {
@@ -70,7 +68,6 @@ const BasicInfo = ({ selector, action = 'create' }) => {
   }
 
   useDebounceSubscribeValues((productBasicInfo) => {
-    // console.log(productBasicInfo);
     dispatch(updateProduct(productBasicInfo));
     return true;
   }, subscribe, 1000);
@@ -110,9 +107,9 @@ const BasicInfo = ({ selector, action = 'create' }) => {
                 render={({ field: { onChange, onBlur, ref } }) => (
                   <Select
                     classNamePrefix='tps'
-                    defaultValue={getValues('brand_id') ? { value: getValues('brand_id'), label: getValues('brand_id').brand_name } : null}
                     inputRef={ref}
-                    options={brands.map(brand => ({ value: brand, label: brand.brand_name }))}
+                    options={brands.array.map(brand => ({ value: brand._id, label: brand.brand_name }))}
+                    value={brands.defaultValue ? { value: brands.defaultValue._id, label: brands.defaultValue.brand_name } : null}
                     styles={{
                       control: (base) => ({
                         ...base,
@@ -125,12 +122,12 @@ const BasicInfo = ({ selector, action = 'create' }) => {
                     placeholder="Chọn thương hiệu..."
                     isClearable={true}
                     onBlur={(option) => onBlur(option?.value)}
-                    onChange={(option) => onChange(option?.value)}
+                    onChange={(option) => onChange(option?.value || '')}
                   />
                 )}
               />
               <Form.Text className="text-danger">
-                {errors.brand_id && errors.brand_id.brand_name.message}
+                {errors.brand_id && errors.brand_id.message}
               </Form.Text>
             </Form.Group>
           </Col>

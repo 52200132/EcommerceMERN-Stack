@@ -137,7 +137,7 @@
     background: white;
     border: 1px solid #dee2e6;
     border-radius: 8px;
-    overflow: hidden;
+    // overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 
     // Bootstrap table enhancements
@@ -404,7 +404,6 @@
         grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
         gap: 0.75rem;
         margin-top: 1rem;
-        // TODO: sửa lại 
         .image-item {
           position: relative;
           background: var(--bs-white);
