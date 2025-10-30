@@ -118,8 +118,8 @@ const createProduct = async (req, res) => {
       product_name,
       hashtag,
       short_description,
-      detailed_description,
-      Warehouse,
+      detail_description,
+      Warehouses,
       Images,
       Variants
     } = req.body;
@@ -129,11 +129,10 @@ const createProduct = async (req, res) => {
       product_name,
       hashtag,
       short_description,
-      detailed_description,
-      Warehouse,
+      detail_description,
+      Warehouses,
       Images,
-      Variants,
-      createdAt: Date.now()
+      Variants
     });
 
     const createdProduct = await product.save();

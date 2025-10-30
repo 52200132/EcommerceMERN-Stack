@@ -19,7 +19,8 @@ const attributeSchema = new Schema({
 
 //  Subschema: warehouse_variant
 const warehouseVariantSchema = new Schema({
-  sku: { type: String, required: true, unique: true },
+  // sku: { type: String, required: true, unique: true },
+  sku: { type: String, required: true },
   quantity: { type: Number, required: true, min: 0 },
   waiting_for_delivery: { type: Number, required: true, min: 0 },
 }, { _id: false });
@@ -33,13 +34,14 @@ const warehouseSchema = new Schema({
 
 //  Subschema: variantSchema 
 const variantSchema = new Schema({
-  sku: { type: String, required: true, unique: true },
+  // sku: { type: String, required: true, unique: true },
+  sku: { type: String, required: true },
   price: { type: Number, min: 0, required: true },
   stock: { type: Number, min: 0},
   html_text_attributes: { type: String }, // dung cho render attribute
   Images: [imageSchema],
   Attributes: [attributeSchema],
-  is_active: { type: Boolean, required: true },
+  is_active: { type: Boolean, required: true, default: true },
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now },
 }, { _id: false });
@@ -50,14 +52,14 @@ const productSchema = new Schema({
   brand_id: { type: Schema.Types.ObjectId, ref: "Brand", required: true },
   hashtag: { type: String },
   quantity_sold: { type: Number, min: 0, default: 0 },
-  price_min: { type: Number, min: 0, required: true },
-  price_max: { type: Number, min: 0, required: true },
+  price_min: { type: Number, min: 0 },
+  price_max: { type: Number, min: 0 },
   short_description: { type: String, required: true },
   detail_description: { type: String, required: true },
   Images: [imageSchema],
   Warehouses: [warehouseSchema],
   Variants: [variantSchema],
-  is_active: { type: Boolean, required: true },
+  is_active: { type: Boolean, required: true, default: true },
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now },
 }, { timestamps: false }); 
@@ -157,6 +159,24 @@ productSchema.pre("save",  function(next) {
   }
   next();
 });
+
+productSchema.index(
+  { 'Variants.sku': 1 }, 
+  { 
+    unique: true, 
+    sparse: true, // Bỏ qua documents không có sku hoặc sku = null
+    partialFilterExpression: { 'Variants.sku': { $exists: true, $ne: null } }
+  }
+);
+
+productSchema.index(
+  { 'Warehouses.warehouse_variants.sku': 1 }, 
+  { 
+    unique: true, 
+    sparse: true, // Bỏ qua documents không có sku hoặc sku = null
+    partialFilterExpression: { 'Warehouses.warehouse_variants.sku': { $exists: true, $ne: null } }
+  }
+);
 
 const Product = mongoose.models.Product || model("Product", productSchema);
 export default Product;
