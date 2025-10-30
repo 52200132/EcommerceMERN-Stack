@@ -34,8 +34,9 @@ const initialState = {
   price_max: 0,
   short_description: '',
   detail_description: '',
-  Images: [{ url: 'tps-default.jpg', is_primary: true }],
+  // Images: [{ url: 'tps-default.jpg', is_primary: true }],
   Images: [],
+  Warehouses: [],
   Variants: [{
     sku: '',
     price: '',
@@ -43,7 +44,7 @@ const initialState = {
     // Images: [{ url: 'tps-default.jpg', is_primary: true }],
     Images: [],
     html_text_attributes: '',
-    Attributes: [productInits.attribute, productInits.attribute], // technology or appearance
+    // Attributes: [productInits.attribute, productInits.attribute], // technology or appearance
     Attributes: [],
   }],
   is_active: true,

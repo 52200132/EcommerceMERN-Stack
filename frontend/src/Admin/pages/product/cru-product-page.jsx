@@ -4,8 +4,6 @@ import { Form, Button, Container, Card } from 'react-bootstrap';
 import { setImages } from 'redux-tps/features';
 import { BasicInfo, MultiImageUpload, Variants } from 'Admin/components/products';
 import { store } from 'redux-tps/store';
-import { closeOverlay, overlay } from 'utils/overlay-manager';
-import { toast } from 'react-toastify';
 import { useCreateProductMutation } from 'services/product-api';
 
 import BackButton from 'Admin/components/back-btn';

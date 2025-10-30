@@ -62,7 +62,8 @@ const App = () => {
           <Route index element={<div>Admin Home</div>} />
           <Route path="manage-products" element={<ManageProductsLayout />}>
             <Route index element={<ManageProductsPage />} />
-            <Route path="add-product" element={<CRUProduct />} />
+            <Route path="add-product" element={<CRUProduct action='create'/>} />
+            <Route path="edit-product/:productId" element={<CRUProduct action='update'/>} />
             <Route path="add-product/description" element={<CRUDetailsDescription />} />
           </Route>
         </Route>
