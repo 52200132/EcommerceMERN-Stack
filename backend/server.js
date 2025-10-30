@@ -6,11 +6,12 @@ import passport from "passport";
 import "./passport.js";
 // Import route files
 import authRoutes from "./routes/auth.js";
+import brandRoutes from "./routes/brands.js";
 import productRoutes from "./routes/products.js";
 import orderRoutes from "./routes/orders.js";
 import userRoutes from "./routes/users.js";
-import discountCodeRoutes from "./routes/discount_code.js";
-import commentRoutes from "./routes/comment.js";
+import discountCodeRoutes from "./routes/discount_codes.js";
+import commentRoutes from "./routes/comments.js";
 
 // Load environment variables
 dotenv.config();
@@ -48,6 +49,7 @@ const connectDB = async () => {
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/brands", brandRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/users", userRoutes);
