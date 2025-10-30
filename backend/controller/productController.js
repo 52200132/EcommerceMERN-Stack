@@ -1,5 +1,5 @@
+import e from "express";
 import Product from "../models/Product.js";
-import Brand from "../models/Brand.js";
 
 // Cập nhật số lượng sau khi đặt hàng thành công đẩy vào waiting_for_delivery
 // Status order: Pending -> Processing
@@ -85,9 +85,9 @@ const getProductById = async (req, res) => {
 
     if (product) {
       product.recalculateStock();
-      res.json({ ec: 0, em: "Lấy sản phẩm thành công", dt: product });
+      res.json({ ec: 0, em: "Get Product Successfully", dt: product });
     } else {
-      res.status(404).json({ ec: 404, em: 'Không tìm thấy sản phẩm' });
+      res.status(404).json({ ec: 404, em: 'Product not found' });
     }
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
@@ -117,30 +117,20 @@ const createProduct = async (req, res) => {
       brand_id,
       product_name,
       hashtag,
-      price_min,
-      price_max,
       short_description,
-      detail_description,
-      is_active,
+      detailed_description,
+      Warehouse,
       Images,
       Variants
     } = req.body;
 
-    const brand_name = brand_id.brand_name;
-    let brand = await Brand.findOne({ brand_name });
-    if (!brand) {
-      brand = await Brand.create({ brand_name });
-    }
-
     const product = new Product({
-      brand_id: brand._id,
+      brand_id,
       product_name,
       hashtag,
       short_description,
-      detail_description,
-      price_min,
-      price_max,
-      is_active,
+      detailed_description,
+      Warehouse,
       Images,
       Variants,
       createdAt: Date.now()

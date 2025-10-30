@@ -119,7 +119,9 @@ const handleRegister = async (req, res) => {
         username,
         email,
         password: hashedPassword,
-        Addresses
+        Addresses,
+        Carts: [],
+        Linked_accounts: []
       });
 
       if (user) {

@@ -19,7 +19,7 @@ const attributeSchema = new Schema({
 
 //  Subschema: warehouse_variant
 const warehouseVariantSchema = new Schema({
-  sku: { type: String, required: true },
+  sku: { type: String, required: true, unique: true },
   quantity: { type: Number, required: true, min: 0 },
   waiting_for_delivery: { type: Number, required: true, min: 0 },
 }, { _id: false });
@@ -46,7 +46,7 @@ const variantSchema = new Schema({
 
 //  Main Schema: productSchema 
 const productSchema = new Schema({
-  product_name: { type: String, required: [true, 'Tên sản phẩm không được để trống'] },
+  product_name: { type: String, required: true },
   brand_id: { type: Schema.Types.ObjectId, ref: "Brand", required: true },
   hashtag: { type: String },
   quantity_sold: { type: Number, min: 0, default: 0 },

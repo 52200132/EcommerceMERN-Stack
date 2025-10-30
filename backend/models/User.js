@@ -34,7 +34,7 @@ const cartSchema = new Schema({
 
 //  Linked Account Schema 
 const linkedAccountSchema = new Schema({
-  provider: { type: String, required: true, unique: true },
+  provider: { type: String, required: true },
   provider_id: { type: String, required: true },
   linked_at: { type: Date, default: Date.now, required: true },
   last_login: { type: Date, default: Date.now, required: true },
