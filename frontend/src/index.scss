@@ -42,3 +42,46 @@ code {
 .tox-tinymce-aux {
   z-index: 999999 !important;
 }
+
+// ============= Technical Table Content Styles ============= //
+.tps-technical-table-content {
+  // table {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-collapse: separate;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  background-color: #fff;
+  border-radius: 10px;
+  border-spacing: 0;
+  overflow: hidden;
+  // }
+
+  tr {
+    border-bottom: 1px solid #f1f1f1;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  td {
+    padding: 8px 16px;
+    vertical-align: middle;
+
+    &:first-child {
+      width: 35%;
+      color: #374151;
+      background-color: #f2f2f2;
+      border-right: 1px solid #e4e4e7;
+    }
+
+    &:last-child {
+      background-color: #fff;
+      border-bottom: 1px solid #e4e4e7;
+    }
+
+    &:not(:last-child) {
+      border-bottom: 1px solid #e4e4e7;
+    }
+  }
+}

@@ -8,8 +8,6 @@ const Default = {
   scrollbarClickScroll: true,
 };
 
-
-
 const Sidebar = () => {
   return (
     <aside className="app-sidebar bg-body-secondary shadow tps-animation-transition" data-bs-theme="dark">

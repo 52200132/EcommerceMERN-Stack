@@ -1,10 +1,12 @@
 import { useDispatch, useSelector } from "react-redux";
-import { Button } from "react-bootstrap";
-import { addVariant, deleteVariant } from 'redux-tps/features/product-slice';
-import Variant from "./variant";
-import { Fragment } from "react";
+import { Button, Card } from "react-bootstrap";
+import { IoTrashBinSharp } from "react-icons/io5";
 
-const Variants = (props) => {
+import { addVariant, deleteVariant } from 'redux-tps/features';
+
+import Variant from "./variant";
+
+const Variants = ({ selector }) => {
   // const { selector, actions } = props;
   const dispatch = useDispatch();
 
@@ -14,27 +16,38 @@ const Variants = (props) => {
   const handleAddVariant = () => {
     dispatch(addVariant());
   }
+  const handleDeleteVariant = (variantIndex) => {
+    dispatch(deleteVariant({ variantIndex }));
+  }
 
   console.log('RENDER: variants');
-
   return (
     <>
-      {variantLength > 0 &&
-        [...Array(variantLength).keys()].map((_, variantIndex) =>
-          <Fragment key={`variant-fragment-${variantIndex}`}>
-            <Variant
-              key={`variant-${variantIndex}`}
-              variantIndex={variantIndex}
-              selector={variantsSelector(variantIndex)}
-            />
-            <div className="text-end">
-              <Button variant="danger" onClick={() => dispatch(deleteVariant({ variantIndex }))}>Xoá phiên bản</Button>
-            </div>
-          </Fragment>
-        )
-      }
+      <Card className="mb-4" id="variants">
+        <Card.Header className='h5'>Biến thể sản phẩm</Card.Header>
 
-      <Button variant="secondary" onClick={handleAddVariant}>+ Thêm phiên bản sản phẩm</Button>
+        <Card.Body>
+          {variantLength > 0 &&
+            [...Array(variantLength).keys()].map((_, variantIndex) =>
+              <div key={`variant-fragment-${variantIndex}`} className='position-relative'>
+                <Variant
+                  key={`variant-${variantIndex}`}
+                  variantIndex={variantIndex}
+                  selector={variantsSelector(variantIndex)}
+                />
+                <Button variant="outline-danger" className="btn-del-variant"
+                  onClick={() => handleDeleteVariant(variantIndex)}
+                  tile='Xóa biến thể'
+                >
+                  <IoTrashBinSharp />
+                </Button>
+              </div>
+            )
+          }
+          <Button variant="outline-secondary" onClick={handleAddVariant}>+ Thêm biến thể</Button>
+        </Card.Body>
+
+      </Card>
     </>
   );
 };

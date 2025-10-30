@@ -30,7 +30,7 @@ export const productApi = createApi({
       query: (id) => ({ url: `products/${id}`, method: 'GET' }),
       providesTags: (result, error, id) => [{ type: 'Product', id }],
     }),
-    addProduct: build.mutation({
+    createProduct: build.mutation({
       query: (newProduct) => ({
         url: 'products',
         method: 'POST',
@@ -39,7 +39,6 @@ export const productApi = createApi({
       invalidatesTags: ['Product'],
     }),
     test: build.mutation({
-
       query: () => ({ url: '/products/test', method: 'GET' }),
     }),
   }),
@@ -48,6 +47,6 @@ export const productApi = createApi({
 export const {
   useGetProductsQuery,
   useGetProductByIdQuery,
-  useAddProductMutation,
+  useCreateProductMutation,
 } = productApi
 

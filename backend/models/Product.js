@@ -46,7 +46,7 @@ const variantSchema = new Schema({
 
 //  Main Schema: productSchema 
 const productSchema = new Schema({
-  product_name: { type: String, required: true },
+  product_name: { type: String, required: [true, 'Tên sản phẩm không được để trống'] },
   brand_id: { type: Schema.Types.ObjectId, ref: "Brand", required: true },
   hashtag: { type: String },
   quantity_sold: { type: Number, min: 0, default: 0 },

@@ -1,5 +1,6 @@
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Button, Dropdown } from 'react-bootstrap';
+import { isArray, isObject } from 'lodash';
 import {
   useReactTable,
   getCoreRowModel,
@@ -18,6 +19,8 @@ import {
   IoAlertCircle,
   IoImage,
 } from 'react-icons/io5';
+
+import slugify from 'slugify';
 
 import { formatDateTime, formatCurrency } from 'utils/format';
 import TableExpandVariants from './table-expand-variants';
@@ -39,7 +42,7 @@ const statusMap = {
   published: { label: 'Đã xuất bản', color: 'success' },
   archived: { label: 'Lưu trữ', color: 'muted' }
 };
-
+const columHelper = createColumnHelper();
 const columns = [
   columnHelper.display({
     id: 'select',
@@ -64,29 +67,32 @@ const columns = [
     ),
   }),
   // ảnh thumbnail
-  {
+  columHelper.display({
     id: 'thumbnail', header: 'Ảnh',
     meta: { thStyle: { width: '80px' } },
-    accessorFn: (row) => ({ url: '', alt: '' }),
+    accessorFn: (row) => {
+      const Images = row.Images
+      if (isArray(Images)) {
+        const primaryImg = Images.find((img) => img?.is_primary)
+        if (primaryImg) {
+          return { url: primaryImg.url, alt: slugify(row?.product_name || 'tps-default') }
+        }
+      } else if (isObject(Images)) { // object chứa { url, alt }
+        return Images
+      }
+      return { url: '', alt: '' }
+    },
     cell: ({ getValue }) => {
       const { url, alt } = getValue();
       return (
-        url ? (
-          <img
-            src={url}
-            alt={alt}
-            className="img-thumbnail"
-            style={{ height: '50px', objectFit: 'cover' }}
-          />
-        ) : (
-          <div className="bg-light text-muted d-flex align-items-center justify-content-center border border-1"
-            style={{ height: '50px', borderRadius: '4px' }}>
-            <IoImage size={24} />
-          </div>
-        )
+        <img
+          src={url}
+          alt={alt}
+          className="img-thumbnail tps-thumbnail-customize"
+        />
       )
     }
-  },
+  }),
   // Tên sản phẩm product_name và nút mở rộng biến thể
   columnHelper.accessor('product_name', {
     header: 'Tên sản phẩm',
@@ -199,7 +205,7 @@ const columns = [
   }
 ]
 
-const TableProducts = ({products, isLoading}) => {
+const TableProducts = ({ products, isLoading }) => {
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [expanded, setExpanded] = useState([]);
 

@@ -1,43 +1,22 @@
-import { useEffect, useRef } from 'react';
 import { Editor } from '@tinymce/tinymce-react';
-import { useState } from 'react';
 
 import { filePickerCallback } from './tiny-file-picker';
-import Loading from '../loading';
 
 const API_KEY = 'v4fkl7lvajd9wuh5hdbzxikukislbijz1fmcj6mvt9ki6yxu'; // để trống nghĩa là dùng bản miễn phí
 
-export default function TinyMCE({ initialValue = '', editorRef }) {
-  const tinyRef = useRef(null);
-
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    setLoading(false);
-  }, []);
-
-  const handleLog = () => {
-    if (tinyRef.current) {
-      console.log(tinyRef.current.getContent());
-    }
-  };
+export default function TinyMCE({ initialValue = '', editorRef = null }) {
 
   console.log('RENDER: TinyMCE');
-  
-  if (loading) return (
-    <Loading />
-  )
-
   return (
-    <div>
+    <>
       <Editor
         apiKey={API_KEY}
         initialValue={initialValue}
-        onInit={(evt, editor) => tinyRef.current = editor}
+        onInit={(evt, editor) => editorRef.current = editor}
         init={{
-          height: 500,
+          height: '100vh',
           menubar: true,
-          toolbar_mode: 'wrap',
+          // toolbar_mode: 'wrap',
           plugins: [
             'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
             'searchreplace', 'visualblocks', 'code', 'fullscreen',
@@ -53,7 +32,6 @@ export default function TinyMCE({ initialValue = '', editorRef }) {
           // appendTo: document.body,
         }}
       />
-      <button onClick={handleLog}>Log content</button>
-    </div>
+    </>
   );
 }

@@ -1,5 +1,4 @@
 import { createSlice, current } from '@reduxjs/toolkit'
-import { get } from 'lodash';
 
 const initialState = {
   show: false,

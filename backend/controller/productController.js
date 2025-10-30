@@ -1,5 +1,5 @@
-import e from "express";
 import Product from "../models/Product.js";
+import Brand from "../models/Brand.js";
 
 // Cập nhật số lượng sau khi đặt hàng thành công đẩy vào waiting_for_delivery
 // Status order: Pending -> Processing
@@ -117,20 +117,30 @@ const createProduct = async (req, res) => {
       brand_id,
       product_name,
       hashtag,
+      price_min,
+      price_max,
       short_description,
-      detailed_description,
-      Warehouse,
+      detail_description,
+      is_active,
       Images,
       Variants
     } = req.body;
 
+    const brand_name = brand_id.brand_name;
+    let brand = await Brand.findOne({ brand_name });
+    if (!brand) {
+      brand = await Brand.create({ brand_name });
+    }
+
     const product = new Product({
-      brand_id,
+      brand_id: brand._id,
       product_name,
       hashtag,
       short_description,
-      detailed_description,
-      Warehouse,
+      detail_description,
+      price_min,
+      price_max,
+      is_active,
       Images,
       Variants,
       createdAt: Date.now()

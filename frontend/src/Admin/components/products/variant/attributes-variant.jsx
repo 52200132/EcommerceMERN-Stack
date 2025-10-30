@@ -1,133 +1,191 @@
-import { Table, Button, Row, Col } from "react-bootstrap";
-import { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { Form } from "react-bootstrap";
+import { Table, Button, Row, Col, Form } from "react-bootstrap";
+import { useEffect, useMemo, Fragment } from "react";
+import { useDispatch } from "react-redux";
 import { FaTrashArrowUp } from "react-icons/fa6";
-import parse from 'html-react-parser';
+import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useFieldArray, useForm } from "react-hook-form";
 
-import Loading from "Admin/components/loading";
-import { addAttribute, changeAttributeValue, deleteAttribute } from "redux-tps/features/product-slice";
-import { useTpsSelector } from "custom-hooks/use-tps-selector";
+import z from "zod";
 
-const AttributesVariant = (props) => {
-  const { selector, variantIndex } = props;
+import { productInits, setAttributes } from "redux-tps/features/product-slice";
+import { store } from "redux-tps/store";
+import { useDebounceSubscribeValues } from "custom-hooks";
 
+import AttributesReview from "./attributes-review";
+
+const attributesSchema = z.object({
+  attributes: z.array(
+    z.object({
+      attribute: z.string().min(1, 'Vui lòng nhập tên thuộc tính'),
+      value: z.string().min(1, 'Vui lòng nhập giá trị thuộc tính'),
+      type: z.string().optional(),
+      group_attribute: z.string().optional(),
+      is_show_in_table: z.boolean().optional(),
+    })
+  )
+})
+const columnHelper = createColumnHelper();
+
+let renderCount = 0
+
+const AttributesVariant = ({ selector, variantIndex }) => {
   const dispatch = useDispatch();
-
-  const attributes = useSelector(selector) || [];
-  const { html_text_attributes = '' } = useTpsSelector((state) => state.product.Variants[variantIndex],
-    { includeProps: ['html_text_attributes'] });
-
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    setLoading(false);
-  }, []);
+  const attributes = selector(store.getState())
+  const { register, subscribe, control, formState: { errors } } = useForm({
+    resolver: zodResolver(attributesSchema),
+    defaultValues: { attributes: attributes },
+    mode: 'all',
+  });
+  const { fields, append, remove } = useFieldArray({ control, name: 'attributes' });
+  const columns = useMemo(() => ([
+    columnHelper.accessor('attribute', {
+      header: 'Tên thuộc tính',
+      cell: ({ row }) => (
+        <Form.Control
+          {...register(`attributes.${row.index}.attribute`)}
+          isInvalid={!!errors?.attributes?.[row.index]?.attribute}
+        />
+      ),
+    }),
+    columnHelper.accessor('value', {
+      header: 'Giá trị',
+      cell: ({ row }) => (
+        <Form.Control
+          {...register(`attributes.${row.index}.value`)}
+          isInvalid={!!errors?.attributes?.[row.index]?.value}
+        />
+      ),
+    }),
+    columnHelper.accessor('type', {
+      header: 'Loại',
+      cell: ({ row }) => (
+        <Form.Select {...register(`attributes.${row.index}.type`)}>
+          <option value="technology">technology</option>
+          <option value="appearance">appearance</option>
+        </Form.Select>
+      ),
+    }),
+    columnHelper.accessor('group_attribute', {
+      header: 'Nhóm thuộc tính',
+      cell: ({ row }) => (
+        <Form.Control {...register(`attributes.${row.index}.group_attribute`)} />
+      ),
+    }),
+    columnHelper.accessor('is_show_in_table', {
+      header: 'Hiển thị',
+      cell: ({ row }) => (
+        <Form.Check
+          type="checkbox"
+          {...register(`attributes.${row.index}.is_show_in_table`)}
+        />
+      ),
+    }),
+    columnHelper.display({
+      id: 'actions',
+      header: '',
+      cell: ({ row }) => (
+        <Button
+          size="sm"
+          variant="outline-danger"
+        onClick={() => handleDeleteAttribute(row.index)}
+        >
+          <FaTrashArrowUp />
+        </Button>
+      ),
+    }),
+  ]
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ), [register, errors]);
+  const table = useReactTable({
+    data: fields || [],
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getExpandedRowModel: getCoreRowModel(),
+    getRowCanExpand: (row) => (!!errors?.attributes?.[row.index]),
+  });
 
   // handle functions
   const handleAddAttribute = () => {
-    dispatch(addAttribute({ variantIndex }))
+    append(productInits.attribute);
   }
   const handleDeleteAttribute = (attributeIndex) => {
-    dispatch(deleteAttribute({ variantIndex, attributeIndex }))
-  }
-  const handleChangeValueAttribute = (e, attributeIndex, key) => {
-    const checkboxType = e.target.type === 'checkbox';
-    const value = checkboxType ? e.target.checked : e.target.value;
-    dispatch(changeAttributeValue({ value, variantIndex, attributeIndex, key }))
+    remove(attributeIndex);
   }
 
-  // console.log('HTML-RENDER: ', html_text_attributes);
+  useDebounceSubscribeValues((values) => {
+    dispatch(setAttributes({ 
+      variantIndex, 
+      attributes: values.attributes 
+    }));
+    return true; // đã lưu
+  }, subscribe, 1000);
 
-  console.log('RENDER: attributes-variant');
-  if (loading) return <Loading />;
+  useEffect(() => { return () => renderCount = 0 }, [])
+  renderCount++
+  console.log('RENDER: attributes-variant-' + renderCount);
+  // if (loading) return <Loading />;
   return (
-    <>
+    <Form>
       <Row className="mb-3">
         <Col xl={6} lg={12}>
           <Button size="sm" variant="outline-secondary" onClick={handleAddAttribute}>+ Thêm thuộc tính</Button>
-          <Table size="sm" className="mb-3">
+          <Table size="sm" hover className="tps-attributes-table">
             <thead>
-              <tr>
-                <th>Tên thuộc tính</th>
-                <th>Giá trị</th>
-                <th>Loại</th>
-                <th>Nhóm thuộc tính</th>
-                <th>Hiển thị</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {attributes.map((attr, attrIndex) => (
-                <tr key={`attr-${variantIndex}-${attrIndex}`}>
-                  <td>
-                    <Form.Control
-                      size="sm"
-                      type="text"
-                      value={attr.attribute}
-                      onChange={(e) => handleChangeValueAttribute(e, attrIndex, 'attribute')}
-                    />
-                  </td>
-
-                  <td>
-                    <Form.Control
-                      size="sm"
-                      type="text"
-                      value={attr.value}
-                      onChange={(e) => handleChangeValueAttribute(e, attrIndex, 'value')}
-                    />
-                  </td>
-
-                  <td>
-                    <Form.Select
-                      size="sm"
-                      value={attr.type}
-                      onChange={(e) => handleChangeValueAttribute(e, attrIndex, 'type')}
+              {table.getHeaderGroups().map((hg) => (
+                <tr key={hg.id}>
+                  {hg.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      style={header.column.columnDef.meta?.thStyle}
+                      className={header.column.columnDef.meta?.thClassName}
                     >
-                      <option value="appearance">Appearance</option>
-                      <option value="technology">Technology</option>
-                    </Form.Select>
-                  </td>
-
-                  <td>
-                    <Form.Control
-                      size="sm"
-                      type="text"
-                      value={attr.group_attribute}
-                      onChange={(e) => handleChangeValueAttribute(e, attrIndex, 'group_attribute')}
-                    />
-                  </td>
-
-                  <td>
-                    <Form.Check
-                      size="sm"
-                      type="checkbox"
-                      name={`show-in-table-${attrIndex}`}
-                      checked={attr.is_show_in_table}
-                      onChange={(e) => handleChangeValueAttribute(e, attrIndex, 'is_show_in_table')}
-                    />
-                  </td>
-
-                  <td>
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      onClick={() => handleDeleteAttribute(attrIndex)}
-                    >
-                      <FaTrashArrowUp />
-                    </Button>
-                  </td>
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                    </th>
+                  ))}
                 </tr>
               ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map((row) => {
+                const canExpand = row.getCanExpand()
+                let trEx
+                if (errors?.attributes && errors?.attributes?.[row.index]) {
+                  const ers = errors?.attributes?.[row.index]
+                  trEx = Object.keys(ers).map((key, i) => (
+                    <Form.Text key={`err-${row.index}-${i}`} className="text-danger d-inline-block mx-1">
+                      <div>{ers[key]?.message}</div>
+                    </Form.Text>
+                  ))
+                }
+                return (
+                  <Fragment key={row.id}>
+                    <tr>
+                      {row.getVisibleCells().map((cell) => (
+                        <td key={cell.id}>
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
+                    </tr>
+                    {canExpand && trEx && (
+                      <tr>
+                        <td style={{ fontSize: '13px' }} colSpan={table.getVisibleLeafColumns().length} className="bg-light">
+                          {trEx}
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                )
+              })}
             </tbody>
           </Table>
-          <Button size="sm" variant="outline-secondary" className="ms-2" onClick={() => console.log(attributes)}>Lưu thuộc tính</Button>
         </Col>
         <Col xl={6} lg={12}>
-          {parse(html_text_attributes)}
+          <h6>Bảng thông số kỹ thuật được hiển thị</h6>
+          <AttributesReview selector={(state) => state.product.Variants[variantIndex]} />
         </Col>
       </Row>
-    </>
+    </Form>
   )
 }
 
