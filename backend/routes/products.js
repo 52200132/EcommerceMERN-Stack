@@ -97,7 +97,8 @@ router.get('', async (req, res) => {
 // @desc    Create a product
 // @route   POST /api/products
 // @access  Private/Admin
-router.post('/', protect, admin, createProduct);
+// router.post('/', protect, admin, createProduct);
+router.post('/', protect, createProduct);
 
 // @desc    Fetch single product
 // @route   GET /api/products/:id

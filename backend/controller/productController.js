@@ -118,7 +118,6 @@ const createProduct = async (req, res) => {
       hashtag,
       short_description,
       detail_description,
-      is_active,
       Warehouses,
       Images,
       Variants
@@ -134,10 +133,7 @@ const createProduct = async (req, res) => {
       detail_description,
       Warehouses,
       Images,
-      Variants,
-      price_min: 0,
-      price_max: 0,
-      is_active,
+      Variants
     });
 
     const createdProduct = await product.save();
