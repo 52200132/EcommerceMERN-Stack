@@ -25,7 +25,7 @@ import slugify from 'slugify';
 import { formatDateTime, formatCurrency } from 'utils/format';
 import TableExpandVariants from './table-expand-variants';
 import { useDispatch } from 'react-redux';
-import { useLazyGetProductByIdQuery } from 'services/product-api';
+import { useDeleteProductMutation, useLazyGetProductByIdQuery, useUpdateProductMutation } from 'services/product-api';
 import { useNavigate } from 'react-router-dom';
 import { updateProduct } from 'redux-tps/features';
 import { confirmation } from 'utils/confirmation';
@@ -53,6 +53,7 @@ const columHelper = createColumnHelper();
 const TableProducts = ({ products, isLoading }) => {
   const dispatch = useDispatch();
   const [triggerGetProductById] = useLazyGetProductByIdQuery();
+  const [deleteProduct] = useDeleteProductMutation();
   const navigate = useNavigate()
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [expanded, setExpanded] = useState([]);
@@ -247,11 +248,8 @@ const TableProducts = ({ products, isLoading }) => {
       cancelText: 'Không',
       variant: 'danger',
     })
-
-    console.log('User confirmed:', confirmed);
-
     if (confirmed) {
-      console.log('Delete product', productId);
+      deleteProduct(productId);
     }
   }
 

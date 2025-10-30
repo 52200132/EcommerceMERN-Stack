@@ -150,7 +150,8 @@ const updateProduct = async (req, res) => {
       product_name,
       hashtag,
       short_description,
-      detailed_description,
+      detail_description,
+      Images
     } = req.body;
 
     const product = await Product.findById(req.params.id);
@@ -160,7 +161,7 @@ const updateProduct = async (req, res) => {
       product.product_name = product_name || product.product_name;
       product.hashtag = hashtag || product.hashtag;
       product.short_description = short_description || product.short_description;
-      product.detailed_description = detailed_description || product.detailed_description;
+      product.detail_description = detail_description || product.detail_description;
       product.Images = Images || product.Images;
       product.updatedAt = Date.now();
 

@@ -4,7 +4,7 @@ import { Form, Button, Container, Card } from 'react-bootstrap';
 import { setImages } from 'redux-tps/features';
 import { BasicInfo, MultiImageUpload, Variants } from 'Admin/components/products';
 import { store } from 'redux-tps/store';
-import { useCreateProductMutation } from 'services/product-api';
+import { useCreateProductMutation, useUpdateProductMutation } from 'services/product-api';
 
 import BackButton from 'Admin/components/back-btn';
 
@@ -35,10 +35,15 @@ const CRUProduct = ({ action = 'create' }) => {
   const option = optionActions[action];
   const selector = (state) => state.product;
   const [createProduct, { data }] = useCreateProductMutation();
+  const [updateProduct] = useUpdateProductMutation();
 
   const handleSave = () => {
     const product = store.getState().product;
-    createProduct(product)
+    if (action === 'create') {
+      createProduct(product);
+    } else if (action === 'update') {
+      updateProduct(product);
+    }
   }
 
   console.log('RENDER: add-product');
