@@ -99,7 +99,7 @@ router.get('', async (req, res) => {
 // @route   POST /api/products
 // @access  Private/Admin
 // router.post('/', protect, admin, createProduct);
-router.post('/', protect, createProduct);
+router.post('/', createProduct);
 
 // @desc    Fetch single product
 // @route   GET /api/products/:id
@@ -109,7 +109,7 @@ router.get('/:id', getProductById); // đã check ok
 // @desc    Delete a product
 // @route   DELETE /api/products/:id
 // @access  Private/Admin
-router.delete('/:id', protect, admin, deleteProductById);
+router.delete('/:id', deleteProductById);
 
 // @desc    Delete a variant by SKU
 // @route   DELETE /api/products/:id/variant?sku=<sku>
@@ -119,7 +119,7 @@ router.delete('/:id/variant', protect, admin, deleteVariantBySku);
 // @desc    Update a product
 // @route   PUT /api/products/:id
 // @access  Private/Admin
-router.put('/:id', protect, admin, updateProduct);
+router.put('/:id', updateProduct);
 
 // @desc    Create A variant by product ID
 // @route   POST /api/products/:id/variant
@@ -129,7 +129,7 @@ router.post('/:id/variant', protect, admin, createVariantByProductId);
 // @desc    Update A variant
 // @route   PUT /api/products/:id/variant?sku=<sku>
 // @access  Private/Admin
-router.put('/:id/variant', protect, admin, updateVariantBySku);
+router.put('/:id/variant', updateVariantBySku);
 
 // @desc    Get all warehouses by product
 // @route   GET /api/products/:id/warehouses
