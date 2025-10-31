@@ -52,6 +52,7 @@ router.get('/categories', async (req, res) => {
 // @route   GET /api/products
 // @access  Public
 router.get('', async (req, res) => {
+  console.log('GET /api/products ', req.query);
   try {
     const pageSize = Number(req.query.pageSize) || 12;
     const page = Number(req.query.page) || 1;
@@ -99,17 +100,26 @@ router.get('', async (req, res) => {
 // @route   POST /api/products
 // @access  Private/Admin
 // router.post('/', protect, admin, createProduct);
-router.post('/', createProduct);
+router.post('/', async (req, res, next) => {
+  console.log(`POST /api/products`);
+  next();
+}, createProduct);
 
 // @desc    Fetch single product
 // @route   GET /api/products/:id
 // @access  Public
-router.get('/:id', getProductById); // đã check ok
+router.get('/:id', async (req, res, next) => {
+  console.log(`GET /api/products/${req.params.id}`);
+  next();
+}, getProductById); // đã check ok
 
 // @desc    Delete a product
 // @route   DELETE /api/products/:id
 // @access  Private/Admin
-router.delete('/:id', deleteProductById);
+router.delete('/:id', async (req, res, next) => {
+  console.log(`DELETE /api/products/${req.params.id}`);
+  next();
+}, deleteProductById);
 
 // @desc    Delete a variant by SKU
 // @route   DELETE /api/products/:id/variant?sku=<sku>
@@ -119,7 +129,10 @@ router.delete('/:id/variant', protect, admin, deleteVariantBySku);
 // @desc    Update a product
 // @route   PUT /api/products/:id
 // @access  Private/Admin
-router.put('/:id', updateProduct);
+router.put('/:id', async (req, res, next) => {
+  console.log(`PUT /api/products/${req.params.id}`);
+  next()
+} , updateProduct);
 
 // @desc    Create A variant by product ID
 // @route   POST /api/products/:id/variant

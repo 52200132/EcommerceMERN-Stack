@@ -235,7 +235,8 @@ const TableProducts = ({ products, isLoading }) => {
       .unwrap()
       .then(async (data) => {
         const defaultBrandOption = await db.brands.get(data.dt.brand_id);
-        dispatch(updateProduct({...data.dt, defaultBrandOption: { value: defaultBrandOption._id, label: defaultBrandOption.brand_name } }));
+        console.log('Fetched product data:', data.dt, 'with brand:', defaultBrandOption);
+        dispatch(updateProduct({...data.dt, defaultBrandOption: { value: defaultBrandOption?._id || '', label: defaultBrandOption?.brand_name || '' } }));
         navigate(`/admin/manage-products/edit-product/${productId}`);
       })
       .catch((error) => {
