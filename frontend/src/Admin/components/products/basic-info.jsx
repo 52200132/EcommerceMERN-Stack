@@ -109,7 +109,7 @@ const BasicInfo = ({ selector, action = 'create' }) => {
                     classNamePrefix='tps'
                     inputRef={ref}
                     options={brands.array.map(brand => ({ value: brand._id, label: brand.brand_name }))}
-                    value={brands.defaultValue ? { value: brands.defaultValue._id, label: brands.defaultValue.brand_name } : null}
+                    defaultValue={brands.defaultValue ? { value: brands.defaultValue._id, label: brands.defaultValue.brand_name } : null}
                     styles={{
                       control: (base) => ({
                         ...base,

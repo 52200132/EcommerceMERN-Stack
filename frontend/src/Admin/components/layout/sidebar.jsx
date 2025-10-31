@@ -330,7 +330,7 @@ const Sidebar = () => {
                 </li>
               </ul>
             </li>
-            <li className="nav-header">DOCUMENTATIONS</li>
+            {/* <li className="nav-header">DOCUMENTATIONS</li>
             <li className="nav-item">
               <Link to="../docs/introduction.html" className="nav-link">
                 <i className="nav-icon bi bi-download"></i>
@@ -496,7 +496,7 @@ const Sidebar = () => {
                 <i className="nav-icon bi bi-circle text-info"></i>
                 <p>Informational</p>
               </Link>
-            </li>
+            </li> */}
           </ul>
         </nav>
       </OverlayScrollbarsComponent>

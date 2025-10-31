@@ -23,7 +23,7 @@ const ManageProductsLayout = () => {
   // State management
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(3);
+  const [pageSize, setPageSize] = useState(5);
   const [showFilters, setShowFilters] = useState(false);
   // Filters state
   const [filters, setFilters] = useState({

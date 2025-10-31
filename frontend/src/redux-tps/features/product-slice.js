@@ -25,8 +25,8 @@ export const productInits = {
   },
 };
 
-const initialState = {
-  product_name: 'Test',
+export const initialState = {
+  product_name: '',
   brand_id: '',
   hashtag: '',
   quantity_sold: 0,

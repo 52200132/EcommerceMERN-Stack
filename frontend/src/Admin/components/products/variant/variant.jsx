@@ -103,6 +103,7 @@ const Variant = ({ selector, variantIndex, action = 'create' }) => {
                 id={`price-${variantIndex}`}
                 {...register('price')}
                 isInvalid={!!errors.price}
+                // defaultValue={formatCurrency(variant.price)}
                 onFocus={(e) => { e.target.value = getValues('price') }}
                 onBlur={(e) => {
                   const val = e.target.value;

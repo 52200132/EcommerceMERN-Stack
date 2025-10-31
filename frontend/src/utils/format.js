@@ -22,5 +22,6 @@ export const formatCurrency = (amount) => {
 // Deformat currency string to number
 export const deformatCurrency = (currencyString) => {
   if (!currencyString) return 0;
+  if (typeof currencyString === 'number') return currencyString;
   return Number(currencyString.replace(/[^0-9,-]+/g,"").replace(',', ''));
 };

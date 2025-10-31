@@ -1,7 +1,7 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Form, Button, Container, Card } from 'react-bootstrap';
 
-import { setImages } from 'redux-tps/features';
+import { initialState, setImages, updateProduct } from 'redux-tps/features';
 import { BasicInfo, MultiImageUpload, Variants } from 'Admin/components/products';
 import { store } from 'redux-tps/store';
 import { useCreateProductMutation, useUpdateProductMutation } from 'services/product-api';
@@ -32,17 +32,27 @@ const optionActions = {
 
 const CRUProduct = ({ action = 'create' }) => {
   const backBtnRef = useRef(null);
+  const dispatch = store.dispatch;
   const option = optionActions[action];
   const selector = (state) => state.product;
-  const [createProduct, { data }] = useCreateProductMutation();
-  const [updateProduct] = useUpdateProductMutation();
+  const [createProduct] = useCreateProductMutation();
+  const [updateProductM] = useUpdateProductMutation();
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const product = store.getState().product;
     if (action === 'create') {
-      createProduct(product);
+      const result = await createProduct(product).unwrap();
+      console.log('createData', result);
+
+      if (result.ec === 0) {
+        dispatch(updateProduct(initialState));
+        backBtnRef.current && backBtnRef.current.click();
+      }
     } else if (action === 'update') {
-      updateProduct(product);
+      const result = await updateProductM(product).unwrap();
+      if (result.ec === 0) {
+        backBtnRef.current && backBtnRef.current.click();
+      }
     }
   }
 
