@@ -4,7 +4,7 @@ import { max, min } from 'lodash';
 
 export const productInits = {
   attribute: {
-    attribute: "hello",
+    attribute: "",
     value: "",
     type: "",
     is_show_in_table: false,

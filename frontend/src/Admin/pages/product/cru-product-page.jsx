@@ -51,6 +51,7 @@ const CRUProduct = ({ action = 'create' }) => {
     } else if (action === 'update') {
       const result = await updateProductM(product).unwrap();
       if (result.ec === 0) {
+        dispatch(updateProduct(initialState));
         backBtnRef.current && backBtnRef.current.click();
       }
     }
