@@ -1,4 +1,3 @@
-import e from "express";
 import Product from "../models/Product.js";
 
 // Cập nhật số lượng sau khi đặt hàng thành công đẩy vào waiting_for_delivery
@@ -124,6 +123,8 @@ const createProduct = async (req, res) => {
       Variants
     } = req.body;
 
+    console.log(brand_id)
+    
     const product = new Product({
       brand_id,
       product_name,
@@ -149,7 +150,9 @@ const updateProduct = async (req, res) => {
       product_name,
       hashtag,
       short_description,
-      detailed_description,
+      detail_description,
+      Images,
+      Variants
     } = req.body;
 
     const product = await Product.findById(req.params.id);
@@ -159,9 +162,10 @@ const updateProduct = async (req, res) => {
       product.product_name = product_name || product.product_name;
       product.hashtag = hashtag || product.hashtag;
       product.short_description = short_description || product.short_description;
-      product.detailed_description = detailed_description || product.detailed_description;
+      product.detail_description = detail_description || product.detail_description;
       product.Images = Images || product.Images;
-      product.updatedAt = Date.now();
+      product.Variants = Variants || product.Variants;
+      product.updated_at = Date.now();
 
       const updatedProduct = await product.save();
       res.json({ ec: 0, em: "Product updated successfully", dt: updatedProduct });

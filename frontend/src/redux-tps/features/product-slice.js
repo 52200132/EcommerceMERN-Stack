@@ -1,11 +1,31 @@
 import { createSlice } from '@reduxjs/toolkit'
+import { max, min } from 'lodash';
 // import { current } from '@reduxjs/toolkit';
 
-const inits = {
-  attribute: { attribute: '', value: '', type: '', is_show_in_table: false, group_attribute: '' },
-}
+export const productInits = {
+  attribute: {
+    attribute: "hello",
+    value: "",
+    type: "",
+    is_show_in_table: false,
+    group_attribute: "",
+  },
+  get variant() {
+    return {
+      sku: "",
+      price: "",
+      stock: 0,
+      // Images: [{ url: "tps-default.jpg", is_primary: true }],
+      Images: [],
+      // Attributes: [this.attribute], // lúc này this trỏ đúng vào inits
+      Attributes: [],
+      html_text_attributes: "",
+      is_active: true,
+    };
+  },
+};
 
-const initialState = {
+export const initialState = {
   product_name: '',
   brand_id: '',
   hashtag: '',
@@ -14,48 +34,38 @@ const initialState = {
   price_max: 0,
   short_description: '',
   detail_description: '',
-  Images: [{ url: '', is_primary: false }],
+  // Images: [{ url: 'tps-default.jpg', is_primary: true }],
+  Images: [],
+  Warehouses: [],
   Variants: [{
     sku: '',
-    price: 0,
+    price: '',
     stock: 0,
-    Images: [{ url: '', is_primary: false }],
+    // Images: [{ url: 'tps-default.jpg', is_primary: true }],
+    Images: [],
     html_text_attributes: '',
-    Attributes: [inits.attribute] // technology or appearance
+    // Attributes: [productInits.attribute, productInits.attribute], // technology or appearance
+    Attributes: [],
   }],
-  is_active: false,
+  is_active: true,
   created_at: '',
   updated_at: '',
 }
 
 // REDUCERS
 const attributeReducers = {
-  addAttribute: (state, action) => {
-    const { variantIndex } = action.payload
-    const attributeArr = state.Variants[variantIndex]?.Attributes
-    if (attributeArr) {
-      attributeArr.push(inits.attribute)
+  setAttributes: (state, action) => {
+    const { variantIndex, attributes } = action.payload;
+    if (state.Variants[variantIndex]) {
+      state.Variants[variantIndex].Attributes = attributes;
+      state.Variants[variantIndex].html_text_attributes = generateAttributesHtml(attributes);
     }
   },
-  deleteAttribute: (state, action) => {
-    const { variantIndex, attributeIndex } = action.payload
-    const variant = state.Variants[variantIndex]
-    const attrArr = variant.Attributes
-    const attrArrValue = attrArr[attributeIndex];
-    if (attrArrValue) {
-      attrArr.splice(attributeIndex, 1)
-      variant.html_text_attributes = generateAttributesHtml(attrArr);
-    }
-  },
-  changeAttributeValue: (state, action) => {
-    const { value, attributeIndex, key, variantIndex } = action.payload
-    const variant = state.Variants[variantIndex]
-    const attrArr = variant.Attributes
-    const attrArrValue = attrArr[attributeIndex];
-
-    if (attrArrValue) {
-      attrArrValue[key] = value;
-      variant.html_text_attributes = generateAttributesHtml(attrArr);
+  deleteAttributes: (state, action) => {
+    const { variantIndex } = action.payload;
+    if (state.Variants[variantIndex]) {
+      state.Variants[variantIndex].Attributes = [];
+      state.Variants[variantIndex].html_text_attributes = '';
     }
   }
 }
@@ -68,16 +78,20 @@ const variantReducers = {
     }
   },
   addVariant: (state) => {
-    state.Variants.push({
-      sku: '',
-      price: 0,
-      stock: 0,
-      Images: [{ url: '', is_primary: false }],
-      Attributes: [inits.attribute],
-      html_text_attributes: '',
-    });
-    // console.log(current(state.Variants));
+    state.Variants.push(productInits.variant);
   },
+  deleteVariant: (state, action) => {
+    const { variantIndex } = action.payload
+    if (variantIndex <= state.Variants.length - 1) {
+      state.Variants.splice(variantIndex, 1)
+    }
+  },
+  updateVariantDraft: (state, action) => {
+    const { variantIndex, object } = action.payload
+    if (state.Variants[variantIndex]) {
+      Object.assign(state.Variants[variantIndex], object)
+    }
+  }
 }
 
 const productSlice = createSlice({
@@ -89,15 +103,27 @@ const productSlice = createSlice({
       // console.log('>>> check payload: ', action.payload)
       state.Images = images;
     },
-
-    deleteVariant: (state, action) => {
-      const { variantIndex } = action.payload
-      if (variantIndex <= state.Variants.length - 1) {
-        state.Variants.splice(variantIndex, 1)
+    setValues: (state, action) => {
+      const object = action.payload
+      if (object) {
+        Object.assign(state, object)
       }
+    },
+    updateProduct: (state, action) => {
+      Object.assign(state, action.payload)
     },
     ...variantReducers,
     ...attributeReducers,
+  },
+  extraReducers: (builder) => {
+    builder
+      .addMatcher(
+        (action) => action.type.startsWith('product/') &&
+          action.type.includes('Variant') && !action.type.includes('Images'),
+        (state) => {
+          triggerSetPriceMaxPriceMin(state);
+        }
+      );
   },
 })
 
@@ -112,9 +138,9 @@ const generateAttributesHtml = (attrArr = [{}]) => {
           </tr>
           `
   }).join('')
-  
+  if (!trData) return ''
   return `
-    <table class="tps-table-technical-content">
+    <table class="tps-technical-table-content">
     <tbody>
       ${trData}
     </tbody>
@@ -122,9 +148,18 @@ const generateAttributesHtml = (attrArr = [{}]) => {
   `
 }
 
+const triggerSetPriceMaxPriceMin = (state) => {
+  const prices = state.Variants.map(variant => +variant.price);
+  state.price_min = min(prices) || 0;
+  state.price_max = max(prices) || 0;
+}
+
 export const {
-  setImages, setImagesVariant, addVariant, deleteVariant,
+  // product actions
+  setImages, setValues, updateProduct,
+  // variant actions
+  setImagesVariant, addVariant, deleteVariant, updateVariantDraft,
   // attribute actions
-  addAttribute, deleteAttribute, changeAttributeValue,
+  setAttributes, deleteAttributes,
 } = productSlice.actions
 export default productSlice.reducer

@@ -20,3 +20,57 @@
     cursor: text;
   }
 }
+
+// ============== Loading ==============
+.tps-loader {
+  width: 120px;
+  height: 22px;
+  border-radius: 40px;
+  color: #a079dc;
+  border: 2px solid;
+  position: relative;
+  display: block;
+}
+.tps-loader::before {
+  content: "";
+  position: absolute;
+  margin: 2px;
+  width: 25%;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: inherit;
+  background: currentColor;
+  animation: l3 1s infinite linear;
+}
+@keyframes l3 {
+    50% {left:100%;transform: translateX(calc(-100% - 4px))}
+}
+
+// ============== Modal Dialog ==============
+#tps-overlay {
+  position: fixed;
+  display: block;
+  width: 100%;
+  height: 100%; 
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.5);
+  z-index: 2004;
+
+  .overlay-content {
+    color: #fff;
+    position: absolute;
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    justify-content: center;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    width: 80%;
+    max-width: 600px;
+  }
+}

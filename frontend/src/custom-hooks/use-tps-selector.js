@@ -21,6 +21,7 @@ export const useTpsSelector = (selectorBase, options = {}) => {
 
   const selected = useSelector(
     (state) => {
+      if (typeof selectorBase !== 'function') return {}
       const base = selectorBase(state);
       const propKeys = Object.keys(base || {});
 

@@ -1,6 +1,8 @@
 import { useReactTable, createColumnHelper, getCoreRowModel, flexRender } from "@tanstack/react-table";
+import { isArray, isObject } from "lodash";
 import { Button } from "react-bootstrap";
-import { IoPencil, IoTrash, IoAdd, IoImage, IoAlertCircle } from "react-icons/io5";
+import { IoPencil, IoTrash, IoAdd, IoAlertCircle } from "react-icons/io5";
+import slugify from "slugify";
 import { formatCurrency } from 'utils/format';
 
 const columnHelper = createColumnHelper();
@@ -13,24 +15,29 @@ const variantStatusMap = {
 const columns = [
   // Ảnh
   columnHelper.display({
-    id: 'image',
+    id: 'thumbnail',
     header: 'Ảnh',
     meta: { thStyle: { width: '60px' } },
-    accessorFn: (row) => ({ url: '', alt: '' }),
+    accessorFn: (row) => {
+      const Images = row.Images
+      if (isArray(Images)) {
+        const primaryImg = Images.find((img) => img?.is_primary)
+        if (primaryImg) {
+          return { url: primaryImg.url, alt: slugify(row?.product_name || 'tps-default') }
+        }
+      } else if (isObject(Images)) { // object chứa { url, alt }
+        return Images
+      }
+      return { url: '', alt: '' }
+    },
     cell: ({ getValue }) => {
       const { url, alt } = getValue();
-      return url ? (
+      return (
         <img
           src={url}
           alt={alt}
-          className="img-thumbnail"
-          style={{ height: '40px', objectFit: 'cover' }}
+          className="img-thumbnail tps-thumbnail-customize"
         />
-      ) : (
-        <div className="bg-light text-muted d-flex align-items-center justify-content-center"
-          style={{ height: '40px', borderRadius: '4px' }}>
-          <IoImage size={16} />
-        </div>
       )
     },
   }),

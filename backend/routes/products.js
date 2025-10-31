@@ -74,6 +74,7 @@ router.get('', async (req, res) => {
       Product.countDocuments(query),
       Product.find(query)
         .select('-Warehouses -detail_description -created_at -short_description') // Loại bỏ các trường không cần thiết
+        .sort({ created_at: -1 })
         // .lean() // Quan trọng: trả về plain objects thay vì Mongoose documents
         .limit(pageSize)
         .skip(pageSize * (page - 1))

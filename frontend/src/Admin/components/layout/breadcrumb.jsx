@@ -1,11 +1,12 @@
 import React from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Breadcrumb as BsBreadcrumb } from 'react-bootstrap';
 
 const linkMap = {
   admin: { name: 'Dashboard', path: '/admin' },
   'manage-products': { name: 'Quản lý sản phẩm', path: '/admin/manage-products' },
   'add-product': { name: 'Thêm sản phẩm', path: '/admin/manage-products/add-product' },
+  'edit-product': { name: 'Chỉnh sửa sản phẩm', path: '/admin/manage-products/edit-product' }
 }
 
 const Breadcrumb = () => {

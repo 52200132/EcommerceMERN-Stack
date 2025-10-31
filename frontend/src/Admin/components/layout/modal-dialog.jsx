@@ -1,12 +1,12 @@
 import { Button, Modal } from 'react-bootstrap';
 import { useSelector, useDispatch } from 'react-redux';
 
-import AttributesVariant from './products/variant/attributes-variant';
-import TinyMCE from './tiny-mce';
-import EditVariant from './products/variant/edit-variant';
+import AttributesVariant from '../products/variant/attributes-variant';
+import TinyMCE from '../tiny-mce';
+import EditVariant from '../products/variant/edit-variant';
 
 import { goBack, setHide } from 'redux-tps/features/modal-slice';
-import { useAContext } from '../a-context';
+import { useSelectorStore } from 'custom-hooks';
 
 const MODAL_COMPONENTS = {
   TinyMCE,
@@ -14,12 +14,12 @@ const MODAL_COMPONENTS = {
   EditVariant,
 }
 
-const ModalDialog = (props) => {
+const ModalDialog = () => {
   const dispatch = useDispatch();
-  const { SELECTORS } = useAContext();
+  const getSelector = useSelectorStore(zs => zs.getSelector);
   const { show, componentName, componentProps, title, showBackBtn } = useSelector((state) => state.modal);
   const ModalContent = MODAL_COMPONENTS[componentName];
-  const selector = SELECTORS[componentProps?.selectorKey] ? SELECTORS[componentProps?.selectorKey] : null;
+  const selector = getSelector(componentProps?.selectorKey);
 
   if (!selector && ModalContent === AttributesVariant) return
 

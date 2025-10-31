@@ -1,0 +1,22 @@
+export const mockBrands = [
+  { brand_name: "Samsung" },
+  { brand_name: "Sony" },
+  { brand_name: "LG" },
+  { brand_name: "Panasonic" },
+  { brand_name: "Philips" },
+  { brand_name: "Toshiba" },
+  { brand_name: "Sharp" },
+  { brand_name: "Hisense" },
+  { brand_name: "Xiaomi" },
+  { brand_name: "Huawei" },
+  { brand_name: "Dell" },
+  { brand_name: "HP" },
+  { brand_name: "Asus" },
+  { brand_name: "Acer" },
+  { brand_name: "Lenovo" },
+  { brand_name: "Apple" },
+  { brand_name: "MSI" },
+  { brand_name: "Canon" },
+  { brand_name: "Nikon" },
+  { brand_name: "Logitech" }
+]

@@ -160,14 +160,14 @@ productSchema.pre("save",  function(next) {
   next();
 });
 
-productSchema.index(
-  { 'Variants.sku': 1 }, 
-  { 
-    unique: true, 
-    sparse: true, // Bỏ qua documents không có sku hoặc sku = null
-    partialFilterExpression: { 'Variants.sku': { $exists: true, $ne: null } }
-  }
-);
+// productSchema.index(
+//   { 'Variants.sku': 1 }, 
+//   { 
+//     unique: true, 
+//     sparse: true, // Bỏ qua documents không có sku hoặc sku = null
+//     partialFilterExpression: { 'Variants.sku': { $exists: true, $ne: null } }
+//   }
+// );
 
 productSchema.index(
   { 'Warehouses.warehouse_variants.sku': 1 }, 

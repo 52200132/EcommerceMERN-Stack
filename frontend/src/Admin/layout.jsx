@@ -1,16 +1,16 @@
 import { useEffect } from 'react'
 import { Outlet } from 'react-router-dom';
+import { Flip, ToastContainer } from 'react-toastify';
 
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import 'overlayscrollbars/overlayscrollbars.css';
 import 'admin-lte/dist/css/adminlte.css'
 import './index.scss';
 
-import ModalDialog from "./components/modal-dialog";
-import AProvider from 'Admin/a-context'
-import Sidebar from "./components/sidebar";
-import Header from "./components/header";
-import Breadcrumb from './components/breadcrumb';
+import ModalDialog from "./components/layout/modal-dialog";
+import Sidebar from "./components/layout/sidebar";
+import Header from "./components/layout/header";
+import Breadcrumb from './components/layout/breadcrumb';
 
 const Layout = () => {
   useEffect(() => {
@@ -20,7 +20,7 @@ const Layout = () => {
   }, [])
 
   return (
-    <AProvider>
+    <>
       <div className={`layout-fixed sidebar-expand-lg bg-body-tertiary`}>
         <div className="app-wrapper">
           <Header />
@@ -31,8 +31,25 @@ const Layout = () => {
           </main>
         </div>
       </div>
+
+      {/* Modal */}
       <ModalDialog />
-    </AProvider>
+
+      {/* Toast */}
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        transition={Flip}
+      />
+    </>
   );
 }
 

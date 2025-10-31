@@ -1170,6 +1170,7 @@ ol {
 
 /* One Click Scrool Top Button*/
 .scroll-top {
+  text-decoration: none;
   width: 40px;
   height: 40px;
   line-height: 40px;
