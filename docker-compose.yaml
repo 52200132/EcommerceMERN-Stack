@@ -20,11 +20,12 @@ services:
     ports:
       - "29017:27017"
   backend:
+    container_name: backend_api
     build:
       context: .
       dockerfile: backend/Dockerfile
     ports:
-    - "5000:5000" # Không cần port để có thể dùng bản sao
+    - "5000:5000"
     environment:
       - PORT=${PORT}
       - MONGODB_URI=${MONGODB_URI}
@@ -40,9 +41,6 @@ services:
       - RESET_PASSWORD_SECRET=${RESET_PASSWORD_SECRET}
     networks:
       - app-network
-    # deploy:
-    #   mode: replicated
-    #   replicas: 3 # Tao 3 bản sao của dịch vụ backend
     depends_on:
       - mongo
   frontend:
