@@ -4,7 +4,6 @@ import dotenv from "dotenv";
 import User from './models/User.js';
 import Product from './models/Product.js';
 import Brand from './models/Brand.js';
-import Order from './models/Order.js';
 import bcrypt from 'bcryptjs';
 
 // Load environment variables
@@ -26,6 +25,10 @@ const connectDB = async () => {
 
 const importData = async () => {
   try {
+    await Product.deleteMany();
+    await User.deleteMany();
+    await Brand.deleteMany();
+
     // Create admin user
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash('123456', salt);
@@ -685,27 +688,7 @@ const importData = async () => {
   }
 };
 
-const destroyData = async () => {
-  try {
-    await Order.deleteMany();
-    await Product.deleteMany();
-    await User.deleteMany();
-    await Brand.deleteMany();
-
-    console.log('Data Destroyed!');
-    process.exit();
-  } catch (error) {
-    console.error(error);
-    process.exit(1);
-  }
-};
-
 connectDB().then(() => {
-  if (process.argv[2] === '-d') {
-    // destroyData();
-    console.log("Destroy data")
-  } else {
-    // importData();
+    importData();
     console.log("Import data")
-  }
 });
