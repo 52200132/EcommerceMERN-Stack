@@ -29,6 +29,7 @@ import { useDeleteProductMutation, useLazyGetProductByIdQuery, useUpdateProductM
 import { useNavigate } from 'react-router-dom';
 import { updateProduct } from 'redux-tps/features';
 import { confirmation } from 'utils/confirmation';
+import { db } from 'indexed-db';
 
 const columnHelper = createColumnHelper();
 // Get stock badge
@@ -228,12 +229,13 @@ const TableProducts = ({ products, isLoading }) => {
 
 
   // handle function
-  const handleEditProductClick = (productId) => {
+  const handleEditProductClick = async(productId) => {
     console.log('Edit product', productId);
     triggerGetProductById(productId)
       .unwrap()
-      .then((data) => {
-        dispatch(updateProduct(data.dt));
+      .then(async (data) => {
+        const defaultBrandOption = await db.brands.get(data.dt.brand_id);
+        dispatch(updateProduct({...data.dt, defaultBrandOption: { value: defaultBrandOption._id, label: defaultBrandOption.brand_name } }));
         navigate(`/admin/manage-products/edit-product/${productId}`);
       })
       .catch((error) => {

@@ -1,5 +1,5 @@
 import { Card, Form, Col, Row } from "react-bootstrap";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useForm, Controller } from 'react-hook-form';
@@ -43,21 +43,22 @@ const basicInfoSchema = z.object({
 let rerenderCount = 0
 const BasicInfo = ({ selector, action = 'create' }) => {
   const dispatch = useDispatch();
-  const product = useTpsGetState(selector, { includeProps: ['product_name', 'brand_id', 'hashtag', 'short_description', 'detail_description', 'is_active'] });
-  const brands = useLiveQuery(async () => {
-    const [array, defaultValue] = await Promise.all([
-      db.brands.toArray(),
+  const product = useTpsGetState(selector, { includeProps: ['product_name', 'brand_id', 'hashtag', 'short_description', 'detail_description', 'is_active', 'defaultBrandOption'] });
+  const brandsOptions = useLiveQuery(async () => {
+    const [array, productBrand] = await Promise.all([
+      db.brands.toArray().then(brands => brands.map(brand => ({ value: brand._id, label: brand.brand_name }))),
       product?.brand_id ? db.brands.get(product.brand_id) : null
     ]);
-    return { array, defaultValue };
-  }, [], { array: [], defaultValue: {} });
+    const defaultOption = productBrand ? { value: productBrand._id, label: productBrand.brand_name } : null; 
+    return { array: array, defaultOption: defaultOption };
+  }, [], { array: [], defaultOption: {} });
   const hashtags = useLiveQuery(async () => await db.hashtags.toArray(), [], []);
   const { register, control, getValues, subscribe, formState: { errors } } = useForm({
     resolver: zodResolver(basicInfoSchema),
     mode: 'all',
     defaultValues: product
   });
-
+  
   const onHashtagsChange = (option) => {
     const target = {
       name: 'hashtag',
@@ -108,8 +109,8 @@ const BasicInfo = ({ selector, action = 'create' }) => {
                   <Select
                     classNamePrefix='tps'
                     inputRef={ref}
-                    options={brands.array.map(brand => ({ value: brand._id, label: brand.brand_name }))}
-                    defaultValue={brands.defaultValue ? { value: brands.defaultValue._id, label: brands.defaultValue.brand_name } : null}
+                    options={brandsOptions.array}
+                    defaultValue={product?.defaultBrandOption || null}
                     styles={{
                       control: (base) => ({
                         ...base,
