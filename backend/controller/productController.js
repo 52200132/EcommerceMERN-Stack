@@ -122,8 +122,6 @@ const createProduct = async (req, res) => {
       Images,
       Variants
     } = req.body;
-
-    console.log(brand_id)
     
     const product = new Product({
       brand_id,
@@ -168,6 +166,7 @@ const updateProduct = async (req, res) => {
       product.updated_at = Date.now();
 
       const updatedProduct = await product.save();
+      // ghi log đường dẫn POST
       res.json({ ec: 0, em: "Product updated successfully", dt: updatedProduct });
     } else {
       res.status(404).json({ ec: 404, em: 'Product not found' });
