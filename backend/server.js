@@ -8,10 +8,11 @@ import "./passport.js";
 import authRoutes from "./routes/auth.js";
 import brandRoutes from "./routes/brands.js";
 import productRoutes from "./routes/products.js";
-import orderRoutes from "./routes/orders.js";
 import userRoutes from "./routes/users.js";
 import discountCodeRoutes from "./routes/discount_codes.js";
+import orderRoutes from "./routes/orders.js";
 import commentRoutes from "./routes/comments.js";
+import ratingRoutes from "./routes/ratings.js";
 
 // Load environment variables
 dotenv.config();
@@ -19,15 +20,15 @@ dotenv.config();
 const app = express();
 
 // Middleware
-// app.use(cors());
+app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Cho phép frontend truy cập API
-// app.use(cors({
-//   origin: process.env.FRONTEND_URL,  // http://localhost:3000
-//   credentials: true
-// }));
+app.use(cors({
+  origin: process.env.FRONTEND_URL,  // http://localhost:3000
+  credentials: true
+}));
 
 // Passport middleware
 app.use(passport.initialize());
@@ -51,10 +52,11 @@ const connectDB = async () => {
 app.use("/api/auth", authRoutes);
 app.use("/api/brands", brandRoutes);
 app.use("/api/products", productRoutes);
-app.use("/api/orders", orderRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/discount_codes", discountCodeRoutes);
+app.use("/api/orders", orderRoutes);
 app.use("/api/comments", commentRoutes);
+app.use("/api/ratings", ratingRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

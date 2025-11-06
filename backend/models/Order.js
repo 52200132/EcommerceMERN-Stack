@@ -47,12 +47,9 @@ const statusHistorySchema = new Schema({
 
 //  Main Schema: orderSchema 
 const orderSchema = new Schema({
-  order_code: { type: String, required: true, unique: true },
   user_id: { type: Schema.Types.ObjectId, ref: "User", required: true },
   Items: {
-    type: [orderItemSchema],
-    required: true,
-    validate: v => v.length > 0,
+    type: [orderItemSchema], required: true, validate: v => v.length > 0,
   },
   discount_code: { type: String, match: /^[A-Za-z0-9]{5}$/ },
   shipping_address: { type: shippingAddressSchema, required: true },
@@ -65,11 +62,13 @@ const orderSchema = new Schema({
     type: String,
     enum: ["pending", "paid", "failed", "refunded"],
     required: true,
+    default: "pending"
   },
-  status: {
+  order_status: {
     type: String,
     enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
     required: true,
+    default: "pending"
   },
   StatusHistory: [statusHistorySchema],
   total_amount: { type: Number, min: 0, required: true },
