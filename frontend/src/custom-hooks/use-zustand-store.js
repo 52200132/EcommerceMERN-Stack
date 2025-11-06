@@ -16,3 +16,16 @@ export const useSelectorStore = create(
     }),
   }))
 );
+
+export const useRenderCountStore = create(
+  immer((set, get) => ({
+    activeComponents: [],
+    addComponent: (name) => set((state) => {
+      state.activeComponents.push(name);
+    }),
+    removeComponent: (name) => set((state) => {
+      state.activeComponents = state.activeComponents.filter(c => c !== name);
+    }),
+    getComponentIndex: (name) => get().activeComponents.indexOf(name)
+  }))
+);

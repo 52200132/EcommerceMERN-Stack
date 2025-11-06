@@ -115,3 +115,7 @@ dist/
 
 # React build
 frontend/build/
+
+# logs
+logs/
+*.log

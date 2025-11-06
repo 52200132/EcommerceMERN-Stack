@@ -5,20 +5,20 @@ import HomePage from './pages/HomePage';
 import ProductsPage from './pages/ProductsPage';
 import ContactPage from './pages/ContactPage';
 import AboutPage from './pages/AboutPage';
-import LoginPage from './components/Auth/LoginPage';
-import RegisterPage from './components/Auth/RegisterPage';
+import LoginPage from './pages/auth/login-page';
+import RegisterPage from './pages/auth/register-page';
 import ProductDetails from './components/ProductDetails/ProductDetails';
 
-import ManageProductsLayout from 'Admin/pages/product/manage-products-layout';
-import ManageProductsPage from 'Admin/pages/product/manage-products-page'
-import CRUProduct from 'Admin/pages/product/cru-product-page';
-import CRUDetailsDescription from './Admin/pages/product/cru-dd-page';
+import ManageProductsLayout from 'admins/pages/product/manage-products-layout';
+import ManageProductsPage from 'admins/pages/product/manage-products-page'
+import CRUProduct from 'admins/pages/product/cru-product-page';
+import CRUDetailsDescription from './admins/pages/product/cru-dd-page';
 
 // import NotFoundPage from './pages/NotFoundPage'; // Optional: Create a 404 page component
 // import './App.css';
 
-const AdminLayout = lazy(() => import('./Admin/layout'))
-const Layout = lazy(() => import('./components/Layout/Layout'))
+const adminsLayout = lazy(() => import('./admins/layout'))
+const Layout = lazy(() => import('./layout'))
 
 const App = () => {
   const allowedCategorySlugs = ['may-tinh', 'dien-thoai'];
@@ -58,8 +58,8 @@ const App = () => {
           } />
         </Route>
 
-        <Route path="/admin/*" element={<AdminLayout />}>
-          <Route index element={<div>Admin Home</div>} />
+        <Route path="/admin/*" element={<adminsLayout />}>
+          <Route index element={<div>admins Home</div>} />
           <Route path="manage-products" element={<ManageProductsLayout />}>
             <Route index element={<ManageProductsPage />} />
             <Route path="add-product" element={<CRUProduct action='create'/>} />

@@ -1,0 +1,8 @@
+export { default as authRoutes } from "./auth.js";
+export { default as brandRoutes } from "./brands.js";
+export { default as productRoutes } from "./products.js";
+export { default as orderRoutes } from "./orders.js";
+export { default as userRoutes } from "./users.js";
+export { default as discountCodeRoutes } from "./discount_codes.js";
+export { default as commentRoutes } from "./comments.js";
+export { default as addressRoutes } from "./addresses.js";

@@ -1387,6 +1387,9 @@ ol {
 
 .preloader-inner {
   position: absolute;
+  display: flex;
+  flex-flow: column; 
+  align-items: center;
   top: 50%;
   left: 50%;
   -webkit-transform: translate(-50%, -50%);
@@ -6954,11 +6957,12 @@ blockquote span {
 /*======================================
 	Account Login CSS
 ========================================*/
-.account-login {
-  background-color: #f9f9f9;
-}
 
-.account-login .login-form {
+/* .account-login {
+  background-color: #f9f9f9;
+} */
+
+.login-form {
   padding: 42px;
   border: 1px solid #e6e6e6;
   border-radius: 4px;
@@ -6968,27 +6972,27 @@ blockquote span {
 }
 
 @media (max-width: 767px) {
-  .account-login .login-form {
+  .login-form {
     padding: 30px;
   }
 }
 
-.account-login .login-form .card-body {
+.login-form .card-body {
   padding: 0;
 }
 
-.account-login .login-form .title {
+.login-form .title {
   margin-bottom: 30px;
 }
 
-.account-login .login-form .title h3 {
+.login-form .title h3 {
   font-size: 22px;
   font-weight: 700;
   color: #081828;
   margin-bottom: 10px;
 }
 
-.account-login .login-form .social-login .btn {
+.login-form .social-login .btn {
   padding: 10px 12px;
   font-size: 12px;
   border-radius: 4px;
@@ -6997,59 +7001,59 @@ blockquote span {
   font-weight: 600;
 }
 
-.account-login .login-form .social-login .btn i {
+.login-form .social-login .btn i {
   display: inline-block;
   margin-right: 4px;
   font-size: 15px;
 }
 
 @media (max-width: 767px) {
-  .account-login .login-form .social-login .btn {
+  .login-form .social-login .btn {
     margin: 6px 0;
   }
 }
 
-.account-login .login-form .social-login .facebook-btn {
+.login-form .social-login .facebook-btn {
   border-color: #3b5998;
   background-color: transparent;
   color: #3b5998;
 }
 
-.account-login .login-form .social-login .facebook-btn:hover {
+.login-form .social-login .facebook-btn:hover {
   background-color: #3b5998;
   border-color: transparent;
   color: #fff;
 }
 
-.account-login .login-form .social-login .twitter-btn {
+.login-form .social-login .twitter-btn {
   border-color: #55acee;
   background-color: transparent;
   color: #55acee;
 }
 
-.account-login .login-form .social-login .twitter-btn:hover {
+.login-form .social-login .twitter-btn:hover {
   background-color: #55acee;
   border-color: transparent;
   color: #fff;
 }
 
-.account-login .login-form .social-login .google-btn {
+.login-form .social-login .google-btn {
   border-color: #dd4b39;
   background-color: transparent;
   color: #dd4b39;
 }
 
-.account-login .login-form .social-login .google-btn:hover {
+.login-form .social-login .google-btn:hover {
   background-color: #dd4b39;
   border-color: transparent;
   color: #fff;
 }
 
-.account-login .bottom-content {
+.bottom-content {
   margin-top: 25px;
 }
 
-.account-login .alt-option {
+.alt-option {
   margin: 30px 0;
   text-align: center;
   display: inline-block;
@@ -7059,19 +7063,19 @@ blockquote span {
 }
 
 @media (max-width: 767px) {
-  .account-login .alt-option {
+  .alt-option {
     margin: 20px 0;
   }
 }
 
-.account-login .alt-option span {
+.alt-option span {
   font-size: 14px;
   background: #fff;
   color: #888;
   padding: 5px 15px;
 }
 
-.account-login .alt-option:before {
+.alt-option:before {
   position: absolute;
   left: 0;
   top: 50%;
@@ -7082,17 +7086,17 @@ blockquote span {
   z-index: -1;
 }
 
-.account-login .form-group {
+.form-group {
   margin-bottom: 15px;
 }
 
-.account-login .form-group label {
+.form-group label {
   display: block;
   margin-bottom: 8px;
   width: 100%;
 }
 
-.account-login .form-group .form-control {
+.form-group .form-control {
   padding: 0 18px;
   -webkit-transition: color .25s, background-color .25s, border-color .25s;
   transition: color .25s, background-color .25s, border-color .25s;
@@ -7109,27 +7113,27 @@ blockquote span {
   width: 100%;
 }
 
-.account-login .form-group .form-control:focus {
+.form-group .form-control:focus {
   border-color: #0167F3;
 }
 
-.account-login .lost-pass {
+.lost-pass {
   color: #888;
 }
 
-.account-login .lost-pass:hover {
+.lost-pass:hover {
   color: #0167F3;
 }
 
-.account-login .button {
+.button {
   margin-top: 30px;
 }
 
-.account-login .button .btn {
+.button .btn {
   width: 100%;
 }
 
-.account-login .outer-link {
+.outer-link {
   display: block;
   font-size: 14px;
   font-weight: 500;
@@ -7138,11 +7142,11 @@ blockquote span {
   text-align: center;
 }
 
-.account-login .outer-link a {
+.outer-link a {
   color: #0167F3;
 }
 
-.account-login .outer-link a:hover {
+.outer-link a:hover {
   text-decoration: underline;
 }
 

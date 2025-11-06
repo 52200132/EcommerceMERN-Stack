@@ -21,6 +21,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "apicache": "1.6.3",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
@@ -28,6 +29,7 @@
     "express-validator": "^7.0.1",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^7.5.0",
+    "morgan": "1.10.1",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^7.0.10",
     "passport": "^0.7.0",
@@ -36,5 +38,15 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
+  },
+  "imports": {
+    "#tps-routes": "./routes/index.js",
+    "#tps-routes/*": "./routes/*",
+    "#controller": "./controller/index.js",
+    "#controller/*": "./controller/*",
+    "#middleware": "./middleware/index.js",
+    "#middleware/*": "./middleware/*",
+    "#utils": "./utils/index.js",
+    "#utils/*": "./utils/*"
   }
 }

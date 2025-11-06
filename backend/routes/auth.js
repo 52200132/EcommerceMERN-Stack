@@ -1,8 +1,10 @@
 import express from "express";
-import { handleRegister, handleLogin, resetPassword, handleResetPassword} from "../controller/authController.js";
+import { handleRegister, handleLogin, resetPassword, handleResetPassword, getBasicProfile} from "../controller/authController.js";
 import { protect } from "../middleware/auth.js";
 import passport from "passport";
 const router = express.Router();
+
+router.get('/me', protect, getBasicProfile); 
 
 // @desc    Register a new user
 // @route   POST /api/auth/register

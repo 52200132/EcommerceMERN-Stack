@@ -60,5 +60,20 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "imports": {
+    "#component-hooks/*": "./src/component-hooks/*",
+    "#custom-hooks": "./src/custom-hooks/index-custom-hooks.js",
+    "#schemas": "./src/schemas/index-schemas.js",
+    "#services": "./src/services/index-services.js",
+    "#services/*": "./src/services/*",
+    "#utils": "./src/utils/index-utils.js",
+    "#utils/*": "./src/utils/*",
+    "#features": "./src/redux-tps/features/index-features.js",
+    "#features/*": "./src/redux-tps/features/*",
+    "#components": "./src/components/index-components.js",
+    "#components/*": "./src/components/*",
+    "#a-components": "./src/components/index-components.js",
+    "#a-components/*": "./src/components/*"
   }
 }

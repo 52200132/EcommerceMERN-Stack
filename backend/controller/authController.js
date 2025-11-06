@@ -3,11 +3,10 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import transporter from "../mail.js";
 
-
 const generateResetToken = (userId) => {
   return jwt.sign(
-    { id: userId, purpose: "reset" }, 
-    process.env.RESET_PASSWORD_SECRET, 
+    { id: userId, purpose: "reset" },
+    process.env.RESET_PASSWORD_SECRET,
     { expiresIn: "1d" } // 1 day for testing
   );
 };
@@ -29,7 +28,7 @@ const resetPassword = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    
+
     // Tạo token reset
     const resetToken = generateResetToken(user._id);
     const resetLink = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
@@ -101,66 +100,91 @@ const generateToken = (id) => {
 };
 
 const handleRegister = async (req, res) => {
-    try {
-      const { username, email, password, Addresses } = req.body;
+  try {
+    const { username, email, password, Addresses } = req.body;
 
-      // Check if user exists
-      // const userExists = await User.findOne({ email });
-      // if (userExists) {
-      //   return res.status(400).json({ message: "User already exists. Please try a different email." });
-      // }
+    // Check if user exists
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ ec: 400, em: "Email đã được sử dụng" });
+    }
 
-      // Hash password
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-      // Create user
-      const user = await User.create({
-        username,
-        email,
-        password: hashedPassword,
-        Addresses,
-        Carts: [],
-        Linked_accounts: []
-      });
+    // Create user
+    const user = await User.create({
+      username,
+      email,
+      password: hashedPassword,
+      Addresses,
+      Carts: [],
+      Linked_accounts: []
+    });
 
-      if (user) {
-        res.status(201).json({
+    if (user) {
+      res.status(201).json({
+        ec: 0,
+        em: 'Đăng ký thành công',
+        dt: {
           _id: user._id,
           username: user.username,
           email: user.email,
           isManager: user.isManager,
           token: generateToken(user._id), // trả về token khi đăng ký thành công
-        });
-      } else {
-        res.status(400).json({ message: "Invalid user data" });
-      }
-    } catch (error) {
-      res.status(500).json({ message: error.message });
+        }
+      });
+    } else {
+      res.status(400).json({ ec: 400, em: "Dữ liệu đăng ký không hợp lệ" });
     }
+  } catch (error) {
+    res.status(500).json({ ec: 500, em: error.message });
+  }
 };
 
 const handleLogin = async (req, res) => {
-    try {
-      const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-      // Check for user
-      const user = await User.findOne({ email : email });
+    // Check for user
+    const user = await User.findOne({ email: email });
 
-      if (user && (await bcrypt.compare(password, user.password))) {
-        res.json({
+    if (user && (await bcrypt.compare(password, user.password))) {
+      res.status(200).json({
+        ec: 0,
+        em: 'Đăng nhập thành công',
+        dt: {
           _id: user._id,
           username: user.username,
           email: user.email,
           isManager: user.isManager,
           token: generateToken(user._id), // trả về token khi đăng nhập thành công
-        });
-      } else {
-        res.status(401).json({ message: "Invalid credentials" });
-      }
-    } catch (error) {
-      res.status(500).json({ message: error.message });
+        }
+      });
+    } else {
+      res.status(401).json({ ec: 401, em: "Email hoặc mật khẩu không đúng" });
     }
+  } catch (error) {
+    res.status(500).json({ ec: 500, em: error.message });
+  }
+};
+
+export const getBasicProfile = async (req, res) => {
+  try {
+    if (req.user) {
+      const basicInfo = { username, email, isManager, _id, token } = req.user;
+      res.status(200).json({
+        ec: 0,
+        em: 'Lấy thông tin thành công',
+        dt: basicInfo
+      });
+    } else {
+      res.status(404).json({ ec: 404, em: "Không tìm thấy người dùng" });
+    }
+  } catch (error) {
+    res.status(500).json({ ec: 500, em: error.message });
+  }
 };
 
 export { handleRegister, handleLogin, handleResetPassword, resetPassword };

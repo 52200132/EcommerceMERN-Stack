@@ -1,17 +1,21 @@
 import express from "express";
-import mongoose from "mongoose";
+import mongoose, { set } from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
 import passport from "passport";
 import "./passport.js";
 // Import route files
-import authRoutes from "./routes/auth.js";
-import brandRoutes from "./routes/brands.js";
-import productRoutes from "./routes/products.js";
-import orderRoutes from "./routes/orders.js";
-import userRoutes from "./routes/users.js";
-import discountCodeRoutes from "./routes/discount_codes.js";
-import commentRoutes from "./routes/comments.js";
+import { 
+  authRoutes,
+  brandRoutes,
+  productRoutes,
+  orderRoutes,
+  userRoutes,
+  discountCodeRoutes,
+  commentRoutes,
+  addressRoutes
+} from "#tps-routes";
+import { setUpConsoleLogging, setUpWriteStream } from "#utils";
 
 // Load environment variables
 dotenv.config();
@@ -23,11 +27,15 @@ const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
+// Setup logging for each route
+setUpConsoleLogging(app);
+setUpWriteStream(app, 'access');
+
 // Cho phép frontend truy cập API
-// app.use(cors({
-//   origin: process.env.FRONTEND_URL,  // http://localhost:3000
-//   credentials: true
-// }));
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true
+}));
 
 // Passport middleware
 app.use(passport.initialize());
@@ -55,12 +63,15 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/discount_codes", discountCodeRoutes);
 app.use("/api/comments", commentRoutes);
+app.use("/api/addresses", addressRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+  console.log('có lỗi')
   res.status(statusCode).json({
-    message: err.message,
+    ec: statusCode,
+    em: err.message,
     stack: process.env.NODE_ENV === "production" ? null : err.stack,
   });
 });

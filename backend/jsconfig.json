@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "#controller/*": ["controller/*"],
+      "#middleware/*": ["middleware/*"],
+      "#tps-routes": ["routes/index.js"],
+      "#utils": ["utils/index.js"]
+    }
+  }
+}
