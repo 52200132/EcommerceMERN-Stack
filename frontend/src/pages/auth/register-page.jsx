@@ -31,12 +31,11 @@ const selectControlStyles = (hasError) => ({
 
 const RegisterPage = () => {
   useRenderCount('register-page', 'both');
-
+  const { register, onSubmit, setValue, control, formState: { errors } } = useRegisterForm();
+  const { handleProvinceChange, handleDistrictChange, provinceCode, districtCode } = useAddressesHandlers(setValue);
   const { provincesOptions, isLoading: provincesLoading } = useProvincesOptions();
   const { districtsOptions, isLoading: districtsLoading } = useDistrictsOptions(provinceCode);
   const { wardsOptions, isLoading: wardsLoading } = useWardsOptions(districtCode);
-  const { register, onSubmit, setValue, control, formState: { errors } } = useRegisterForm();
-  const { handleProvinceChange, handleDistrictChange, provinceCode, districtCode } = useAddressesHandlers(setValue);
 
   return (
     <div className="tps-register-container container">

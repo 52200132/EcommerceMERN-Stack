@@ -24,7 +24,7 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(cors());
+// app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
@@ -33,10 +33,12 @@ setUpConsoleLogging(app);
 setUpWriteStream(app, 'access');
 
 // Cho phép frontend truy cập API
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
-}));
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || "http://localhost:3000",
+  credentials: true,
+};
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // để preflight cũng có cùng header
 
 // Passport middleware
 app.use(passport.initialize());

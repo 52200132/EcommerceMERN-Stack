@@ -349,7 +349,7 @@ export const handleGoogleLoginCallback = async (req, res) => {
       return res.status(404).send(`
         <script>
           window.opener.postMessage(
-            ${JSON.stringify({ ec: 404, em: "Tài khoản Google chưa được liên kết" })},
+            ${JSON.stringify({ ec: 404, em: "Tài khoản Google chưa được liên kết", event_type: "GOOGLE_LOGIN" })},
             "${origin}"
           );
         </script>
@@ -372,7 +372,7 @@ export const handleGoogleLoginCallback = async (req, res) => {
 
     res.status(200).send(`
       <script>
-        window.opener.postMessage(${JSON.stringify({ ec: 0, em: "Đăng nhập thành công", dt: basicInfo })},
+        window.opener.postMessage(${JSON.stringify({ ec: 0, em: "Đăng nhập thành công", dt: basicInfo, event_type: "GOOGLE_LOGIN" })},
         "${origin}"
         );
       </script>
@@ -381,7 +381,7 @@ export const handleGoogleLoginCallback = async (req, res) => {
     console.error("Error in Google login callback:", err);
     res.status(500).send(`
       <script>
-        window.opener.postMessage(${JSON.stringify({ ec: 500, em: err.message })},
+        window.opener.postMessage(${JSON.stringify({ ec: 500, em: err.message, event_type: "GOOGLE_LOGIN" })},
         "${origin}"
         );
       </script>
