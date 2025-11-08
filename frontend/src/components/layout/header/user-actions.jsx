@@ -1,14 +1,16 @@
 import { useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { useDispatch } from 'react-redux';
 
 import { OverlayTrigger, Popover } from 'react-bootstrap';
 import { useLazyLinkGoogleAccountQuery } from '#services';
 import { axiosBaseQueryUtil, BASE_URL } from '#services/axios-config';
 import { closeOverlayPreloader, overlayPreloader } from '#utils';
+import { useRenderCount, useTpsSelector } from '#custom-hooks';
+import { logout } from '#features/auth-slice';
 
 import unknownAvatar from '../../../assets/images/cat-avatar.jpg';
-import { useRenderCount, useTpsSelector } from '#custom-hooks';
 
 const openWindowPopup = (url) => {
   const width = 500;
@@ -33,6 +35,7 @@ const openWindowPopup = (url) => {
 
 const UserActions = () => {
   useRenderCount('user-actions', 'ui');
+  const dispatch = useDispatch();
   const popupRef = useRef(null);
   const navigate = useNavigate();
   const user = useTpsSelector((state) => state.auth.user, { includeProps: ['token', 'username'] });
@@ -53,6 +56,10 @@ const UserActions = () => {
       }
     }
     linkGoogleAccount({ origin: window.location.origin, feRedirectUri: '' });
+  };
+
+  const handleLogout = () => {
+    dispatch(logout());
   };
 
   useEffect(() => {
@@ -97,9 +104,9 @@ const UserActions = () => {
               <ul className="user-popover-menu">
                 <li className="popover-item"><Link to="#">Tài khoản của tôi</Link></li>
                 <li className="popover-item"><Link to="#">Đơn mua</Link></li>
-                <li className="popover-item"><Link onClick={handleLinkGoogleAccount}>Liên kết tài khoản google</Link></li>
+                <li onClick={handleLinkGoogleAccount} className="popover-item"><Link >Liên kết tài khoản google</Link></li>
                 <li><hr /></li>
-                <li className="popover-item"><Link to="#">Đăng xuất</Link></li>
+                <li onClick={handleLogout} className="popover-item"><Link to='/'>Đăng xuất</Link></li>
               </ul>
             </Popover>
           }

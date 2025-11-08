@@ -27,6 +27,13 @@ export const authApi = createApi({
         data: credentials,
       }),
     }),
+
+    loginGoogleUser: build.mutation({
+      query: () => ({
+        url: `/auth/google-login?origin=${window.location.origin}`,
+        method: 'GET',
+      }),
+    }),
   })
 })
 
@@ -34,5 +41,6 @@ export const {
   useLazyLinkGoogleAccountQuery,
   useRegisterUserMutation,
   useLoginUserMutation,
+  useLoginGoogleUserMutation
 } = authApi 
 

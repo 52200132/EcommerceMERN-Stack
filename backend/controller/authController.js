@@ -6,13 +6,28 @@ import jwt from "jsonwebtoken";
 
 import transporter from "../mail.js";
 import User from "../models/User.js";
-import { token } from "morgan";
 
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
   process.env.BASE_URL + "/auth/google-link-account/callback"
 );
+
+const oauth2ClientLogin = new google.auth.OAuth2(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.BASE_URL + "/auth/google-login/callback"
+);
+
+const getGoogleUserInfo = async (tokens) => {
+  oauth2Client.setCredentials(tokens);
+  const oauth2 = google.oauth2({
+    auth: oauth2Client,
+    version: "v2",
+  });
+  const { data } = await oauth2.userinfo.get();
+  return data;
+};
 
 const generateResetToken = (userId) => {
   return jwt.sign(
@@ -197,6 +212,7 @@ export const getBasicProfile = async (req, res) => {
   }
 };
 
+// Function to handle Google account 
 export const handleLinkGoogleAccount = async (req, res) => {
   const { origin, feRedirectUri } = req.query;
   try {
@@ -211,8 +227,6 @@ export const handleLinkGoogleAccount = async (req, res) => {
       ],
       state: encryptedState,
       prompt: 'consent',
-      // origin,
-      // feRedirectUri
     });
     res.status(200).json({
       ec: 0,
@@ -287,6 +301,88 @@ export const handleLinkGoogleAccountCallback = async (req, res) => {
         window.opener.postMessage(
           ${JSON.stringify({ ec: 500, em: err.message })},
           "${origin}"
+        );
+      </script>
+    `);
+  }
+}
+
+export const handleGoogleLogin = async (req, res) => {
+  const { origin } = req.query;
+  try {
+    const state = CryptoJS.AES.encrypt(origin, process.env.JWT_SECRET).toString();
+    const url = oauth2ClientLogin.generateAuthUrl({
+      prompt: 'consent',
+      scope: ['profile'],
+      state
+    });
+    res.status(200).json({
+      ec: 0,
+      em: 'Lấy URL liên kết thành công',
+      dt: { urlRedirect: url }
+    });
+  } catch (error) {
+    res.status(500).json({ ec: 500, em: error.message });
+  }
+}
+
+export const handleGoogleLoginCallback = async (req, res) => {
+  const { code, state } = req.query;
+
+  try {
+    const origin = CryptoJS.AES.decrypt(state, process.env.JWT_SECRET).toString(CryptoJS.enc.Utf8);
+    const { tokens } = await oauth2ClientLogin.getToken(code);
+
+    const data = await getGoogleUserInfo(tokens);
+
+    // Tìm user có linked account với Google ID này
+    let user = await User.findOne({
+      Linked_accounts: {
+        $elemMatch: {
+          provider: 'google',
+          provider_id: data.id
+        }
+      }
+    });
+
+    if (!user) {
+      return res.status(404).send(`
+        <script>
+          window.opener.postMessage(
+            ${JSON.stringify({ ec: 404, em: "Tài khoản Google chưa được liên kết" })},
+            "${origin}"
+          );
+        </script>
+      `);
+    }
+
+    // Cập nhật last_login
+    const acc = user.Linked_accounts.find(acc => acc.provider === 'google');
+    if (acc) {
+      acc.last_login = new Date();
+      await user.save();
+    }
+    const basicInfo = {
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      isManager: user.isManager,
+      token: generateToken(user._id),
+    };
+
+    res.status(200).send(`
+      <script>
+        window.opener.postMessage(${JSON.stringify({ ec: 0, em: "Đăng nhập thành công", dt: basicInfo })},
+        "${origin}"
+        );
+      </script>
+    `);
+  } catch (err) {
+    console.error("Error in Google login callback:", err);
+    res.status(500).send(`
+      <script>
+        window.opener.postMessage(${JSON.stringify({ ec: 500, em: err.message })},
+        "${origin}"
         );
       </script>
     `);

@@ -49,39 +49,39 @@ passport.use(
 	)
 );
 
-passport.use(
-	"google-link",
-	new GoogleStrategy(
-		{
-			clientID: process.env.GOOGLE_CLIENT_ID,
-			clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-			callbackURL: process.env.GOOGLE_CALLBACK_URL_LINK,
-			passReqToCallback: true,
-			state: false,
-		},
-		async (req, accessToken, refreshToken, profile, done) => {
-			try {
-				console.log(profile);
-				const exists = req.user.Linked_accounts.find(
-					(acc) => acc.provider === 'google' && acc.provider_id === profile.id
-				);
-				if (!exists) {
-					req.user.Linked_accounts.push({
-						provider: 'google',
-						provider_id: profile.id,
-						linked_at: new Date(),
-						last_login: new Date(),
-					});
-					await req.user.save();
-				}
+// passport.use(
+// 	"google-link",
+// 	new GoogleStrategy(
+// 		{
+// 			clientID: process.env.GOOGLE_CLIENT_ID,
+// 			clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+// 			callbackURL: process.env.GOOGLE_CALLBACK_URL_LINK,
+// 			passReqToCallback: true,
+// 			state: false,
+// 		},
+// 		async (req, accessToken, refreshToken, profile, done) => {
+// 			try {
+// 				console.log(profile);
+// 				const exists = req.user.Linked_accounts.find(
+// 					(acc) => acc.provider === 'google' && acc.provider_id === profile.id
+// 				);
+// 				if (!exists) {
+// 					req.user.Linked_accounts.push({
+// 						provider: 'google',
+// 						provider_id: profile.id,
+// 						linked_at: new Date(),
+// 						last_login: new Date(),
+// 					});
+// 					await req.user.save();
+// 				}
 
-				done(null, req.user);
-			} catch (err) {
-				done(err, null);
-			}
-		}
-	)
-);
+// 				done(null, req.user);
+// 			} catch (err) {
+// 				done(err, null);
+// 			}
+// 		}
+// 	)
+// );
 
 passport.use(
 	"facebook-login",

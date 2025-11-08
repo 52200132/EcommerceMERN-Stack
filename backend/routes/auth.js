@@ -1,7 +1,7 @@
 import passport from "passport";
 import express from "express";
 
-import { handleRegister, handleLogin, resetPassword, handleResetPassword, getBasicProfile, handleLinkGoogleAccount, handleLinkGoogleAccountCallback } from "../controller/authController.js";
+import { handleRegister, handleLogin, resetPassword, handleResetPassword, getBasicProfile, handleLinkGoogleAccount, handleLinkGoogleAccountCallback, handleGoogleLogin, handleGoogleLoginCallback } from "../controller/authController.js";
 import { cacheRoute } from "#middleware/cache.js";
 import { protect } from "../middleware/auth.js";
 
@@ -44,16 +44,8 @@ router.get("/facebook/callback",
 );
 
 // Google login
-router.get("/google-login", passport.authenticate("google-login", { scope: ["profile", "email"] }));
-router.get("/google-login/callback",
-  passport.authenticate("google-login", { session: false }),
-  (req, res) => {
-    if (!req.user)
-      return res.status(401).json({ message: "Login failed" });
-    const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, { expiresIn: "1d" });
-    res.json({ message: "Google login success", token, user: req.user });
-  }
-);
+router.get("/google-login", handleGoogleLogin);
+router.get("/google-login/callback", handleGoogleLoginCallback);
 
 // Facebook login
 router.get("/facebook", passport.authenticate("facebook-login", { scope: ["email"] }));
