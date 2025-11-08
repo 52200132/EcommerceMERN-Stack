@@ -2,8 +2,10 @@ import axios from 'axios';
 
 import { toast } from 'react-toastify';
 
+export const BASE_URL = 'http://localhost:5000/api';
+
 export const axiosInstance = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: BASE_URL,
   timeout: 10000,
   headers: { 'Content-Type': 'application/json' },
 })
@@ -16,18 +18,20 @@ axiosInstance.interceptors.response.use(
   }, (error) => {
     // Any status codes that falls outside the range of 2xx cause this function to trigger
     // Do something with response error
+    if (error?.code === "ERR_NETWORK") return Promise.reject({ ec: -1, em: 'Lỗi mạng' })
+    console.log(error);
     return error.response && error?.response?.data && Promise.reject(error?.response?.data);
   });
 
 export const sleep = (ms = 0) => new Promise(resolve => setTimeout(resolve, ms));
+export const getUserToken = () => JSON.parse(sessionStorage.getItem('user'))?.token || null;
 
 export const axiosBaseQuery = ({ baseUrl } = { baseUrl: '' }) =>
-  async ({ url, method, data, params, headers }) => {
+  async ({ url, method, data, params, headers, redirect }) => {
     let setTimeoutIds = [];
     const { showSuccessToast, showErrorToast, useMessageFromResponse, showOverlay } = axiosBaseQueryUtil.behaviors;
     const { flowMessages, message, overlay, callbackfn } = axiosBaseQueryUtil;
     let overlayInstance;
-
     try {
       if (showOverlay && typeof overlay === 'function') overlayInstance = overlay();
 
@@ -35,14 +39,20 @@ export const axiosBaseQuery = ({ baseUrl } = { baseUrl: '' }) =>
         const id = setTimeout(() => (typeof overlayInstance?.update === 'function') && overlayInstance.update(currFM.message), currFM.delay || 500);
         setTimeoutIds.push(id);
       });
-
+      let token = getUserToken();
+      if (token) {
+        headers = {
+          ...headers,
+          Authorization: `Bearer ${token}`,
+        };
+      }
       const result = await axiosInstance({
         url: baseUrl + url,
         method,
         data,
         params,
         headers,
-        // withCredentials: true, // nếu cần cookie
+        withCredentials: true, // nếu cần cookie
       })
       if (typeof callbackfn === 'function') callbackfn(result);
       if (showSuccessToast) toast.success(useMessageFromResponse ? result?.em || message.success : message.success);

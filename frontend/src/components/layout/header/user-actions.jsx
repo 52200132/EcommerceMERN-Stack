@@ -1,0 +1,119 @@
+import { useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+
+import { OverlayTrigger, Popover } from 'react-bootstrap';
+import { useLazyLinkGoogleAccountQuery } from '#services';
+import { axiosBaseQueryUtil, BASE_URL } from '#services/axios-config';
+import { closeOverlayPreloader, overlayPreloader } from '#utils';
+
+import unknownAvatar from '../../../assets/images/cat-avatar.jpg';
+import { useRenderCount, useTpsSelector } from '#custom-hooks';
+
+const openWindowPopup = (url) => {
+  const width = 500;
+  const height = 600;
+  const left = (window.screen.width - width) / 2;
+  const top = (window.screen.height - height) / 2;
+  const popup = window.open(
+    url,
+    'googleAuth',
+    `width=${width},height=${height},top=${top},left=${left}`
+  );
+  const timer = setInterval(() => {
+    if (popup?.opener?.closed) {
+      clearInterval(timer);
+      closeOverlayPreloader();
+    }
+  }, 1500)
+  console.log('Opened popup window for Google linking:', popup);
+  popup.focus();
+  return popup;
+}
+
+const UserActions = () => {
+  useRenderCount('user-actions', 'ui');
+  const popupRef = useRef(null);
+  const navigate = useNavigate();
+  const user = useTpsSelector((state) => state.auth.user, { includeProps: ['token', 'username'] });
+  const [linkGoogleAccount] = useLazyLinkGoogleAccountQuery();
+
+  const handleLinkGoogleAccount = () => {
+    axiosBaseQueryUtil.configBehaviors = {
+      showErrorToast: true,
+    };
+    axiosBaseQueryUtil.message = {
+      error: 'Không thể tạo liên kết tài khoản Google. Vui lòng thử lại sau!'
+    };
+    axiosBaseQueryUtil.callbackfn = (data) => {
+      // Chuyển hướng người dùng đến URL liên kết Google
+      overlayPreloader()
+      if (data?.dt?.urlRedirect) {
+        popupRef.current = openWindowPopup(data.dt.urlRedirect);
+      }
+    }
+    linkGoogleAccount({ origin: window.location.origin, feRedirectUri: '' });
+  };
+
+  useEffect(() => {
+
+    const handleMessage = (event) => {
+      // Kiểm tra origin backend
+      if (event.origin !== BASE_URL.replace('/api', '')) return;
+      const data = event.data;
+      console.log('Received message from popup:', data);
+
+      if (data?.ec === 0) {
+        if (data?.em) toast.info(data.em);
+      } else {
+        console.error('Lỗi liên kết tài khoản Google:', data?.em);
+        toast.error('Lỗi liên kết tài khoản Google');
+      }
+      if (data?.dt?.feRedirectUri) navigate(data.dt.feRedirectUri);
+      if (typeof popupRef?.current?.close === 'function') popupRef.current.close();
+      closeOverlayPreloader();
+    };
+    window.addEventListener('message', handleMessage);
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    }
+  }, []);
+  return (
+    <>
+      {!user?.token ?
+        (<div className='tps-auth-buttons'>
+          <ul>
+            <li><Link to="/login">Đăng nhập</Link></li>
+            <li><Link to="/register">Đăng ký</Link></li>
+          </ul>
+        </div>)
+        :
+        (<OverlayTrigger
+          trigger="click"
+          placement="bottom-end"
+          rootClose
+          overlay={
+            <Popover className='no-style-popover'>
+              <ul className="user-popover-menu">
+                <li className="popover-item"><Link to="#">Tài khoản của tôi</Link></li>
+                <li className="popover-item"><Link to="#">Đơn mua</Link></li>
+                <li className="popover-item"><Link onClick={handleLinkGoogleAccount}>Liên kết tài khoản google</Link></li>
+                <li><hr /></li>
+                <li className="popover-item"><Link to="#">Đăng xuất</Link></li>
+              </ul>
+            </Popover>
+          }
+        >
+          <div className="tps-user-brief-info">
+            <img src={user?.avatarPath || unknownAvatar} alt="User Avatar" className='user-avatar' />
+            <div className='user-greeting'>
+              <p>Xin chào,</p>
+              <p>{user?.username || 'Bạn'}</p>
+            </div>
+          </div>
+        </OverlayTrigger>)}
+    </>
+  );
+};
+
+export default UserActions;

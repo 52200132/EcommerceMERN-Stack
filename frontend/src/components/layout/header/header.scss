@@ -11,7 +11,7 @@
   margin: 0 12px 0 auto;
 
   ul {
-    border: 1px solid #eee;
+    border: 1px solid var(--custom-gray);
     border-radius: 999px;
     list-style: none;
     display: flex;
@@ -63,19 +63,10 @@
   box-sizing: border-box;
   height: 45px;
   margin: 0 12px 0 auto;
-  border: 1px solid #eee;
+  border: 1px solid var(--custom-gray);
   border-radius: 999px;
   display: flex;
   align-items: center;
-
-  .dropdown-toggle {
-    display: flex;
-    padding: 0 10px 0 2px;
-
-    *:not(p) {
-      display: inline-block;
-    }
-  }
 
   .user-greeting {
     margin: 0 10px;
@@ -90,8 +81,9 @@
   img {
     width: 40px;
     height: 40px;
+    margin-left: 2px;
     border-radius: 50%;
-    border: 1px solid #eee;
+    border: 1px solid var(--custom-gray);
     object-fit: cover;
   }
 
@@ -108,42 +100,47 @@
     p {
       color: #fff;
     }
-
-    // > .dropdown-menu { // con trục tiếp
-    //   display: block;
-    //   position: absolute;
-    //   inset: 0px 0px auto auto;
-    //   margin: 0px;
-    //   transform: translate3d(-140.8px, 126.4px, 0px);
-    // }
   }
+}
 
-  .dropdown-toggle::after {
-    display: none;
-  }
+.no-style-popover {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
 
-  .dropdown-menu {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border: 1px solid #eee;
-    border-radius: 20px;
-    padding: 0;
-    overflow: hidden;
+.user-popover-menu {
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--custom-gray);
+  border-radius: 20px;
+  padding: 0;
+  position: relative;
+  top: -1px;
+  z-index: -1;
+  overflow: hidden;
+
+  .popover-item {
+    display: block;
+    padding: 10px 20px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
 
     a {
-      display: block;
-      padding: 10px 20px;
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 600;
+      color: #000;
+    }
 
-      &:hover {
-        background-color: #f5f5f5;
+    &:hover {
+      background-color: #f5f5f5;
+
+      a {
         color: #0167F3;
       }
     }
+  }
 
-    hr {
-      margin: 0;
-    }
+  hr {
+    margin: 0;
   }
 }

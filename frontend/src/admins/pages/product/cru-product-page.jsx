@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { Form, Button, Container, Card } from 'react-bootstrap';
 
-import { initialState, setImages, updateProduct } from 'redux-tps/features/index-features';
+import { authInitialState, setImages, updateProduct } from 'redux-tps/features/index-features';
 import { BasicInfo, MultiImageUpload, Variants } from 'admins/components/products';
 import { store } from 'redux-tps/store';
 import { useCreateProductMutation, useUpdateProductMutation } from 'services/product-api';
@@ -45,13 +45,13 @@ const CRUProduct = ({ action = 'create' }) => {
       console.log('createData', result);
 
       if (result.ec === 0) {
-        dispatch(updateProduct(initialState));
+        dispatch(updateProduct(authInitialState));
         backBtnRef.current && backBtnRef.current.click();
       }
     } else if (action === 'update') {
       const result = await updateProductM(product).unwrap();
       if (result.ec === 0) {
-        dispatch(updateProduct(initialState));
+        dispatch(updateProduct(authInitialState));
         backBtnRef.current && backBtnRef.current.click();
       }
     }

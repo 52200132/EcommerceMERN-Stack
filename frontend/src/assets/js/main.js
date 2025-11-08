@@ -21,7 +21,7 @@ import { axiosInstance } from "services/axios-config";
 						}
 					})
 					.catch((err) => {
-						console.error('Token invalid or expired', err);
+						console.error('Lỗi', err);
 						sessionStorage.removeItem('user');
 					});
 			}

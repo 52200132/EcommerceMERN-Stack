@@ -7,4 +7,3 @@ export * from './product-slice';
 export * from './modal-slice';
 export * from './component-action-slice';
 export * from './auth-slice';
-

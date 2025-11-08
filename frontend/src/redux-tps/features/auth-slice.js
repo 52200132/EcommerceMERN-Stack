@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit'
 
-const initialState = {
+export const authInitialState = {
   user: {
     _id: '',
     username: '',
@@ -12,14 +12,14 @@ const initialState = {
 
 const authSlice = createSlice({
   name: 'auth',
-  initialState,
+  initialState: authInitialState,
   reducers: {
     setCredentials: (state, action) => {
       Object.assign(state.user, action.payload);
       sessionStorage.setItem('user', JSON.stringify(state.user));
     },
     logout: (state) => {
-      state.user = initialState.user;
+      state.user = authInitialState.user;
       sessionStorage.removeItem('user');
     }
   },

@@ -2,12 +2,17 @@ import { Link } from 'react-router-dom';
 import { Button, Col, Form, Row } from 'react-bootstrap';
 import { MdOutlineReportGmailerrorred } from "react-icons/md";
 import { Controller } from 'react-hook-form';
-import { useState } from 'react';
 
 import Select from 'react-select';
 
 import { useRenderCount } from '#custom-hooks';
-import { useDistrictsOptions, useProvincesOptions, useRegisterForm, useWardsOptions } from '#component-hooks/use-register-hooks';
+import {
+  useAddressesHandlers,
+  useDistrictsOptions,
+  useProvincesOptions,
+  useRegisterForm,
+  useWardsOptions
+} from '#component-hooks/use-register-hooks';
 
 import './auth.scss';
 
@@ -26,26 +31,12 @@ const selectControlStyles = (hasError) => ({
 
 const RegisterPage = () => {
   useRenderCount('register-page', 'both');
-  const [provinceCode, setProvinceCode] = useState(null);
-  const [districtCode, setDistrictCode] = useState(null);
 
   const { provincesOptions, isLoading: provincesLoading } = useProvincesOptions();
   const { districtsOptions, isLoading: districtsLoading } = useDistrictsOptions(provinceCode);
   const { wardsOptions, isLoading: wardsLoading } = useWardsOptions(districtCode);
   const { register, onSubmit, setValue, control, formState: { errors } } = useRegisterForm();
-
-  const handleProvinceChange = (selectedOption, onChange) => {
-    onChange(selectedOption?.value);
-    setProvinceCode(selectedOption?.provinceCode);
-    setValue('Addresses.district', '');
-    setValue('Addresses.ward', '');
-  }
-
-  const handleDistrictChange = (selectedOption, onChange) => {
-    onChange(selectedOption?.value);
-    setDistrictCode(selectedOption?.districtCode);
-    setValue('Addresses.ward', '');
-  }
+  const { handleProvinceChange, handleDistrictChange, provinceCode, districtCode } = useAddressesHandlers(setValue);
 
   return (
     <div className="tps-register-container container">

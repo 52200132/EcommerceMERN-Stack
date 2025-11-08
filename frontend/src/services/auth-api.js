@@ -13,6 +13,13 @@ export const authApi = createApi({
       }),
     }),
 
+    linkGoogleAccount: build.query({
+      query: ({ origin, feRedirectUri = '' }) => ({
+        url: `/auth/google-link-account?origin=${origin}&feRedirectUri=${feRedirectUri}`,
+        method: 'GET',
+      }),
+    }),
+
     loginUser: build.mutation({
       query: (credentials) => ({
         url: '/auth/login',
@@ -24,6 +31,7 @@ export const authApi = createApi({
 })
 
 export const {
+  useLazyLinkGoogleAccountQuery,
   useRegisterUserMutation,
   useLoginUserMutation,
 } = authApi 

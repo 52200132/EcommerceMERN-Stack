@@ -1,7 +1,18 @@
-import User from "../models/User.js";
+import { google } from "googleapis";
+
+import CryptoJS from "crypto-js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+
 import transporter from "../mail.js";
+import User from "../models/User.js";
+import { token } from "morgan";
+
+const oauth2Client = new google.auth.OAuth2(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.BASE_URL + "/auth/google-link-account/callback"
+);
 
 const generateResetToken = (userId) => {
   return jwt.sign(
@@ -9,6 +20,12 @@ const generateResetToken = (userId) => {
     process.env.RESET_PASSWORD_SECRET,
     { expiresIn: "1d" } // 1 day for testing
   );
+};
+
+const generateToken = (_id) => {
+  return jwt.sign({ _id }, process.env.JWT_SECRET, {
+    expiresIn: "1d",
+  });
 };
 
 const resetPassword = async (req, res) => {
@@ -91,14 +108,6 @@ const handleResetPassword = async (req, res) => {
   }
 };
 
-
-// Generate JWT
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: "1d",
-  });
-};
-
 const handleRegister = async (req, res) => {
   try {
     const { username, email, password, Addresses } = req.body;
@@ -173,7 +182,8 @@ const handleLogin = async (req, res) => {
 export const getBasicProfile = async (req, res) => {
   try {
     if (req.user) {
-      const basicInfo = { username, email, isManager, _id, token } = req.user;
+      const { username, email, isManager, _id, token } = req.user;
+      const basicInfo = { username, email, isManager, _id, token };
       res.status(200).json({
         ec: 0,
         em: 'Lấy thông tin thành công',
@@ -186,5 +196,101 @@ export const getBasicProfile = async (req, res) => {
     res.status(500).json({ ec: 500, em: error.message });
   }
 };
+
+export const handleLinkGoogleAccount = async (req, res) => {
+  const { origin, feRedirectUri } = req.query;
+  try {
+    // mã hóa state
+    const payload = { token: req.user.token, feRedirectUri, origin };
+    const encryptedState = CryptoJS.AES.encrypt(JSON.stringify(payload), process.env.JWT_SECRET).toString();
+    const url = oauth2Client.generateAuthUrl({
+      access_type: 'offline', // để có refresh token
+      scope: [
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/userinfo.email',
+      ],
+      state: encryptedState,
+      prompt: 'consent',
+      // origin,
+      // feRedirectUri
+    });
+    res.status(200).json({
+      ec: 0,
+      em: 'Lấy URL liên kết thành công',
+      dt: { urlRedirect: url }
+    });
+  } catch (error) {
+    res.status(500).json({ ec: 500, em: error.message });
+  }
+};
+
+export const handleLinkGoogleAccountCallback = async (req, res) => {
+  /**
+   * @param {string} code - Mã code trả về từ Google
+   * @param {string} state - Mã hóa JWT token của user
+   * @param {string} feRedirectUri - URL FE để redirect sau khi liên kết thành công
+   * @param {string} origin - Origin của FE để postMessage về
+   */
+  const { code, state } = req.query;
+
+  try {
+    const decryptedState = CryptoJS.AES.decrypt(state, process.env.JWT_SECRET).toString(CryptoJS.enc.Utf8);
+    const payload = JSON.parse(decryptedState);
+    const { token, feRedirectUri, origin } = payload;
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decodedToken._id);
+    if (!user) {
+      return res.status(404).send({ ec: 404, em: 'Người dùng không tồn tại' });
+    }
+
+    const { tokens } = await oauth2Client.getToken(code);
+    oauth2Client.setCredentials(tokens);
+
+    const oauth2 = google.oauth2({
+      auth: oauth2Client,
+      version: "v2",
+    });
+    const { data } = await oauth2.userinfo.get();
+
+    const exists = user.Linked_accounts.find(
+      (acc) => acc.provider === 'google' && acc.provider_id === data.id
+    );
+    if (!exists) {
+      user.Linked_accounts.push({
+        provider: 'google',
+        provider_id: data.id,
+        linked_at: new Date(),
+        last_login: new Date(),
+      });
+      await user.save();
+    }
+    // data chứa info như name, email, picture
+    // console.log("User info:", data);
+    // res.send(`Welcome ${data.name}!`);
+    res.status(200).send(`
+      <h2>
+        Liên kết tài khoản Google thành công, lần sau bạn có thể đăng nhập bằng tài khoản Google.<br>
+        Hãy trải nghiệm và tiếp tục mua sắm bạn nhé.
+      </h2>
+      <script>
+        window.opener.postMessage(
+          ${JSON.stringify({ ec: 0, em: 'Liên kết tài khoản Google thành công', dt: { feRedirectUri } })},
+          "${origin}"
+        );
+      </script>
+    `)
+  } catch (err) {
+    console.error("Error in Google link callback:", err);
+    res.status(500).send(`
+      <h2>Có lỗi xảy ra khi liên kết tài khoản Google. Vui lòng thử lại sau!</h2>
+      <script>
+        window.opener.postMessage(
+          ${JSON.stringify({ ec: 500, em: err.message })},
+          "${origin}"
+        );
+      </script>
+    `);
+  }
+}
 
 export { handleRegister, handleLogin, handleResetPassword, resetPassword };

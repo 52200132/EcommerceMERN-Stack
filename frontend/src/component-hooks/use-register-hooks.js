@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'react-toastify';
@@ -104,4 +104,29 @@ export const useWardsOptions = (districtCode) => {
   })) || []];
 
   return { wardsOptions, isLoading };
+}
+
+export const useAddressesHandlers = (setValue) => {
+  const [provinceCode, setProvinceCode] = useState(null);
+  const [districtCode, setDistrictCode] = useState(null);
+
+  const handleProvinceChange = (selectedOption, onChange) => {
+    onChange(selectedOption?.value);
+    setProvinceCode(selectedOption?.provinceCode);
+    setValue('Addresses.district', '');
+    setValue('Addresses.ward', '');
+  }
+
+  const handleDistrictChange = (selectedOption, onChange) => {
+    onChange(selectedOption?.value);
+    setDistrictCode(selectedOption?.districtCode);
+    setValue('Addresses.ward', '');
+  }
+
+  return {
+    provinceCode,
+    districtCode,
+    handleProvinceChange,
+    handleDistrictChange
+  };
 }

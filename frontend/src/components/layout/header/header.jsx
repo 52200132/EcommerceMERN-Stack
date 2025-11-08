@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Container, Row, Col } from 'react-bootstrap';
 import HeaderBottom from './header-bottom';
-import UserBriefInfo from './user-bief-info';
+import UserActions from './user-actions';
 import Hotline from '../../common/Hotline';
 import FollowUs from '../../common/FollowUs';
 
@@ -103,7 +103,7 @@ const Header = () => {
             <Col lg={4} md={2} xs={5}>
               <div className="middle-right-area">
                 
-                <UserBriefInfo />
+                <UserActions />
                 
                 <div className="navbar-cart">
                   <div className="wishlist">

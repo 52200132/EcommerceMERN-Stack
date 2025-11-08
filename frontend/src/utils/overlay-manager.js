@@ -112,6 +112,14 @@ export const overlayPreloader = (children) => {
   };
 };
 
+export const closeOverlayPreloader = () => {
+  if (preloaderRoot) {
+    preloaderRoot.render(null);
+    preloaderContainer.style.display = 'none';
+    preloaderContainer.style.opacity = '0';
+  }
+}
+
 /**
  * Đóng tất cả overlay hiện tại
  */
@@ -120,8 +128,5 @@ export const closeOverlays = () => {
     overlayRoot.render(null);
     document.body.style.overflow = '';
   }
-  if (preloaderRoot) {
-    preloaderRoot.render(null);
-    preloaderContainer.style = {};
-  }
+  closeOverlayPreloader();
 };
