@@ -2,8 +2,7 @@ import passport from "passport";
 import express from "express";
 
 import { handleRegister, handleLogin, resetPassword, handleResetPassword, getBasicProfile, handleLinkGoogleAccount, handleLinkGoogleAccountCallback, handleGoogleLogin, handleGoogleLoginCallback } from "../controller/authController.js";
-import { cacheRoute } from "#middleware/cache.js";
-import { protect } from "../middleware/auth.js";
+import { cacheRoute, protect } from "#middleware";
 
 
 

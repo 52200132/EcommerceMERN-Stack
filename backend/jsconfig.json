@@ -2,10 +2,14 @@
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {
+      "#controller": ["controller/index-controller.js"],
       "#controller/*": ["controller/*"],
+      "#middleware": ["middleware/index-middleware.js"],
       "#middleware/*": ["middleware/*"],
-      "#tps-routes": ["routes/index.js"],
-      "#utils": ["utils/index.js"]
+      "#tps-routes": ["routes/index-routes.js"],
+      "#tps-routes/*": ["routes/*"],
+      "#utils": ["utils/index-utils.js"],
+      "#utils/*": ["utils/*"]
     }
   }
 }

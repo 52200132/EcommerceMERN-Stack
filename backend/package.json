@@ -42,13 +42,13 @@
     "nodemon": "^3.0.1"
   },
   "imports": {
-    "#tps-routes": "./routes/index.js",
+    "#tps-routes": "./routes/index-routes.js",
     "#tps-routes/*": "./routes/*",
-    "#controller": "./controller/index.js",
+    "#controller": "./controller/index-controller.js",
     "#controller/*": "./controller/*",
-    "#middleware": "./middleware/index.js",
+    "#middleware": "./middleware/index-middleware.js",
     "#middleware/*": "./middleware/*",
-    "#utils": "./utils/index.js",
+    "#utils": "./utils/index-utils.js",
     "#utils/*": "./utils/*"
   }
 }

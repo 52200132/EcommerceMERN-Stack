@@ -13,7 +13,8 @@ import {
   userRoutes,
   discountCodeRoutes,
   commentRoutes,
-  addressRoutes
+  addressRoutes,
+  ratingRoutes
 } from "#tps-routes";
 import { setUpConsoleLogging, setUpWriteStream } from "#utils";
 
