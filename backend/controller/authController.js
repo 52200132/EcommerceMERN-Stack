@@ -142,9 +142,7 @@ const handleRegister = async (req, res) => {
       username,
       email,
       password: hashedPassword,
-      Addresses,
-      Carts: [],
-      Linked_accounts: []
+      Addresses
     });
 
     if (user) {
@@ -388,5 +386,6 @@ export const handleGoogleLoginCallback = async (req, res) => {
     `);
   }
 }
+// TODO: Sau khi liên kết tài khoản GG, lấy thêm thông tin profile từ GG để cập nhật vào user (ảnh đại diện)
 
 export { handleRegister, handleLogin, handleResetPassword, resetPassword };

@@ -58,10 +58,14 @@ const userSchema = new Schema({
     required: true, 
     minlength: [8, 'Password must be at least 8 characters'] 
   },
+  image: { type: String, default: null },
+  gender: { type: String, enum: ['Nam', 'Nữ'], default: undefined },
+  points: { type: Number, default: 0 },
   isManager: { type: Boolean, default: false },
-  Addresses: [addressSchema],
-  Carts: [cartSchema],
-  Linked_accounts: [linkedAccountSchema],
+  isActive: { type: Boolean, default: true },
+  Addresses: { type: [addressSchema], required: true },
+  Carts: { type: [cartSchema], default: [] },
+  Linked_accounts: { type: [linkedAccountSchema], default: [] },
 }, { timestamps: true });
 
 //  Export 

@@ -1,15 +1,15 @@
 import express from 'express';
 import Product from '../models/Product.js';
 import { protect, admin } from '../middleware/auth.js';
-import { getArrangeChar, getArrangePrice, createWarehouseByProductId, createVariantByProductId, updateWarehouseById, getAllWarehouseByProduct, getProductById, deleteProductById, createProduct, updateProduct, getAllProducts, deleteVariantBySku, updateVariantBySku } from '../controller/productController.js';
+import { getArrangeAlphabet, getProductByCategory, getArrangePrice, createWarehouseByProductId, createVariantByProductId, updateWarehouseById, getAllWarehouseByProduct, getProductById, deleteProductById, createProduct, updateProduct, getAllProducts, deleteVariantBySku, updateVariantBySku } from '../controller/productController.js';
 
 const router = express.Router();
 
 // Sắp xếp sản phẩm A-Z, Z-A
 // @desc    Arrange all products A-Z, Z-A
-// @route   GET /api/products/order_char
+// @route   GET /api/products/order_alphabet
 // @access  Public
-router.get('/order_char', getArrangeChar);
+router.get('/order_alphabet', getArrangeAlphabet);
 
 // Sắp xếp sản phẩm theo giá thấp đến cao, cao đến thấp
 // @desc    Arrange all products Price Low to High, Price High to Low
@@ -37,16 +37,9 @@ router.get('/top', async (req, res) => {
 });
 
 // @desc    Get product categories
-// @route   GET /api/products/categories
+// @route   GET /api/products/category/:categoryId
 // @access  Public
-router.get('/categories', async (req, res) => {
-  try {
-    const categories = await Product.distinct('category');
-    res.json(categories);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+router.get('/category/:categoryId', getProductByCategory);
 
 // @desc    Fetch all products
 // @route   GET /api/products

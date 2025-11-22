@@ -48,4 +48,9 @@ const getOrderById = async (req,res) => {
     }
 };
 
+// TODO: Xem lịch sử mua hàng (yêu cầu đăng nhập)
+// TODO: Xem chi tiết mua hàng (yêu cầu đăng nhập)
+// TODO: Thanh toán đơn hàng (tích hợp cổng thanh toán)
+// TODO: Email thông báo sau khi tạo đơn hàng
+// TODO: Quản lý đơn hàng: Quản trị viên có thể xem, cập nhật và xử lý đơn hàng (ví dụ: thay đổi trạng thái từ đang chờ xử lý sang đã xác nhận).
 export { createOder, getOrderById };

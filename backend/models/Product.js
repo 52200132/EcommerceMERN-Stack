@@ -51,6 +51,7 @@ const productSchema = new Schema({
   product_name: { type: String, required: true },
   brand_id: { type: Schema.Types.ObjectId, ref: "Brand", required: true },
   hashtag: { type: String },
+  category_id: { type: Schema.Types.ObjectId, ref: "Category", required: true },
   quantity_sold: { type: Number, min: 0, default: 0 },
   price_min: { type: Number, min: 0 },
   price_max: { type: Number, min: 0 },
