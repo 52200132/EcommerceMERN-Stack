@@ -12,9 +12,6 @@ export const createBrand = async (req, res) => {
 	}
 };
 
-/**
- * Lấy tất cả thương hiệu có trong database
- */
 export const getAllBrands = async (req, res) => {
 	try {
 		const brands = await Brand.find();

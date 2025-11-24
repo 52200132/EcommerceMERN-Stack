@@ -6,9 +6,8 @@ const commentSchema = new Schema({
   product_id: { type: Schema.Types.ObjectId, ref: "Product", required: true },
   user_id: { type: Schema.Types.ObjectId, ref: "User", default: null },
   user_displayed_name: { type: String, required: true, trim: true },
-  content: { type: String, required: true, trim: true },
-  created_at: { type: Date, default: Date.now }
-});
+  content: { type: String, required: true, trim: true }
+}, { timestamps: true });
 
 const Comment = mongoose.models.Comment || model("Comment", commentSchema);
 

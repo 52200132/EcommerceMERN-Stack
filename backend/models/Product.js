@@ -61,10 +61,7 @@ const productSchema = new Schema({
   Warehouses: [warehouseSchema],
   Variants: [variantSchema],
   is_active: { type: Boolean, required: true, default: true },
-  created_at: { type: Date, default: Date.now },
-  updated_at: { type: Date, default: Date.now },
-}, { timestamps: false }); 
-// Không dùng timestamps vì đã có created_at, updated_at
+}, { timestamps: true }); 
 
 // Hàm tính lại stock cho các variant dựa trên thông tin trong Warehouses
 productSchema.methods.recalculateStock = function() {

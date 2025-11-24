@@ -58,22 +58,19 @@ export const updatePassword = async (req, res) => {
   }
 };
 
+// Tạo user tạm để gán đơn hàng
 export const createUserTemp = async (req, res) => {
   try {
+    const { username , email, Addresses } = req.body;
     const user = new User({
-      username: "User" + Date.now(),
+      username: username,
       password: "12345678",
-      email: req.body.email,
-      Addresses: req.body.Addresses
+      email: email,
+      Addresses: Addresses
     });
     
     const createdUser = await user.save();
-    res.status(201).json({ ec: 201, me: "Tạo user tạm thành công", dt: {
-      _id: createdUser._id,
-      username: createdUser.username,
-      email: createdUser.email,
-      Addresses: createdUser.Addresses
-    }});
+    res.status(201).json({ ec: 201, me: "Tạo user tạm thành công", dt: user});
   } catch (error) {
     res.status(500).json({ ec: 500, me: error.message });
   }
