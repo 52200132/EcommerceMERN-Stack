@@ -12,9 +12,9 @@ const invoiceSchema = new Schema({
   total_amount: { type: Number, min: 0, required: true },
   discount: { type: Number, min: 0, required: true, default: 0 },
   shipping_fee: { type: Number, min: 0, required: true, default: 0 },
-  grand_total: { type: Number, min: 0, required: true },
+  grand_total: { type: Number, min: 0, required: true }
     // grand_total = total_amount - discount + shipping_fee
-});
+}, { timestamps: true });
 
 // Dùng pre-save hook để tự tính grand_total trước khi lưu:
 invoiceSchema.pre("save", function (next) {

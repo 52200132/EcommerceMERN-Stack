@@ -51,6 +51,7 @@ const productSchema = new Schema({
   product_name: { type: String, required: true },
   brand_id: { type: Schema.Types.ObjectId, ref: "Brand", required: true },
   hashtag: { type: String },
+  category_id: { type: Schema.Types.ObjectId, ref: "Category", required: true },
   quantity_sold: { type: Number, min: 0, default: 0 },
   price_min: { type: Number, min: 0 },
   price_max: { type: Number, min: 0 },
@@ -60,10 +61,7 @@ const productSchema = new Schema({
   Warehouses: [warehouseSchema],
   Variants: [variantSchema],
   is_active: { type: Boolean, required: true, default: true },
-  created_at: { type: Date, default: Date.now },
-  updated_at: { type: Date, default: Date.now },
-}, { timestamps: false }); 
-// Không dùng timestamps vì đã có created_at, updated_at
+}, { timestamps: true }); 
 
 // Hàm tính lại stock cho các variant dựa trên thông tin trong Warehouses
 productSchema.methods.recalculateStock = function() {

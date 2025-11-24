@@ -133,6 +133,24 @@ const handleRegister = async (req, res) => {
       return res.status(400).json({ ec: 400, em: "Email đã được sử dụng" });
     }
 
+    if (!password){
+      // Create user temp (no set password)
+      const user = await User.create({
+        username,
+        email,
+        Addresses
+      });
+      return res.status(201).json({ ec: 0, em: 'Đăng ký user thành công (no set password)',
+        dt: {
+          _id: user._id,
+          username: user.username,
+          email: user.email,
+          isManager: user.isManager,
+          token: generateToken(user._id), // trả về token khi đăng ký thành công
+        }
+      });
+    }
+    
     // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -142,26 +160,18 @@ const handleRegister = async (req, res) => {
       username,
       email,
       password: hashedPassword,
-      Addresses,
-      Carts: [],
-      Linked_accounts: []
+      Addresses
     });
 
-    if (user) {
-      res.status(201).json({
-        ec: 0,
-        em: 'Đăng ký thành công',
-        dt: {
-          _id: user._id,
+    return res.status(201).json({ ec: 0, em: 'Đăng ký user thành công (set password)',
+      dt: {
+        _id: user._id,
           username: user.username,
           email: user.email,
           isManager: user.isManager,
           token: generateToken(user._id), // trả về token khi đăng ký thành công
         }
       });
-    } else {
-      res.status(400).json({ ec: 400, em: "Dữ liệu đăng ký không hợp lệ" });
-    }
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
   }
@@ -388,5 +398,6 @@ export const handleGoogleLoginCallback = async (req, res) => {
     `);
   }
 }
+// TODO: Sau khi liên kết tài khoản GG, lấy thêm thông tin profile từ GG để cập nhật vào user (ảnh đại diện)
 
 export { handleRegister, handleLogin, handleResetPassword, resetPassword };

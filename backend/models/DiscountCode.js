@@ -14,7 +14,9 @@ const discountCodeSchema = new Schema({
     required: true,
     min: [0, 'Giới hạn số lần sử dụng không được nhỏ hơn 0'],
     max: [10, 'Giới hạn số lần sử dụng không được lớn hơn 10']
-  }
+  },
+  condition: { type: Number, required: true, min: 0},
+  discount: { type: Number, required: true, min: [1000, 'Giá trị giảm giá không được nhỏ hơn 1000'] },
 }, { timestamps: true });
 
 export default mongoose.models.DiscountCode || model("DiscountCode", discountCodeSchema);

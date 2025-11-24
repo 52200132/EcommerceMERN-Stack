@@ -1,7 +1,7 @@
 import express from 'express';
 import User from '../models/User.js';
 import { protect, admin } from '../middleware/auth.js';
-import {getProfile, updateProfile, updatePassword, createUserTemp, getAllCarts, getAllAddresses, getALlUsers, getUserById, addProductToCart, deleteCartItem, updateCartItem } from '../controller/userController.js'
+import {getProfile, updateProfile, updatePassword, createUserTemp, getAllCarts, getAllAddresses, getAllUsers, getUserById, addProductToCart, deleteCartItem, updateCartItem, addAddress, deleteAddress, updateAddress, updateUserById } from '../controller/userController.js'
 
 const router = express.Router();
 
@@ -25,39 +25,59 @@ router.put('/profile/password', protect, updatePassword); // đã check ok
 // @access  Public/User
 router.post('/temp', createUserTemp); // đã check ok
 
-// @desc    Add product to cart
-// @route   POST /api/users/cart
-// @access  Public/User
-router.post('/cart', protect, addProductToCart);
-
-// @desc    Update cart item
-// @route   PUT /api/users/cart
-// @access  Public/User
-router.put('/cart', protect, updateCartItem); // thêm id product rồi update
-
-// @desc    Delete cart item
-// @route   DELETE /api/users/cart
-// @access  Public/User
-router.delete('/cart/:product_id', protect, deleteCartItem);  // thêm id product rồi xóa
-
 // @desc    Get all carts by user
 // @route   GET /api/users/cart
 // @access  Public/User
 router.get('/cart', protect, getAllCarts); // đã check ok
 
+// @desc    Add product to cart
+// @route   POST /api/users/cart
+// @access  Public/User
+router.post('/cart', protect, addProductToCart); // đã check ok
+
+// @desc    Update cart item
+// @route   PUT /api/users/cart/:product_id?sku=<sku>
+// @access  Public/User
+router.put('/cart/:product_id', protect, updateCartItem); // đã check ok
+
+// @desc    Delete cart item
+// @route   DELETE /api/users/cart/:product_id?sku=<sku>
+// @access  Public/User
+router.delete('/cart/:product_id', protect, deleteCartItem); // đã check ok
+
 // @desc    Get all addresses by user
 // @route   GET /api/users/addresses
-// @access  Public/User
-router.get('/address', protect, getAllAddresses); // thêm id của address rồi xóa, sửa
+// @access  Private/User
+router.get('/addresses', protect, getAllAddresses); // đã check ok
+
+// @desc    Add an address by user
+// @route   POST /api/users/addresses
+// @access  Private/User
+router.post('/addresses', protect, addAddress); // đã check ok
+
+// @desc    Update an address by user
+// @route   PUT /api/users/addresses/:address_id
+// @access  Private/User
+router.put('/addresses/:address_id', protect, updateAddress); // đã check ok
+
+// @desc    Delete an address by user
+// @route   DELETE /api/users/addresses/:address_id
+// @access  Private/User
+router.delete('/addresses/:address_id', protect, deleteAddress); // đã check ok
 
 // @desc    Get all users
 // @route   GET /api/users
 // @access  Private/Admin
-router.get('/', protect, admin, getALlUsers); // đã check ok
+router.get('/', protect, admin, getAllUsers); // đã check ok
 
 // @desc    Get user by ID
-// @route   GET /api/users/:id
+// @route   GET /api/users/:user_id
 // @access  Private/Admin
-router.get('/:id', protect, admin, getUserById); // đã check ok
+router.get('/:user_id', protect, admin, getUserById); // đã check ok
+
+// @desc    Update user by ID
+// @route   PUT /api/users/:user_id
+// @access  Private/Admin
+router.put('/:user_id', protect, admin, updateUserById);
 
 export default router;
