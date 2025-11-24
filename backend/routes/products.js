@@ -1,7 +1,7 @@
 import express from 'express';
 import Product from '../models/Product.js';
 import { protect, admin } from '../middleware/auth.js';
-import { getProductInfoForOrder, getArrangeAlphabet, getProductByCategory, getArrangePrice, createWarehouseByProductId, createVariantByProductId, updateWarehouseById, getAllWarehouseByProduct, getProductById, deleteProductById, createProduct, updateProduct, getAllProducts, deleteVariantBySku, updateVariantBySku } from '../controller/productController.js';
+import { getProductsInfoForOrder, getArrangeAlphabet, getProductByCategory, getArrangePrice, createWarehouseByProductId, createVariantByProductId, updateWarehouseById, getAllWarehouseByProduct, getProductById, deleteProductById, createProduct, updateProduct, getAllProducts, deleteVariantBySku, updateVariantBySku } from '../controller/productController.js';
 
 const router = express.Router();
 
@@ -197,8 +197,8 @@ router.post('/:id/reviews', protect, async (req, res) => {
 });
 
 // @desc    Get product info for order
-// @route   GET /api/products/info_for_order/:product_id?sku=<sku>&quantity=<quantity>
+// @route   Post /api/products/info_for_order/bulk
 // @access  Public
-router.get('/info_for_order/:product_id', getProductInfoForOrder);
+router.post('/info_for_order/bulk', getProductsInfoForOrder);
 
 export default router;
