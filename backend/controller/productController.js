@@ -293,31 +293,33 @@ const updateWarehouseById = async (req, res) => {
 };
 
 // Product information needs to create Order
-export const getProductInfoForOrder = async (req, res) => {
+export const getProductsInfoForOrder = async (req, res) => {
   try {
-    const { product_id } = req.params;
-    const { sku, qty } = req.query;
-    const product = await Product.findById(product_id);
-    if (product) {
-      const variant = product.Variants.find(variant => variant.sku === sku);
-      if (variant) {
-        const attributes_info = variant.Attributes.filter(attr => attr.type === 'appearance');
-        const variant_info = {
-          sku: variant.sku,
-          price: variant.price,
-          attributes: attributes_info
+    const { items } = req.body; // [{ product_id, sku, qty }, ...]
+    let results = [];
+    for (const item of items) {
+      const { product_id, sku, qty } = item;
+      const product = await Product.findById(product_id);
+      if (product) {
+        const variant = product.Variants.find(variant => variant.sku === sku);
+        if (variant) {
+          const attributes_info = variant.Attributes.filter(attr => attr.type === 'appearance');
+          const variant_info = {
+            sku: variant.sku,
+            price: variant.price,
+            attributes: attributes_info
+          }
+          const result_item = {
+            product_id: product._id,
+            product_name: product.product_name,
+            quantity: parseInt(qty, 10) || 1,
+            variant: variant_info
+          };
+          results.push(result_item);
         }
-        const item = {
-          product_id: product._id,
-          product_name: product.product_name,
-          quantity: parseInt(qty, 10) || 1,
-          variant: variant_info
-        };
-        return res.json({ ec: 0, em: 'Get product info for order successfully', dt: item });
       }
-      return res.status(404).json({ ec: 404, em: 'Variant not found' });
     }
-    res.status(404).json({ ec: 404, em: 'Product not found' });
+    return res.json({ ec: 0, em: 'Get products info for order successfully', dt: results });
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
   }

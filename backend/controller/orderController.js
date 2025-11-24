@@ -5,53 +5,115 @@ import User from "../models/User.js";
 // User functions
 export const createOrder = async (req, res) => {
     try {
-        const user_id = req.user._id;
+
         const {
-            Items, // mảng các item trong đơn hàng frontend xử lý truyền vào
+            Items, // mảng các item trong đơn hàng frontend xử lý truyền vào gọi Post /api/products/info_for_order/bulk lấy Items
             discount_code,
             points_used,
             shipping_address_id, // truyền id của địa chỉ đã lưu trong user
             shipment,
             payment_method,
-            notes
+            notes,
+
+            // Cho khách ko đăng nhập
+            username,
+            email,
+            Addresses
         } = req.body;
-        // Tiền xử lý dữ liệu trước khi tạo đơn hàng
 
-        // lấy địa chỉ giao hàng từ user
-        const shipping_address = req.user.Addresses.id(shipping_address_id);
+        // Kiểm tra đăng nhập
+        let token;
+        if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+            try {
+                token = req.headers.authorization.split(' ')[1];
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                const user = await User.findById(decoded.id).select('-password');
+                console.log("Token", token);
+                console.log("User", user);
 
-        // tính tổng tiền hàng
-        const total_amount = Items.reduce((sum, item) => {
-            return sum + item.variant.price * item.quantity;
-        }, 0);
+                // Xử lý tạo đơn hàng cho user đã đăng nhập
+                const user_id = user._id;
 
-        // cập nhật điểm người dùng nếu có sử dụng điểm
-        const user = await User.findById(user_id).select('points');
-        user.points = Math.max(0, user.points - points_used);
-        await user.save();
+                // lấy địa chỉ giao hàng từ user
+                const shipping_address = user.Addresses.id(shipping_address_id);
 
-        // tính giảm giá từ mã giảm giá nếu có
-        const Dcode = await DiscountCode.findOne({ code: discount_code });
-        const discount = Dcode ? Dcode.discount : 0;
+                // cập nhật điểm người dùng nếu có sử dụng điểm
+                user.points = Math.max(0, user.points - points_used);
+                await user.save();
 
-        // tính grand_total
-        const grand_total = Math.max(0, total_amount + shipment.fee - discount - points_used * 1000);
+                // tính tổng tiền hàng
+                const total_amount = Items.reduce((sum, item) => {
+                    return sum + item.variant.price * item.quantity;
+                }, 0);
 
-        const newOrder = await new Order({
-            user_id,
-            Items,
-            discount_code,
-            points_used,
-            shipping_address,
-            total_amount,
-            discount,
-            grand_total,
-            shipment,
-            payment_method,
-            notes
-        });
-        await newOrder.save();
-        res.status(201).json({ ec: 0, em: "Order created successfully", dt: newOrder });
+                // tính giảm giá từ mã giảm giá nếu có
+                const Dcode = await DiscountCode.findOne({ code: discount_code });
+                const discount = Dcode ? Dcode.discount : 0;
+
+                // tính grand_total
+                const grand_total = Math.max(0, total_amount + shipment.fee - discount - points_used * 1000);
+
+                const newOrder = await new Order({
+                    user_id,
+                    Items,
+                    discount_code,
+                    points_used,
+                    shipping_address,
+                    total_amount,
+                    discount,
+                    grand_total,
+                    shipment,
+                    payment_method,
+                    notes
+                });
+                await newOrder.save();
+
+                return res.status(201).json({ ec: 0, em: "Order created successfully", dt: newOrder });
+            } catch (authError) {
+                console.log("Invalid token, treating as guest");
+            }
+        }
+        // Đơn hàng cho khách không đăng nhập
+        else {
+            // Kiểm tra nếu email đã được tạo tài khoản
+            const userExists = await User.findOne({ email });
+            if (userExists) {
+                return res.status(400).json({ ec: 400, em: "Email đã tạo tài khoản, xin hãy đăng nhập" });
+            }
+            // Tạo user tạm để gán đơn hàng
+            const user = await User.create({
+                username,
+                email,
+                Addresses
+            });
+            // tính tổng tiền hàng
+            const total_amount = Items.reduce((sum, item) => {
+                return sum + item.variant.price * item.quantity;
+            }, 0);
+
+            // tính giảm giá từ mã giảm giá nếu có
+            const Dcode = await DiscountCode.findOne({ code: discount_code });
+            const discount = Dcode ? Dcode.discount : 0;
+
+            // tính grand_total
+            const grand_total = Math.max(0, total_amount + shipment.fee - discount);
+
+            const newOrder = await new Order({
+                user_id: user._id,
+                Items,
+                discount_code,
+                points_used: 0, // khách ko đăng nhập ko dùng điểm
+                shipping_address: user.Addresses[0], // lấy địa chỉ đầu tiên
+                total_amount,
+                discount,
+                grand_total,
+                shipment,
+                payment_method,
+                notes
+            });
+            await newOrder.save();
+            res.status(201).json({ ec: 0, em: "Order created successfully", dt: newOrder });
+        }
     } catch (error) {
         res.status(500).json({ ec: 500, em: error.message });
     }
