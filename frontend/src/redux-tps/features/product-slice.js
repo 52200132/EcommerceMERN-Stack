@@ -1,6 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { max, min } from 'lodash';
-// import { current } from '@reduxjs/toolkit';
 
 export const productInits = {
   attribute: {
@@ -112,6 +111,9 @@ const productSlice = createSlice({
     updateProduct: (state, action) => {
       Object.assign(state, action.payload)
     },
+    clearProductState: (state) => {
+      Object.assign(state, initialState)
+    },
     ...variantReducers,
     ...attributeReducers,
   },
@@ -156,7 +158,7 @@ const triggerSetPriceMaxPriceMin = (state) => {
 
 export const {
   // product actions
-  setImages, setValues, updateProduct,
+  setImages, setValues, updateProduct, clearProductState,
   // variant actions
   setImagesVariant, addVariant, deleteVariant, updateVariantDraft,
   // attribute actions

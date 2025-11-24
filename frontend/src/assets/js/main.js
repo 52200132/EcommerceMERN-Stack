@@ -39,9 +39,6 @@ import { axiosInstance } from "services/axios-config";
 	Sticky
 	======================================= */
 	window.onscroll = function () {
-		// var header_navbar = document.querySelector(".navbar-area");
-		// var sticky = header_navbar.offsetTop;
-
 		// show or hide the back-top-top button
 		var backToTo = document.querySelector(".scroll-top");
 		if (document.body.scrollTop > 50 || document.documentElement.scrollTop > 50) {
@@ -50,10 +47,4 @@ import { axiosInstance } from "services/axios-config";
 			backToTo.style.display = "none";
 		}
 	};
-
-	//===== mobile-menu-btn ==> Đã đổi thành dùng trong react component rồi
-	// let navbarToggler = document.querySelector(".mobile-menu-btn");
-	// navbarToggler?.addEventListener('click', function () {
-	//     navbarToggler.classList.toggle("active");
-	// });
 })();

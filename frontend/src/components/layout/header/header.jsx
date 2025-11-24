@@ -6,8 +6,47 @@ import Hotline from '../../common/Hotline';
 import FollowUs from '../../common/FollowUs';
 
 import './header.scss';
+import CategoriesBtn from './categories-btn';
+import { useEffect, useRef } from 'react';
 
 const Header = () => {
+  const headerMiddleRef = useRef(null);
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    const navbar = headerMiddleRef.current;
+    const navbarSekeleton = document.createElement("div");
+    const HIDE_THRESHOLD = 200;
+
+    const onScroll = () => {
+      navbarSekeleton.style.width = `${navbar?.clientWidth}px`;
+      navbarSekeleton.style.height = `${navbar?.clientHeight}px`;
+      const currentScroll = window.scrollY;
+
+      if (currentScroll > 100) {
+        navbar.classList.add("navbar--scrolled", 'position-fixed');
+        if (!navbar.parentNode.contains(navbarSekeleton)) {
+          navbar.parentNode.insertBefore(navbarSekeleton, navbar);
+        }
+      } else {
+        navbar.classList.remove("navbar--scrolled", "navbar--fixed", 'position-fixed');
+        navbar.parentNode.contains(navbarSekeleton) && navbar.parentNode.removeChild(navbarSekeleton);
+        return;
+      }
+
+      if (currentScroll > lastScrollY && currentScroll > HIDE_THRESHOLD) {
+        navbar.classList.add("navbar--hidden");
+        navbar.classList.remove("navbar--fixed");
+      } else {
+        navbar.classList.remove("navbar--hidden");
+        navbar.classList.add("navbar--fixed");
+      }
+
+      lastScrollY = currentScroll;
+    };
+
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
     <header className="header navbar-area header-container">
@@ -62,9 +101,9 @@ const Header = () => {
       {/* End Topbar */}
 
       {/* Start Header Middle */}
-      <div className="header-middle">
+      <div ref={headerMiddleRef} className="navbar header-middle">
         <Container>
-          <Row className="align-items-center">
+          <Row className="align-items-center w-100">
             <Col lg={3} md={3} xs={7}>
               {/* Start Header Logo */}
               <Link className="navbar-brand" to="/">
@@ -72,23 +111,12 @@ const Header = () => {
               </Link>
               {/* End Header Logo */}
             </Col>
-            <Col lg={5} md={7} className="d-xs-none">
+            <Col lg={5} md={6} className="d-xs-none">
               {/* Start Main Menu Search */}
               <div className="main-menu-search">
                 {/* navbar search start */}
                 <div className="navbar-search search-style-5">
-                  <div className="search-select">
-                    <div className="select-position">
-                      <select id="select1">
-                        <option defaultValue>All</option>
-                        <option value="1">Electronics</option>
-                        <option value="2">Fashion</option>
-                        <option value="3">Accessories</option>
-                        <option value="4">Books</option>
-                        <option value="5">Sports</option>
-                      </select>
-                    </div>
-                  </div>
+                  {/* <CategoriesBtn /> */}
                   <div className="search-input">
                     <input type="text" placeholder="Search" />
                   </div>
@@ -100,11 +128,11 @@ const Header = () => {
               </div>
               {/* End Main Menu Search */}
             </Col>
-            <Col lg={4} md={2} xs={5}>
+            <Col lg={4} md={3} xs={5}>
               <div className="middle-right-area">
-                
+
                 <UserActions />
-                
+
                 <div className="navbar-cart">
                   <div className="wishlist">
                     <Link to="/wishlist">

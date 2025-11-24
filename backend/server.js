@@ -14,9 +14,10 @@ import {
   discountCodeRoutes,
   commentRoutes,
   addressRoutes,
-  ratingRoutes
+  ratingRoutes,
+  uploadRoutes
 } from "#tps-routes";
-import { setUpConsoleLogging, setUpWriteStream } from "#utils";
+import { setUpConsoleLogging, setUpWriteStream, uploadConfig } from "#utils";
 
 // Load environment variables
 dotenv.config();
@@ -43,6 +44,9 @@ app.options("*", cors(corsOptions)); // để preflight cũng có cùng header
 // Passport middleware
 app.use(passport.initialize());
 
+// Serve optimized uploads as static assets
+app.use("/uploads", express.static(uploadConfig.directories.root));
+
 // MongoDB connection
 const connectDB = async () => {
   try {
@@ -68,6 +72,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/ratings", ratingRoutes);
+app.use("/api/upload", uploadRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

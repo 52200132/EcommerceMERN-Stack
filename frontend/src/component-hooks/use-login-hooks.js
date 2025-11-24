@@ -82,6 +82,7 @@ export const useLoginHandlers = () => {
   const handleGoogleLogin = () => {
     axiosBaseQueryUtil.configBehaviors = {
       showErrorToast: true,
+      autoCloseOverlay: false,
     };
     axiosBaseQueryUtil.message = {
       error: 'Không thể đăng nhập bằng Google. Vui lòng thử lại sau!'

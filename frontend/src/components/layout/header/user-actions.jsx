@@ -34,7 +34,7 @@ const openWindowPopup = (url) => {
 }
 
 const UserActions = () => {
-  useRenderCount('user-actions', 'ui');
+  // useRenderCount('user-actions', 'ui');
   const dispatch = useDispatch();
   const popupRef = useRef(null);
   const navigate = useNavigate();
@@ -84,14 +84,16 @@ const UserActions = () => {
     return () => {
       window.removeEventListener('message', handleMessage);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
   return (
     <>
       {!user?.token ?
         (<div className='tps-auth-buttons'>
           <ul>
-            <li><Link to="/login">Đăng nhập</Link></li>
-            <li><Link to="/register">Đăng ký</Link></li>
+            <li><a href="/login">Đăng nhập</a></li>
+            <li><a href="/register">Đăng ký</a></li>
           </ul>
         </div>)
         :
@@ -112,8 +114,8 @@ const UserActions = () => {
           }
         >
           <div className="tps-user-brief-info">
-            <img src={user?.avatarPath || unknownAvatar} alt="User Avatar" className='user-avatar' />
-            <div className='user-greeting'>
+            <img title={`Xin chào ${user?.username || 'Bạn'}`} src={user?.avatarPath || unknownAvatar} alt="User Avatar" className='user-avatar' />
+            <div className='user-greeting d-none d-lg-block'>
               <p>Xin chào,</p>
               <p>{user?.username || 'Bạn'}</p>
             </div>

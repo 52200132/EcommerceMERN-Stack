@@ -1,36 +1,17 @@
-import { useState } from 'react';
+import { ratingModalHooks } from '#component-hooks/use-product-details-hooks';
 import { Modal } from 'react-bootstrap';
 import { FaStar, FaImage } from 'react-icons/fa';
 
-const RatingModal = ({ product, ...props }) => {
-  const [rating, setRating] = useState(5);
-  const [comment, setComment] = useState('');
-  const [hoveredStar, setHoveredStar] = useState(null);
+const RatingModal = ({ productName, productId, ratingId, initialRating, initialComment, productImgUrl, hasRated, ...props }) => {
   const { setHide, show } = props;
-
-  const ratingLabels = ['Rất Tệ', 'Tệ', 'Bình thường', 'Tốt', 'Tuyệt vời'];
-
-  const handleStarClick = (value) => {
-    setRating(value);
-  };
-
-  const handleMouseEnter = (value) => {
-    setHoveredStar(value);
-  };
-
-  const handleMouseLeave = () => {
-    setHoveredStar(null);
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Here you would handle the submission logic
-    console.log({ rating, comment });
-  };
+  const {
+    rating, hoveredStar, ratingLabels,
+    handleStarClick, handleMouseEnter, handleMouseLeave
+  } = ratingModalHooks.useRatingStars(initialRating);
+  const { comment, setComment, handleSubmit } = ratingModalHooks.useRatingCreateComment({ productId, ratingId, rating, initialComment, setHide, hasRated });
 
   return (
     <>
-      {/* Rating Modal */}
       <Modal className='tps-rating-modal' show={show} onHide={() => setHide(false)} centered>
         <Modal.Header className="tps-rating-modal-header" closeButton>
           <Modal.Title>Đánh giá & nhận xét</Modal.Title>
@@ -39,9 +20,9 @@ const RatingModal = ({ product, ...props }) => {
         <Modal.Body>
           <div className="tps-rating-product-info">
             <div className="tps-rating-product-image">
-              <img src={product?.image || "/assets/images/default-product.png"} alt="Product" />
+              <img src={productImgUrl || "/assets/images/default-product.png"} alt="Product" />
             </div>
-            <h4>{product?.name || "Camera IP 360 độ 2MP TP-Link Tapo C202"}</h4>
+            <h4>{productName}</h4>
           </div>
           <div className="tps-rating-form">
             <div className="tps-rating-stars-section">
@@ -90,7 +71,7 @@ const RatingModal = ({ product, ...props }) => {
 
         <Modal.Footer className="tps-rating-submit-section">
           <button type="button" className="btn tps-rating-submit-btn" onClick={handleSubmit}>
-            GỬI ĐÁNH GIÁ
+            {hasRated ? 'Cập nhật đánh giá' : 'Gửi đánh giá'}
           </button>
         </Modal.Footer>
       </Modal>

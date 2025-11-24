@@ -140,7 +140,7 @@ const Comments = () => {
               </div>
               <div className="tps-comment-content">
                 <div className="tps-comment-header">
-                  <h4>{comment.username}</h4>
+                  <div className="tps-comment-username">{comment.username}</div>
                   <div className="tps-comment-date">
                     <FaClock /> {comment.date}
                   </div>

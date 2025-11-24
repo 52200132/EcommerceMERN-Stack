@@ -65,6 +65,7 @@
   margin: 0 12px 0 auto;
   border: 1px solid var(--custom-gray);
   border-radius: 999px;
+  padding: 3px;
   display: flex;
   align-items: center;
 
@@ -81,7 +82,7 @@
   img {
     width: 40px;
     height: 40px;
-    margin-left: 2px;
+    // margin-left: 2px;
     border-radius: 50%;
     border: 1px solid var(--custom-gray);
     object-fit: cover;

@@ -1,0 +1,293 @@
+{
+  "_id": "68fa1abf5ce927f31937c719",
+  "product_name": "Laptop Gaming Acer Nitro V 15 ProPanel",
+  "brand_id": "68dcab48f9b820a3efd8a357",
+  "hashtag": "laptop",
+  "quantity_sold": 0,
+  "price_min": 16990000,
+  "price_max": 24490000,
+  "short_description": "Mid-range gaming laptop with powerful performance, 15.6-inch ProPanel display, dual-fan cooling, and RGB keyboard.",
+  "detail_description": "Acer Nitro V 15 ProPanel is designed for gamers and creators seeking strong performance at a reasonable price. It features AMD Ryzen processors, NVIDIA GeForce RTX GPUs, and a ProPanel display with 100% sRGB color. Dual-fan cooling ensures consistent performance during long sessions, while the RGB keyboard and DTS:X Ultra sound elevate the experience.",
+  "Images": [
+    {
+      "url": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/l/a/laptop_gaming_acer_nitro_v_15_propanel_anv15-41-r7ap_-_1.png",
+      "is_primary": true
+    }
+  ],
+  "Variants": [
+    {
+      "sku": "ANV15-41-R7AP",
+      "price": 16990000,
+      "stock": 115,
+      "html_text_attributes": "\n    <table class=\"tps-technical-table-content\">\n    <tbody>\n      \n          <tr>\n            <td>Graphics Card</td>\n            <td>NVIDIA GeForce RTX 2050 4GB GDDR6</td>\n          </tr>\n          \n          <tr>\n            <td>RAM Capacity</td>\n            <td>16GB</td>\n          </tr>\n          \n          <tr>\n            <td>RAM Type</td>\n            <td>DDR5 4800 MT/s</td>\n          </tr>\n          \n          <tr>\n            <td>SSD Storage</td>\n            <td>512GB PCIe NVMe SSD</td>\n          </tr>\n          \n          <tr>\n            <td>Screen Size</td>\n            <td>15.6 inches</td>\n          </tr>\n          \n          <tr>\n            <td>Battery</td>\n            <td>57Wh 4-cell Li-ion</td>\n          </tr>\n          \n          <tr>\n            <td>Operating System</td>\n            <td>Windows 11 Home</td>\n          </tr>\n          \n          <tr>\n            <td>Color</td>\n            <td>Trắng</td>\n          </tr>\n          \n    </tbody>\n    </table>\n  ",
+      "Images": [
+        {
+          "url": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/l/a/laptop_gaming_acer_nitro_v_15_propanel_anv15-41-r7ap_-_1.png",
+          "is_primary": true
+        }
+      ],
+      "Attributes": [
+        {
+          "attribute": "Graphics Card",
+          "value": "NVIDIA GeForce RTX 2050 4GB GDDR6",
+          "type": "technology",
+          "is_show_in_table": true,
+          "group_attribute": ""
+        },
+        {
+          "attribute": "RAM Capacity",
+          "value": "16GB",
+          "type": "technology",
+          "is_show_in_table": true,
+          "group_attribute": ""
+        },
+        {
+          "attribute": "RAM Type",
+          "value": "DDR5 4800 MT/s",
+          "type": "technology",
+          "is_show_in_table": true,
+          "group_attribute": ""
+        },
+        {
+          "attribute": "SSD Storage",
+          "value": "512GB PCIe NVMe SSD",
+          "type": "technology",
+          "is_show_in_table": true,
+          "group_attribute": ""
+        },
+        {
+          "attribute": "Screen Size",
+          "value": "15.6 inches",
+          "type": "appearance",
+          "is_show_in_table": true,
+          "group_attribute": ""
+        },
+        {
+          "attribute": "Battery",
+          "value": "57Wh 4-cell Li-ion",
+          "type": "technology",
+          "is_show_in_table": true,
+          "group_attribute": ""
+        },
+        {
+          "attribute": "Operating System",
+          "value": "Windows 11 Home",
+          "type": "technology",
+          "is_show_in_table": true,
+          "group_attribute": ""
+        },
+        {
+          "attribute": "Color",
+          "value": "Trắng",
+          "type": "appearance",
+          "is_show_in_table": true,
+          "group_attribute": ""
+        }
+      ],
+      "is_active": true,
+      "created_at": {
+        "$date": "2025-11-21T06:16:19.345Z"
+      },
+      "updated_at": {
+        "$date": "2025-11-21T06:16:19.345Z"
+      }
+    },
+    {
+      "sku": "ANV15-41-R9M1",
+      "price": 20490000,
+      "stock": 299,
+      "html_text_attributes": "\n    <table class=\"tps-technical-table-content\">\n    <tbody>\n      \n          <tr>\n            <td>Graphics Card</td>\n            <td>NVIDIA GeForce RTX 3050 6GB GDDR6</td>\n          </tr>\n          \n          <tr>\n            <td>RAM Capacity</td>\n            <td>16GB</td>\n          </tr>\n          \n          <tr>\n            <td>RAM Type</td>\n            <td>DDR5 4800 MT/s</td>\n          </tr>\n          \n          <tr>\n            <td>SSD Storage</td>\n            <td>512GB PCIe NVMe SSD</td>\n          </tr>\n          \n          <tr>\n            <td>Screen Size</td>\n            <td>15.6 inches</td>\n          </tr>\n          \n          <tr>\n            <td>Battery</td>\n            <td>57Wh 4-cell Li-ion</td>\n          </tr>\n          \n          <tr>\n            <td>Operating System</td>\n            <td>Windows 11 Home</td>\n          </tr>\n          \n          <tr>\n            <td>Color</td>\n            <td>Đen</td>\n          </tr>\n          \n    </tbody>\n    </table>\n  ",
+      "Images": [
+        {
+          "url": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/l/a/laptop_acer_gaming_nitro_v_15_propanel_anv15-41-r9m1_-_1.png",
+          "is_primary": true
+        }
+      ],
+      "Attributes": [
+        {
+          "attribute": "Graphics Card",
+          "value": "NVIDIA GeForce RTX 3050 6GB GDDR6",
+          "type": "technology",
+          "is_show_in_table": true,
+          "group_attribute": ""
+        },
+        {
+          "attribute": "RAM Capacity",
+          "value": "16GB",
+          "type": "technology",
+          "is_show_in_table": true,
+          "group_attribute": ""
+        },
+        {
+          "attribute": "RAM Type",
+          "value": "DDR5 4800 MT/s",
+          "type": "technology",
+          "is_show_in_table": true,
+          "group_attribute": ""
+        },
+        {
+          "attribute": "SSD Storage",
+          "value": "512GB PCIe NVMe SSD",
+          "type": "technology",
+          "is_show_in_table": true,
+          "group_attribute": ""
+        },
+        {
+          "attribute": "Screen Size",
+          "value": "15.6 inches",
+          "type": "appearance",
+          "is_show_in_table": true,
+          "group_attribute": ""
+        },
+        {
+          "attribute": "Battery",
+          "value": "57Wh 4-cell Li-ion",
+          "type": "technology",
+          "is_show_in_table": true,
+          "group_attribute": ""
+        },
+        {
+          "attribute": "Operating System",
+          "value": "Windows 11 Home",
+          "type": "technology",
+          "is_show_in_table": true,
+          "group_attribute": ""
+        },
+        {
+          "attribute": "Color",
+          "value": "Đen",
+          "type": "appearance",
+          "is_show_in_table": true,
+          "group_attribute": ""
+        }
+      ],
+      "is_active": true,
+      "created_at": {
+        "$date": "2025-11-21T06:16:19.346Z"
+      },
+      "updated_at": {
+        "$date": "2025-11-21T06:16:19.346Z"
+      }
+    },
+    {
+      "sku": "ANV15-41-R5P2",
+      "price": 24490000,
+      "stock": 222,
+      "html_text_attributes": "\n    <table class=\"tps-technical-table-content\">\n    <tbody>\n      \n          <tr>\n            <td>Graphics Card</td>\n            <td>NVIDIA GeForce RTX 4060 8GB GDDR6</td>\n          </tr>\n          \n          <tr>\n            <td>RAM Capacity</td>\n            <td>32GB</td>\n          </tr>\n          \n          <tr>\n            <td>RAM Type</td>\n            <td>DDR5 4800 MT/s</td>\n          </tr>\n          \n          <tr>\n            <td>SSD Storage</td>\n            <td>1TB PCIe NVMe SSD</td>\n          </tr>\n          \n          <tr>\n            <td>Screen Size</td>\n            <td>15.6 inches</td>\n          </tr>\n          \n          <tr>\n            <td>Battery</td>\n            <td>60Wh 4-cell Li-ion</td>\n          </tr>\n          \n          <tr>\n            <td>Operating System</td>\n            <td>Windows 11 Home</td>\n          </tr>\n          \n    </tbody>\n    </table>\n  ",
+      "Images": [
+        {
+          "url": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/l/a/laptop_acer_nitro_v_15_propanel_anv15-41-r5p2_-_1.png",
+          "is_primary": true
+        }
+      ],
+      "Attributes": [
+        {
+          "attribute": "Graphics Card",
+          "value": "NVIDIA GeForce RTX 4060 8GB GDDR6",
+          "type": "technology",
+          "is_show_in_table": true,
+          "group_attribute": ""
+        },
+        {
+          "attribute": "RAM Capacity",
+          "value": "32GB",
+          "type": "technology",
+          "is_show_in_table": true,
+          "group_attribute": ""
+        },
+        {
+          "attribute": "RAM Type",
+          "value": "DDR5 4800 MT/s",
+          "type": "technology",
+          "is_show_in_table": true,
+          "group_attribute": ""
+        },
+        {
+          "attribute": "SSD Storage",
+          "value": "1TB PCIe NVMe SSD",
+          "type": "technology",
+          "is_show_in_table": true,
+          "group_attribute": ""
+        },
+        {
+          "attribute": "Screen Size",
+          "value": "15.6 inches",
+          "type": "appearance",
+          "is_show_in_table": true,
+          "group_attribute": ""
+        },
+        {
+          "attribute": "Battery",
+          "value": "60Wh 4-cell Li-ion",
+          "type": "technology",
+          "is_show_in_table": true,
+          "group_attribute": ""
+        },
+        {
+          "attribute": "Operating System",
+          "value": "Windows 11 Home",
+          "type": "technology",
+          "is_show_in_table": true,
+          "group_attribute": ""
+        },
+        {
+          "attribute": "Color",
+          "value": "Xám",
+          "type": "appearance",
+          "is_show_in_table": false,
+          "group_attribute": ""
+        }
+      ],
+      "is_active": true,
+      "created_at": {
+        "$date": "2025-11-21T06:16:19.346Z"
+      },
+      "updated_at": {
+        "$date": "2025-11-21T06:16:19.346Z"
+      }
+    }
+  ],
+  "Warehouses": [
+    {
+      "name": "WH01_tpHCM",
+      "location": "Hẻm 458/20, đường 3/2, phường 12, quận 10, tp HCM",
+      "warehouse_variants": [
+        {
+          "sku": "ANV15-41-R7AP",
+          "quantity": 120,
+          "waiting_for_delivery": 5
+        }
+      ]
+    },
+    {
+      "name": "WH02_tpHCM",
+      "location": "Hẻm 365, đường Nguyễn Thị Thập, phường 3, quận 7, tp HCM",
+      "warehouse_variants": [
+        {
+          "sku": "ANV15-41-R9M1",
+          "quantity": 302,
+          "waiting_for_delivery": 3
+        }
+      ]
+    },
+    {
+      "name": "WH03_tpHCM",
+      "location": "Hẻm 223, đường Dương Quảng Hàm, phường 6, quận Gò Vấp, tp HCM",
+      "warehouse_variants": [
+        {
+          "sku": "ANV15-41-R5P2",
+          "quantity": 230,
+          "waiting_for_delivery": 8
+        }
+      ]
+    }
+  ],
+  "is_active": true,
+  "__v": 1,
+  "created_at": {
+    "$date": "2025-11-21T06:19:37.752Z"
+  },
+  "updated_at": {
+    "$date": "2025-11-21T06:19:37.767Z"
+  }
+}

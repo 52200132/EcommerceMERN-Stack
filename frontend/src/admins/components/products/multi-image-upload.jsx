@@ -1,62 +1,81 @@
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "react-bootstrap";
-import { useTpsSelector } from "custom-hooks/use-tps-selector";
 import { MdOutlineChangeCircle, MdOutlineDomainVerification } from "react-icons/md";
 import { IoTrashBinSharp } from "react-icons/io5";
 import { FaRegStar } from "react-icons/fa";
-import { closestCenter, DndContext, DragOverlay, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { closestCenter, DndContext, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { nanoid } from "@reduxjs/toolkit";
-import _ from 'lodash'
+import _ from 'lodash';
 
 import ImageUploading from "react-images-uploading";
+import { useTpsGetState, useUploadersRegistry } from "#custom-hooks";
+import { uploadSingleImageApi } from "#services/upload-service";
 
 /**
  * @param {object} props -
  * @param {function} [props.selector] - 
  * @param {function} [props.action] - 
- * @param {function} [props.uploadsApi] - 
  * @param {boolean} [props.uploadToServer=false] - có upload ảnh lên server không, mặc định là flase
  * @param {string} [props.upload_action_name] - tên đã được đăng ký bằng dispatch(createTriggerAction(triggerKeyName)) mặc định là 'upload_action'
  * @returns 
  */
-const MultiImageUpload = (props) => {
-  const { selector, action, uploadsApi, uploadToServer = false, upload_action_name = 'upload_action' } = props
+const MultiImageUpload = ({ maxNumber = 10, ...props }) => {
+  const { selector, action } = props
   const dispatch = useDispatch();
   const sensors = useSensors(useSensor(MouseSensor), useSensor(TouchSensor));
-  const { upload_action } = useTpsSelector((state) => state.component, { includeProps: [upload_action_name] })
-  const refSelector = useSelector(selector);
-  const images = _.isEqual(refSelector, [{ url: '', is_primary: false }]) ? [] : refSelector;
-  const [isPrimaryIndex, setIsPrimaryIndex] = useState(0);
+  // const { upload_action } = useTpsSelector((state) => state.component, { includeProps: [upload_action_name] })
+  const Images = useTpsGetState(selector, false);
+  const imagesT = _.isEqual(Images, [{ url: '', is_primary: false }]) ? [] : Images;
+  const [images, setImages] = useState(imagesT);
+  const [isPrimaryIndex, setIsPrimaryIndex] = useState(images.findIndex(img => img.is_primary) || 0);
   const [activeId, setActiveId] = useState(null);
   const uniqueId = useMemo(() => nanoid(), []);
-  let imageFiles = []
-  const maxNumber = 10;
 
+  const setUploader = useUploadersRegistry(zs => zs.setUploader);
+  const removeUploader = useUploadersRegistry(zs => zs.removeUploader);
   useEffect(() => {
-    if (upload_action && uploadToServer && uploadsApi) {
-      // TODO: xử lý upload ảnh lên server
-      // console.log('UPLOAD: images id:', generatePrimaryKey);
+    const uploadImg = async () => {
+      const newImages = [];
+      for (const img of images) {
+        if (img.file) {
+          try {
+            const uploadResult = await uploadSingleImageApi(img.file);
+            console.log('Upload result:', uploadResult);
+            newImages.push({ is_primary: img.is_primary, url: uploadResult.url });
+          } catch (error) {
+            console.error('Error uploading image:', error);
+            newImages.push({ url: img.url, is_primary: img.is_primary }); // giữ nguyên ảnh cũ nếu upload lỗi
+          }
+        } else {
+          newImages.push({ url: img.url, is_primary: img.is_primary });
+        }
+      }
+      dispatch(action(newImages));
+      return Promise.resolve();
     }
-  }, [upload_action, uploadToServer, uploadsApi])
+    setUploader(uniqueId, uploadImg);
+    return () => {
+      removeUploader(uniqueId);
+    }
+  }, [dispatch, action, images, setUploader, removeUploader, uniqueId]);
 
   const onChange = (imageList) => {
-    imageFiles = imageList
     setIsPrimaryIndex(prev => {
       if (imageList.length === 0) return 0;
       if (prev >= imageList.length) return imageList.length - 1;
       return prev;
     });
-    const newImages = imageList.map((img, index) => { return { is_primary: index === isPrimaryIndex, url: img.url } });
-    dispatch(action(newImages));
+    const newImages = imageList.map((img, index) => ({ is_primary: index === isPrimaryIndex, url: img.url, file: img.file }));
+    setImages(newImages);
   };
 
   const handleChangePrimary = (newIndex) => {
     setIsPrimaryIndex(newIndex);
-    const newImages = images.map((img, index) => { return { is_primary: index === newIndex, url: img.url } });
-    dispatch(action(newImages));
+    const newImages = images.map((img, index) => ({ is_primary: index === newIndex, url: img.url, file: img.file }));
+    setImages(newImages);
   }
 
   const handleDragEnd = (event) => {
@@ -66,8 +85,7 @@ const MultiImageUpload = (props) => {
     const overIndex = parseInt(over.id.split('-')[1], 10);
     console.log('DRAG END: ', activeIndex, overIndex);
     const newImages = arrayMove(images, activeIndex, overIndex);
-    imageFiles = newImages;
-    dispatch(action(newImages));
+    setImages(newImages);
   };
   const handleDragStart = (event) => {
     const { active } = event;
@@ -96,9 +114,9 @@ const MultiImageUpload = (props) => {
         }) => (
           <div className="tps-multi-image-upload">
             <Button className="upload-button" onClick={onImageUpload} {...dragProps}>
-              📷 Chọn hoặc kéo ảnh vào đây (Tối đa {maxNumber} ảnh)
+              Chọn hoặc kéo ảnh vào đây (Tối đa {maxNumber} ảnh)
             </Button>
-            <DndContext collisionDetection={closestCenter} sensors={sensors} 
+            <DndContext collisionDetection={closestCenter} sensors={sensors}
               onDragEnd={handleDragEnd}
               onDragStart={handleDragStart}
               onDragCancel={handleDragCancel}

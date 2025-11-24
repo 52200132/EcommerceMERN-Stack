@@ -10,6 +10,14 @@ export const formatDateTime = (dateString) => {
   }).format(new Date(dateString));
 };
 
+export const formatDisplayDate = (value) => {
+  const raw = value?.$date || value;
+  if (!raw) return '';
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return '';
+  return parsed.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+};
+
 // Format currency
 export const formatCurrency = (amount) => {
   return new Intl.NumberFormat('vi-VN', {
@@ -23,5 +31,5 @@ export const formatCurrency = (amount) => {
 export const deformatCurrency = (currencyString) => {
   if (!currencyString) return 0;
   if (typeof currencyString === 'number') return currencyString;
-  return Number(currencyString.replace(/[^0-9,-]+/g,"").replace(',', ''));
+  return Number(currencyString.replace(/[^0-9,-]+/g, "").replace(',', ''));
 };

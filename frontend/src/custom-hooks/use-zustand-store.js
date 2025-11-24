@@ -29,3 +29,19 @@ export const useRenderCountStore = create(
     getComponentIndex: (name) => get().activeComponents.indexOf(name)
   }))
 );
+/**
+ * Store quản lý các hàm uploader được đăng ký
+ */
+export const useUploadersRegistry = create(
+  immer((set, get) => ({
+    uploadersFuncs: {},
+    setUploader: (key, uploader) => set((state) => {
+      state.uploadersFuncs[key] = uploader;
+    }),
+    getUploader: (key) => get().uploadersFuncs[key],
+    getUploaderFuncs: () => Object.values(get().uploadersFuncs),
+    removeUploader: (key) => set((state) => {
+      delete state.uploadersFuncs[key];
+    }),
+  }))
+);

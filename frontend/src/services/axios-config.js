@@ -29,7 +29,7 @@ export const getUserToken = () => JSON.parse(sessionStorage.getItem('user'))?.to
 export const axiosBaseQuery = ({ baseUrl } = { baseUrl: '' }) =>
   async ({ url, method, data, params, headers, redirect }) => {
     let setTimeoutIds = [];
-    const { showSuccessToast, showErrorToast, useMessageFromResponse, showOverlay } = axiosBaseQueryUtil.behaviors;
+    const { showSuccessToast, showErrorToast, useMessageFromResponse, showOverlay, autoCloseOverlay } = axiosBaseQueryUtil.behaviors;
     const { flowMessages, message, overlay, callbackfn } = axiosBaseQueryUtil;
     let overlayInstance;
     try {
@@ -62,7 +62,7 @@ export const axiosBaseQuery = ({ baseUrl } = { baseUrl: '' }) =>
       return { error: axiosError }
     } finally {
       setTimeoutIds.forEach(id => clearTimeout(id));
-      if (typeof overlayInstance?.close === 'function') overlayInstance.close();
+      if (autoCloseOverlay && typeof overlayInstance?.close === 'function') overlayInstance.close();
       axiosBaseQueryUtil.resetDefaultBehaviors();
     }
   }
@@ -76,6 +76,7 @@ export const axiosBaseQueryUtil = {
     showErrorToast: false,
     showOverlay: false,
     useMessageFromResponse: false,
+    autoCloseOverlay: true,
   },
   overlay: null,
   callbackfn: null,
@@ -100,17 +101,18 @@ export const axiosBaseQueryUtil = {
    * Bật hoặc tắt tất cả behaviors
    * @param {boolean} value
    */
-  toggleAllBehaviors(value) {
+  toggleAllBehaviors(value, except = []) {
     this.behaviors = {
-      showSuccessToast: value,
-      showErrorToast: value,
-      showOverlay: value,
-      useMessageFromResponse: value,
+      showSuccessToast: except.includes('showSuccessToast') ? this.behaviors.showSuccessToast : value,
+      showErrorToast: except.includes('showErrorToast') ? this.behaviors.showErrorToast : value,
+      showOverlay: except.includes('showOverlay') ? this.behaviors.showOverlay : value,
+      useMessageFromResponse: except.includes('useMessageFromResponse') ? this.behaviors.useMessageFromResponse : value,
+      autoCloseOverlay: except.includes('autoCloseOverlay') ? this.behaviors.autoCloseOverlay : value,
     };
   },
 
   resetDefaultBehaviors() {
-    this.toggleAllBehaviors(false);
+    this.toggleAllBehaviors(false, ['autoCloseOverlay']);
     this.message = {
       success: 'Thao tác thành công',
       error: 'Đã xảy ra lỗi',

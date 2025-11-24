@@ -4,10 +4,212 @@ $hover-color: #081828;
 $light-gray: #f9f9f9;
 $border-color: #eee;
 $text-color: #333;
-$text-light: #666;
+$text-light: #b9b9b9;
 $star-active: #FFC107;
 $rating-btn-color: $primary-color;
 $purchased-color: #28a745;
+$variant-accent: #ffa000;
+
+//---------------------------------------------------------------
+// Product Variant Selector Styles
+//---------------------------------------------------------------
+.product-info {
+  .variant-selector {
+    margin-top: 1.5rem;
+
+    .variant-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 0.5rem;
+    }
+
+    .variant-card {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 12px;
+      border: 1px solid $border-color;
+      border-radius: 14px;
+      cursor: pointer;
+      min-width: 180px;
+      background-color: #fff;
+      overflow: hidden;
+
+      input {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      &:hover {
+        border-color: $primary-color;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+      }
+
+      &--active {
+        border-color: $primary-color;
+
+        &::after {
+          content: "✓";
+          position: absolute;
+          top: -1px;
+          right: 0;
+          color: #fff;
+          padding: 0px 6px 0 6px;
+          border-radius: 0 4px 0 8px;
+          background-color: $primary-color;
+        }
+
+        .variant-card__price {
+          color: $primary-color;
+          font-weight: 600;
+        }
+      }
+
+      &__input {
+        display: none;
+      }
+
+      &__image {
+        img {
+          width: auto;
+          height: 38px;
+          aspect-ratio: 16 / 9;
+          object-fit: cover;
+          border-radius: 5px;
+        }
+      }
+
+      &__text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+      }
+
+      &__name {
+        color: $hover-color;
+        font-size: 0.85rem;
+      }
+
+      &__price {
+        font-size: 0.85rem;
+        color: $text-color;
+        margin-top: 2px;
+      }
+    }
+  }
+}
+
+@media (max-width: 767px) {
+  .product-info {
+    .variant-selector {
+      .variant-card {
+        width: 100%;
+      }
+    }
+  }
+}
+
+//---------------------------------------------------------------
+// Product Details Info Styles
+//---------------------------------------------------------------
+.product-details-info {
+  margin-top: 2.5rem;
+
+  .info-card {
+    background-color: #fff;
+    border: 1px solid $border-color;
+    border-radius: 14px;
+    padding: 20px 24px;
+    box-shadow: 0 12px 30px rgba(8, 24, 40, 0.06);
+
+    &+.info-card {
+      margin-top: 1.5rem;
+    }
+  }
+
+  .info-card__header {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid $border-color;
+
+    h6 {
+      font-weight: 600;
+      color: $hover-color;
+    }
+  }
+
+  .info-card__badge {
+    padding: 4px 10px;
+    background-color: rgba($primary-color, 0.12);
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: $primary-color;
+  }
+
+  .product-technical-specifications {
+    .tps-technical-table-content {
+      margin-top: 1.25rem;
+    }
+  }
+
+  .product-highlight {
+    background: #fff9f6;
+    border-color: #ffe1d4;
+
+    h6 {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    p {
+      color: $text-color;
+      line-height: 1.5;
+      margin: 0;
+    }
+  }
+
+  .coming-soon-card {
+    background: linear-gradient(135deg, #ff5f6d, #ffc371);
+    color: #fff;
+    border: none;
+    min-height: 100%;
+
+    h5 {
+      font-weight: 600;
+      margin: 0.75rem 0;
+    }
+
+    p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.92);
+    }
+
+    .btn {
+      border-color: rgba(255, 255, 255, 0.4);
+      color: #fff;
+
+      &:hover {
+        border-color: #fff;
+        color: #ff5f6d;
+        background-color: #fff;
+      }
+    }
+  }
+
+  .coming-soon-card__label {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.18);
+    font-size: 0.8rem;
+    letter-spacing: 0.02em;
+    font-weight: 500;
+  }
+}
 
 //---------------------------------------------------------------
 // Comments Component Styles
@@ -136,10 +338,9 @@ $purchased-color: #28a745;
           justify-content: space-between;
           margin-bottom: 0.5rem;
 
-          h4 {
+          .tps-comment-username {
             color: $text-color;
             margin: 0;
-            font-weight: 600;
           }
 
           .tps-comment-date {
@@ -159,6 +360,7 @@ $purchased-color: #28a745;
           color: $text-color;
           margin-bottom: 1rem;
           line-height: 1.5;
+          font-weight: 400;
         }
 
         .tps-comment-actions {
@@ -522,14 +724,15 @@ $purchased-color: #28a745;
   background-color: $light-gray;
   margin-bottom: 70px;
 
-  .tps-top-half-section, .tps-bottom-half-section{
+  .tps-top-half-section,
+  .tps-bottom-half-section {
     background-color: #fff;
     border-radius: 4px;
     border: 1px solid $border-color;
     padding: 20px 20px 0 20px;
     margin-bottom: 20px;
   }
-  
+
   .tps-ratings-header {
     padding: 15px 20px;
     border-bottom: 1px solid $border-color;
@@ -686,7 +889,8 @@ $purchased-color: #28a745;
         cursor: pointer;
         transition: all 0.2s;
 
-        &:hover, &.active {
+        &:hover,
+        &.active {
           background-color: $primary-color;
           color: white;
           border-color: $primary-color;
@@ -751,7 +955,7 @@ $purchased-color: #28a745;
             }
 
             .tps-rating-text {
-              margin-left: 5px;
+              margin-right: 5px;
               font-size: 0.9rem;
               color: $text-light;
             }
@@ -760,12 +964,13 @@ $purchased-color: #28a745;
 
         .tps-rating-comment {
           margin: 10px 0;
+          font-weight: 400;
           color: $text-color;
         }
 
         .tps-rating-purchase {
           margin-bottom: 5px;
-          
+
           span {
             display: inline-block;
             color: $purchased-color;
@@ -870,6 +1075,16 @@ $purchased-color: #28a745;
       .tps-ratings-breakdown {
         padding-left: 0;
       }
+    }
+  }
+
+  .product-details-info {
+    .info-card {
+      padding: 16px;
+    }
+
+    .coming-soon-card {
+      align-items: center;
     }
   }
 }

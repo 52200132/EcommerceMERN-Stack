@@ -14,7 +14,7 @@ import { store } from 'redux-tps/store'; // Cập nhật đường dẫn đúng
  * - Phù hợp để lấy giá trị state tại thời điểm gọi (ví dụ: trong event handler)
  * - Nếu cần component tự động re-render khi state thay đổi, dùng `useTpsSelector`
  */
-export const useTpsGetState = (selectorBase, options = {}) => {
+export const useTpsGetState = (selectorBase, isObject = true, options = {}) => {
   const {
     excludeProps = [],
     includeProps = [],
@@ -28,6 +28,11 @@ export const useTpsGetState = (selectorBase, options = {}) => {
   const propKeys = Object.keys(base || {});
 
   let selectedKeys;
+
+  if (isObject === false) {
+    return base;
+  }
+
   if (includeProps.length > 0) {
     selectedKeys = propKeys.filter((key) =>
       includeProps.includes(key)

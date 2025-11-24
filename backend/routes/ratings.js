@@ -22,7 +22,7 @@ router.delete("/:rating_id", protect, deleteRating); //đã check ok
 // @desc    Get all ratings by product
 // @route   GET /api/ratings/product/:product_id
 // @access  Private
-router.get("/product/:product_id", protect, getAllRatingsByProduct); //đã check ok
+router.get("/product/:product_id", getAllRatingsByProduct); //đã check ok
 
 // @desc    Get all ratings by user
 // @route   GET /api/ratings/user

@@ -13,7 +13,7 @@ import parse from 'html-react-parser';
 import { z } from "zod";
 
 import { updateProduct } from 'redux-tps/features/index-features';
-import { useDebounceSubscribeValues, useTpsGetState, useTpsSelector } from '#custom-hooks';
+import { useDebounceSubscribeValues, useRenderCount, useTpsGetState, useTpsSelector } from '#custom-hooks';
 import { db } from 'indexed-db';
 
 const optionActions = {
@@ -39,8 +39,8 @@ const basicInfoSchema = z.object({
   is_active: z.boolean(),
 });
 
-let rerenderCount = 0
 const BasicInfo = ({ selector, action = 'create' }) => {
+  useRenderCount('basic-info', 'both');
   const dispatch = useDispatch();
   const product = useTpsGetState(selector, { includeProps: ['product_name', 'brand_id', 'hashtag', 'short_description', 'detail_description', 'is_active', 'defaultBrandOption'] });
   const brandsOptions = useLiveQuery(async () => {
@@ -48,7 +48,7 @@ const BasicInfo = ({ selector, action = 'create' }) => {
       db.brands.toArray().then(brands => brands.map(brand => ({ value: brand._id, label: brand.brand_name }))),
       product?.brand_id ? db.brands.get(product.brand_id) : null
     ]);
-    const defaultOption = productBrand ? { value: productBrand._id, label: productBrand.brand_name } : null; 
+    const defaultOption = productBrand ? { value: productBrand._id, label: productBrand.brand_name } : null;
     return { array: array, defaultOption: defaultOption };
   }, [], { array: [], defaultOption: {} });
   const hashtags = useLiveQuery(async () => await db.hashtags.toArray(), [], []);
@@ -57,14 +57,13 @@ const BasicInfo = ({ selector, action = 'create' }) => {
     mode: 'all',
     defaultValues: product
   });
-  
+
   const onHashtagsChange = (option) => {
     const target = {
       name: 'hashtag',
       value: option ? option.map(item => item.value).join('|') : ''
     };
     register("hashtag").onChange({ target });
-    console.log('Hashtags changed:', target.value);
   }
 
   useDebounceSubscribeValues((productBasicInfo) => {
@@ -72,9 +71,6 @@ const BasicInfo = ({ selector, action = 'create' }) => {
     return true;
   }, subscribe, 1000);
 
-  rerenderCount++;
-  useEffect(() => { console.log('FM: basic-info'); return () => rerenderCount = 0 }, []);
-  console.log('RENDER: basic-info-' + rerenderCount);
   return (
     <Card className="mb-4">
       <Card.Header className='h5'>Thông tin cơ bản</Card.Header>
@@ -218,7 +214,6 @@ const DetailsDescriptionPreview = ({ selector, action }) => {
     navigate('description');
   };
 
-  console.log('RENDER: details-description-preview')
   return (
     <Form.Group className="mb-3">
       <Form.Label htmlFor='detail_description'>Mô tả chi tiết</Form.Label>

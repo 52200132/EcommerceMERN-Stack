@@ -31,6 +31,7 @@ export const useRenderCount = (name, mode) => {
   }
   if (!renderRoot) {
     renderRoot = createRoot(renderContainer);
+
   }
 
   const addComponent = useRenderCountStore((zs) => zs.addComponent);

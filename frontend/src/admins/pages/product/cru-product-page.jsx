@@ -1,12 +1,13 @@
 import { useRef } from 'react';
 import { Form, Button, Container, Card } from 'react-bootstrap';
 
-import { authInitialState, setImages, updateProduct } from 'redux-tps/features/index-features';
+import { clearProductState, setImages, triggerAction } from 'redux-tps/features/index-features';
 import { BasicInfo, MultiImageUpload, Variants } from 'admins/components/products';
 import { store } from 'redux-tps/store';
 import { useCreateProductMutation, useUpdateProductMutation } from 'services/product-api';
 
 import BackButton from 'admins/components/back-btn';
+import { useRenderCount, useUploadersRegistry } from '#custom-hooks';
 
 const optionActions = {
   'create': {
@@ -31,6 +32,7 @@ const optionActions = {
 }
 
 const CRUProduct = ({ action = 'create' }) => {
+  useRenderCount('CRUProduct', 'both');
   const backBtnRef = useRef(null);
   const dispatch = store.dispatch;
   const option = optionActions[action];
@@ -38,28 +40,36 @@ const CRUProduct = ({ action = 'create' }) => {
   const [createProduct] = useCreateProductMutation();
   const [updateProductM] = useUpdateProductMutation();
 
+  const getUploaderFuncs = useUploadersRegistry(zs => zs.getUploaderFuncs);
+
   const handleSave = async () => {
+    await Promise.all(getUploaderFuncs().map(uploadFunc => {
+      if (typeof uploadFunc === 'function') {
+        return uploadFunc();
+      }
+      return Promise.resolve();
+    }));
     const product = store.getState().product;
     if (action === 'create') {
       const result = await createProduct(product).unwrap();
       console.log('createData', result);
 
       if (result.ec === 0) {
-        dispatch(updateProduct(authInitialState));
+        dispatch(clearProductState());
         backBtnRef.current && backBtnRef.current.click();
       }
     } else if (action === 'update') {
       const result = await updateProductM(product).unwrap();
       if (result.ec === 0) {
-        dispatch(updateProduct(authInitialState));
+        dispatch(clearProductState());
         backBtnRef.current && backBtnRef.current.click();
       }
     }
   }
 
-  console.log('RENDER: add-product');
   return (
     <>
+      {/* <Button onClick={handTestUpload}>Test upload</Button> */}
       <BackButton ref={backBtnRef} />
       <Container className='tps-cru-product-page'>
         <h2 className="mb-4">Thêm sản phẩm mới</h2>
@@ -71,7 +81,7 @@ const CRUProduct = ({ action = 'create' }) => {
             <Card.Header className='h5'>Hình ảnh sản phẩm</Card.Header>
             <Card.Body>
               <MultiImageUpload
-                {...{ uploadsApi: true, uploadToServer: true }}
+                {...{ uploadToServer: true }}
                 selector={(state) => state.product.Images}
                 action={images => setImages({ images })}
               />

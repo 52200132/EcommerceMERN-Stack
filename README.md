@@ -5,6 +5,7 @@ Xây dựng website thương mại điện tử bán các sản phẩm như: lap
 ## 🚀 Công nghệ sử dụng
 
 ### Backend
+
 - **Node.js** & **Express.js** - Web framework
 - **MongoDB** & **Mongoose** - Database
 - **JWT** - Authentication
@@ -12,6 +13,7 @@ Xây dựng website thương mại điện tử bán các sản phẩm như: lap
 - **Multer** - File upload
 
 ### Frontend
+
 - **React.js** - UI Library
 - **Redux** - State management
 - **React Router** - Navigation
@@ -21,29 +23,34 @@ Xây dựng website thương mại điện tử bán các sản phẩm như: lap
 ## 📦 Cài đặt
 
 ### Yêu cầu hệ thống
+
 - Node.js (v14 hoặc cao hơn)
 - MongoDB
 - npm hoặc yarn
 
 ### 1. Clone repository
+
 ```bash
 git clone https://github.com/52200132/EcommerceMERN-Stack.git
 cd EcommerceMERN-Stack
 ```
 
 ### 2. Cài đặt backend
+
 ```bash
 cd backend
 npm install
 ```
 
 ### 3. Cài đặt frontend
+
 ```bash
 cd frontend
 npm install
 ```
 
 ### 4. Cấu hình môi trường
+
 Tạo file `.env` trong thư mục `backend` từ file `.env.example`:
 
 ```env
@@ -51,23 +58,27 @@ NODE_ENV=development
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/ecommerce
 JWT_SECRET=your_jwt_secret_key_here
+APP_URL=http://localhost:5000
 ```
 
 ### 5. Chạy ứng dụng
 
 #### Chạy backend (Port 5000)
+
 ```bash
 cd backend
 npm run dev
 ```
 
 #### Chạy frontend (Port 3000)
+
 ```bash
 cd frontend
 npm start
 ```
 
 ### 6. Import dữ liệu mẫu
+
 ```bash
 cd backend
 node seeder.js
@@ -78,16 +89,19 @@ node seeder.js
 Sau khi import dữ liệu mẫu:
 
 **Admin:**
+
 - Email: admin@example.com
 - Password: 123456
 
 **Người dùng thường:**
+
 - Email: john@example.com / jane@example.com
 - Password: 123456
 
 ## 📱 Tính năng
 
 ### Người dùng
+
 - [x] Đăng ký/Đăng nhập
 - [x] Xem sản phẩm
 - [x] Tìm kiếm sản phẩm
@@ -98,12 +112,14 @@ Sau khi import dữ liệu mẫu:
 - [x] Cập nhật hồ sơ
 
 ### Admin
+
 - [x] Quản lý sản phẩm
 - [x] Quản lý đơn hàng
 - [x] Quản lý người dùng
 - [x] Thống kê
 
 ### Sản phẩm
+
 - [x] Laptop (MacBook Pro, Dell XPS, ...)
 - [x] Chuột (Logitech, Razer, ...)
 - [x] Bàn phím (Corsair, ASUS, ...)
@@ -112,6 +128,7 @@ Sau khi import dữ liệu mẫu:
 ## 🛠️ Scripts
 
 ### Backend
+
 ```bash
 npm start          # Chạy production
 npm run dev        # Chạy development với nodemon
@@ -120,6 +137,7 @@ node seeder.js -d  # Xóa dữ liệu
 ```
 
 ### Frontend
+
 ```bash
 npm start          # Chạy development server
 npm run build      # Build production
@@ -153,12 +171,14 @@ EcommerceMERN-Stack/
 ## 🔄 API Endpoints
 
 ### Authentication
+
 - `POST /api/auth/register` - Đăng ký
 - `POST /api/auth/login` - Đăng nhập
 - `GET /api/auth/profile` - Lấy thông tin user
 - `PUT /api/auth/profile` - Cập nhật thông tin user
 
 ### Products
+
 - `GET /api/products` - Lấy danh sách sản phẩm
 - `GET /api/products/:id` - Lấy chi tiết sản phẩm
 - `POST /api/products` - Tạo sản phẩm (Admin)
@@ -166,12 +186,19 @@ EcommerceMERN-Stack/
 - `DELETE /api/products/:id` - Xóa sản phẩm (Admin)
 
 ### Orders
+
 - `POST /api/orders` - Tạo đơn hàng
 - `GET /api/orders/:id` - Lấy chi tiết đơn hàng
 - `GET /api/orders/myorders` - Lấy đơn hàng của user
 - `PUT /api/orders/:id/pay` - Cập nhật thanh toán
 
+### Uploads
+
+- `POST /api/upload/image` - Upload 1 ảnh (field `image`, tối đa 5MB, cho phép JPEG/PNG/WebP). Trả về URL tuyệt đối sau khi resize <= 1280px và nén bằng Sharp.
+- `POST /api/upload/images` - Upload nhiều ảnh (field `image`, tối đa 10 ảnh/lần). API trả về mảng metadata gồm `url`, `path`, `size`, `mimeType`, `width`, `height` cho từng ảnh.
+
 ### Users (Admin)
+
 - `GET /api/users` - Lấy danh sách users
 - `GET /api/users/:id` - Lấy chi tiết user
 - `PUT /api/users/:id` - Cập nhật user
@@ -180,14 +207,17 @@ EcommerceMERN-Stack/
 ## 🚀 Deployment
 
 ### Environment Variables cho Production
+
 ```env
 NODE_ENV=production
 PORT=5000
 MONGODB_URI=your_mongodb_atlas_uri
 JWT_SECRET=your_super_secret_jwt_key
+APP_URL=https://api.example.com
 ```
 
 ### Build Frontend
+
 ```bash
 cd frontend
 npm run build

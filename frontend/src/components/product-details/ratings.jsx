@@ -1,99 +1,44 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FaStar, FaClock } from 'react-icons/fa';
 import { Container } from 'react-bootstrap';
-import RatingModal from './RatingModal';
 
-// Fake data for product and ratings
-const fakeProduct = {
-  name: "Camera IP 360 độ 2MP TP-Link Tapo C202",
-  image: "/assets/images/product-1.jpg",
-  rating: 5.0,
-  numReviews: 8
-};
+import { useTpsSelector } from '#custom-hooks';
+import { useFilterRatings } from '#component-hooks/use-product-details-hooks';
+import { formatDateTime } from '#utils';
 
-const fakeRatings = [
-  {
-    id: 1,
-    username: "Huongvu",
-    rating: 5,
-    comment: "Nv tư vấn tận tâm, giá tốt",
-    date: "2 tháng trước",
-    avatar: "H",
-    hasImage: false,
-    hasBought: false
-  },
-  {
-    id: 2,
-    username: "Phan van kha",
-    rating: 5,
-    comment: "tuyệt vời",
-    date: "8 tháng trước",
-    avatar: "P",
-    hasImage: false,
-    hasBought: false
-  },
-  {
-    id: 3,
-    username: "Phan van kha",
-    rating: 5,
-    comment: "tuyệt vời",
-    date: "8 tháng trước",
-    avatar: "P",
-    hasImage: false,
-    hasBought: false
-  },
-  {
-    id: 4,
-    username: "LE THI AI VAN",
-    rating: 5,
-    comment: "Sẽ ủng hộ lần nữa",
-    date: "9 tháng trước",
-    avatar: "L",
-    hasImage: false,
-    hasBought: true
-  },
-  {
-    id: 5,
-    username: "Mr Thanh",
-    rating: 5,
-    comment: "giá rẻ, vận tốt",
-    date: "9 tháng trước",
-    avatar: "M",
-    hasImage: false,
-    hasBought: true
-  }
-];
-
-const ratingCounts = {
-  5: 8,
-  4: 0,
-  3: 0,
-  2: 0,
-  1: 0
-};
+import RatingModal from './rating-modal';
 
 const Ratings = () => {
-  const [activeFilter, setActiveFilter] = useState('all');
-  const [filteredRatings, setFilteredRatings] = useState(fakeRatings);
-  const [showRatingModal, setShowRatingModals] = useState(false);
+  const ratingState = useTpsSelector(
+    state => state.productDetails.ratings || {},
+    { includeProps: ['rating_counts', 'ratings', 'rating_of_me'] }
+  );
+  const product = useTpsSelector(
+    state => state.productDetails.product,
+    {
+      includeProps: ['product_name', 'primary_image_url', 'rating', 'num_reviews', '_id']
+    });
 
-  const handleFilterChange = (filter) => {
-    setActiveFilter(filter);
+  const ratingCounts = ratingState?.rating_counts || {};
 
-    // Apply filtering logic
-    if (filter === 'all') {
-      setFilteredRatings(fakeRatings);
-    } else if (filter === 'hasImage') {
-      setFilteredRatings(fakeRatings.filter(rating => rating.hasImage));
-    } else if (filter === 'hasBought') {
-      setFilteredRatings(fakeRatings.filter(rating => rating.hasBought));
-    } else if (filter.includes('star')) {
-      const starRating = parseInt(filter.split('-')[0]);
-      setFilteredRatings(fakeRatings.filter(rating => rating.rating === starRating));
-    }
-  };
+  const normalizedRatings = useMemo(() => {
+    const rawRatings = ratingState?.ratings || [];
+    const RatingOfMe = ratingState?.rating_of_me ? [ratingState.rating_of_me] : [];
+    return [...RatingOfMe, ...rawRatings].map(item => ({
+      id: item?._id?.$oid || item?._id || item?.id,
+      username: item?.user_id?.username || 'Ẩn danh',
+      avatar: item?.user_id?.image || (item?.user_id?.username || '?').charAt(0),
+      rating: item?.rating || 0,
+      comment: item?.comment || '',
+      date: formatDateTime(item?.created_at),
+      // hasImage: Array.isArray(item?.images) && item.images.length > 0,
+      hasBought: Boolean(item?.hasBought || item?.isPurchased)
+    }));
+  }, [ratingState]);
 
-  // Function to render stars
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const { handleFilterChange, activeFilter, filteredRatings } = useFilterRatings(normalizedRatings);
+
   const renderStars = (rating) => {
     const stars = [];
     for (let i = 0; i < 5; i++) {
@@ -102,29 +47,33 @@ const Ratings = () => {
     return stars;
   };
 
+  const totalReviews = product.num_reviews || normalizedRatings.length || 0;
+  // const safeAverage = product.rating || 0;
+  const safeAverage = (Object.entries(ratingCounts).reduce((acc, [star, count]) => acc + (parseInt(star, 10) * count), 0) / (totalReviews || 1));
+
   return (
     <div className="tps-ratings-section">
       <Container>
-        {/* Bắt đầu nửa trên */}
+        {/* Tổng quan đánh giá */}
         <div className='tps-top-half-section'>
           <div className="tps-ratings-header">
-            <h3>Đánh giá Camera IP 360 độ 2MP TP-Link Tapo C202</h3>
+            <h3>Đánh giá {product.product_name}</h3>
           </div>
 
           <div className="tps-ratings-summary">
             <div className="tps-ratings-score">
               <div className="tps-ratings-average">
-                <span className="tps-average-number">{fakeProduct.rating.toFixed(1)}</span>
+                <span className="tps-average-number">{safeAverage.toFixed(1)}</span>
                 <span className="tps-average-total">/{5}</span>
               </div>
               <div className="tps-ratings-stars">
-                {renderStars(fakeProduct.rating)}
+                {renderStars(safeAverage)}
               </div>
               <div className="tps-ratings-count">
-                <span>{fakeProduct.numReviews} lượt đánh giá</span>
+                <span>{totalReviews} lượt đánh giá</span>
               </div>
               <div className="tps-ratings-write">
-                <button className="tps-write-review-btn" onClick={() => setShowRatingModals(true)}>
+                <button className="tps-write-review-btn" onClick={() => setShowRatingModal(true)}>
                   Viết đánh giá
                 </button>
               </div>
@@ -136,18 +85,18 @@ const Ratings = () => {
                   <div className="tps-rating-progress">
                     <div
                       className="tps-rating-progress-bar"
-                      style={{ width: `${(ratingCounts[star] / fakeProduct.numReviews) * 100}%` }}
+                      style={{ width: `${totalReviews ? ((ratingCounts[star] || 0) / totalReviews) * 100 : 0}%` }}
                     ></div>
                   </div>
-                  <span className="tps-rating-count">{ratingCounts[star]} đánh giá</span>
+                  <span className="tps-rating-count">{ratingCounts[star] || 0} đánh giá</span>
                 </div>
               ))}
             </div>
           </div>
         </div>
-        {/* Kết thúc nửa trên */}
+        {/* Kết thúc tổng quan đánh gi */}
 
-        {/* Bắt đầu nửa dưới */}
+        {/* Đánh giá chi tiết */}
         <div className="tps-bottom-half-section">
           <div className="tps-ratings-filter">
             <span>Lọc đánh giá theo </span>
@@ -164,12 +113,12 @@ const Ratings = () => {
               >
                 Có hình ảnh
               </button>
-              <button
+              {/* <button
                 className={activeFilter === 'hasBought' ? 'active' : ''}
                 onClick={() => handleFilterChange('hasBought')}
               >
                 Đã mua hàng
-              </button>
+              </button> */}
               <button
                 className={activeFilter === '5-star' ? 'active' : ''}
                 onClick={() => handleFilterChange('5-star')}
@@ -213,24 +162,24 @@ const Ratings = () => {
                   <div className="tps-rating-info">
                     <h4 className="tps-rating-username">{rating.username}</h4>
                     <div className="tps-rating-stars">
-                      {renderStars(rating.rating)}
                       <span className="tps-rating-text">
-                        {rating.rating === 5 ? 'tuyệt vời' : ''}
-                        {rating.rating === 4 ? 'tốt' : ''}
-                        {rating.rating === 3 ? 'bình thường' : ''}
-                        {rating.rating === 2 ? 'tệ' : ''}
-                        {rating.rating === 1 ? 'rất tệ' : ''}
+                        {rating.rating === 5 ? 'Tuyệt vời' : ''}
+                        {rating.rating === 4 ? 'Tốt' : ''}
+                        {rating.rating === 3 ? 'Bình thường' : ''}
+                        {rating.rating === 2 ? 'Tệ' : ''}
+                        {rating.rating === 1 ? 'Rất tệ' : ''}
                       </span>
+                      {renderStars(rating.rating)}
                     </div>
                   </div>
                   <p className="tps-rating-comment">{rating.comment}</p>
                   {rating.hasBought && (
                     <div className="tps-rating-purchase">
-                      <span>Đã mua tại CellphoneS</span>
+                      <span>Đã mua tại TpsShop</span>
                     </div>
                   )}
                   <div className="tps-rating-date">
-                    <FaClock /> Đánh giá đã đăng vào {rating.date}
+                    <FaClock /> Đánh giá đã đăng vào {rating.date || 'Không rõ'}
                   </div>
                 </div>
               </div>
@@ -243,14 +192,19 @@ const Ratings = () => {
             </button>
           </div>
         </div>
-        {/* Kết thúc nửa dưới */}
+        {/* Kết thúc đánh giá chi tiết */}
 
         {/* Rating Modal */}
         <RatingModal
-          product={fakeProduct}
+          productId={product._id}
+          ratingId={ratingState?.rating_of_me?._id || null}
+          initialRating={ratingState?.rating_of_me?.rating || 5}
+          initialComment={ratingState?.rating_of_me?.comment || ''}
+          hasRated={Boolean(ratingState?.rating_of_me)}
+          productName={product.product_name}
+          productImgUrl={product.primary_image_url}
           show={showRatingModal}
-          setShow={setShowRatingModals}
-          setHide={setShowRatingModals}
+          setHide={setShowRatingModal}
         />
       </Container>
     </div>
