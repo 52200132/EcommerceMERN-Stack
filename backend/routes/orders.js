@@ -7,8 +7,8 @@ const router = express.Router();
 
 // @desc    Create new order
 // @route   POST /api/orders
-// @access  Private - User
-router.post('/', protect, createOrder);
+// @access  Public - User
+router.post('/', createOrder);
 
 // @desc    Get all orders
 // @route   GET /api/orders

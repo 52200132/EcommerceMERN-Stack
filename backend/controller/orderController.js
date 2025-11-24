@@ -1,6 +1,7 @@
 import Order from "../models/Order.js"
 import DiscountCode from '../models/DiscountCode.js';
 import User from "../models/User.js";
+import jwt from 'jsonwebtoken';
 
 // User functions
 export const createOrder = async (req, res) => {
@@ -27,9 +28,11 @@ export const createOrder = async (req, res) => {
             try {
                 token = req.headers.authorization.split(' ')[1];
                 const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                const user = await User.findById(decoded.id).select('-password');
-                console.log("Token", token);
-                console.log("User", user);
+                const user = await User.findById(decoded._id).select('-password');
+                // console.log("env", process.env.JWT_SECRET);
+                // console.log("Decoded id:", decoded);
+                // console.log("Token", token);
+                // console.log("User", user);
 
                 // Xử lý tạo đơn hàng cho user đã đăng nhập
                 const user_id = user._id;
