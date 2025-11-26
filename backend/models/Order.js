@@ -87,35 +87,6 @@ const orderSchema = new Schema({
   notes: { type: String }
 }, { timestamps: true });
 
-// post-save để xử lý điểm khách hàng (an toàn hơn pre-save)
-// orderSchema.post('save', async function(doc) {
-//   try {
-//     // Lấy user
-//     const user = await User.findById(doc.user_id).select('points');
-//     if (!user) return;
-
-//     // Nếu đơn được giao (delivered) thì cộng điểm
-//     if (doc.isModified('order_status') && doc.order_status === 'delivered') {
-//       user.points += parseInt(doc.total_amount * 0.1); // 10% tổng tiền
-//       console.log(parseInt(doc.total_amount * 0.1))
-//       console.log('User points after delivery:', user.points);
-//       await user.save();
-//     }
-
-//     // Nếu đơn bị hủy sau khi đã giao thì trừ điểm
-//     else if (doc.isModified('order_status') && doc.order_status === 'cancelled') {
-//       user.points += parseInt(doc.points_used); // hoàn trả điểm đã dùng
-//       if (user.points < 0) user.points = 0; // tránh âm
-//       console.log(parseInt(doc.points_used));
-//       console.log('User points after cancellation:', user.points);
-//       await user.save();
-//     }
-//   } catch (err) {
-//     console.error('Error updating user points:', err);
-//   }
-// });
-
-
 //  Export model 
 const Order = mongoose.models.Order || model("Order", orderSchema);
 export default Order;

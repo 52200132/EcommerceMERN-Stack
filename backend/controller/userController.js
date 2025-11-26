@@ -102,7 +102,7 @@ export const getUserById = async (req, res) => {
 export const updateUserById = async (req, res) => {
   try {
     const user_id = req.params.user_id;
-    //TODO:? Thông tin người dùng 
+    // Thông tin người dùng 
     const { username, email, image, gender, password, points, isActive } = req.body;
     const user = await User.findByIdAndUpdate(
       user_id,
@@ -292,4 +292,13 @@ export const deleteAddress = async (req, res) => {
   }
 };
 
-// TODO: Thêm ảnh đại diện người dùng/ lưu ảnh về máy chủ
+// TODO: Bảng điều khiển đơn giản: tổng quan chi tiết về hiệu suất của cửa hàng, các số liệu chính và thông tin chi tiết hữu ích. Bao gồm: Tổng số người
+// dùng, số lượng người dùng mới, số lượng đơn hàng, doanh thu, các sản phẩm bán chạy nhất được thể hiện qua biểu đồ.
+
+
+
+// TODO: Bảng điều khiển Nâng cao: Hiển thị số liệu thống kê và biểu đồ liên quan cho thông tin chính theo các khoảng thời gian cụ thể. Theo mặc định, dữ
+// liệu được hiển thị hàng năm, nhưng người dùng có thể linh hoạt điều chỉnh chế độ xem theo quý, hàng tháng, hàng tuần hoặc dựa trên ngày bắt đầu
+// và kết thúc đã xác định. Đối với mỗi khung thời gian này, việc theo dõi số lượng đơn hàng đã bán, tổng doanh thu và lợi nhuận chung là rất quan
+// trọng. Ngoài ra, cần có các biểu đồ so sánh thể hiện doanh thu, lợi nhuận, số lượng sản phẩm và loại sản phẩm đã bán, được phân chia theo năm,
+// tháng, quý và tuần.

@@ -398,6 +398,5 @@ export const handleGoogleLoginCallback = async (req, res) => {
     `);
   }
 }
-// TODO: Sau khi liên kết tài khoản GG, lấy thêm thông tin profile từ GG để cập nhật vào user (ảnh đại diện)
 
 export { handleRegister, handleLogin, handleResetPassword, resetPassword };
