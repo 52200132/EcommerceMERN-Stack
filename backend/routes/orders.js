@@ -1,17 +1,17 @@
 import express from 'express';
 import Order from '../models/Order.js';
 import { protect, admin } from '../middleware/auth.js';
-import { createOrder, getOrderByUserId, getStatusHistoryByOrderId, getOrderById, getAllOrders, updateOrderStatus } from '../controller/orderController.js';
+import { userCancelOrder, createOrder, getOrderByUserId, getStatusHistoryByOrderId, getOrderById, getAllOrders, updateOrderStatus } from '../controller/orderController.js';
 
 const router = express.Router();
 
 // @desc    Create new order
 // @route   POST /api/orders
-// @access  Private - User
-router.post('/', protect, createOrder);
+// @access  Public - User
+router.post('/', createOrder);
 
 // @desc    Get all orders
-// @route   GET /api/orders
+// @route   GET /api/orders?start=<>&end=<>&date=<>
 // @access  Private - Admin
 router.get('/', protect, admin, getAllOrders);
 
@@ -35,12 +35,10 @@ router.get('/:order_id/history_status', protect, getStatusHistoryByOrderId); // 
 // @access  Private - Admin
 router.put('/:order_id/status', protect, admin, updateOrderStatus);
 
-
-
-
-
-
-
+// @desc    Update order status
+// @route   PUT /api/orders/:order_id/cancel
+// @access  Public - User
+router.put('/:order_id/cancel', protect, userCancelOrder); // TODO: test chức năng hủy đơn hàng của user
 
 // @desc    Update order to paid
 // @route   PUT /api/orders/:id/pay
@@ -90,13 +88,4 @@ router.put('/:id/deliver', protect, admin, async (req, res) => {
   }
 });
 
-
-
 export default router
-//TODO: thêm cập nhật lịch sử trạng thái đơn hàng
-// cập nhật lịch sử trạng thái đơn hàng
-  // this.StatusHistory.push({
-  //   status: this.order_status,
-  //   change_at: new Date(),
-  //   change_by: null
-  // });

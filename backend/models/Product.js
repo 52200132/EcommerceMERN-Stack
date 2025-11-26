@@ -29,7 +29,7 @@ const warehouseVariantSchema = new Schema({
 const warehouseSchema = new Schema({
   name : { type: String, required: true },
   location: { type: String },
-  warehouse_variants: [warehouseVariantSchema],
+  warehouse_variants: { type: [warehouseVariantSchema], default: [] }
 }, { _id: true });
 
 //  Subschema: variantSchema 
@@ -39,8 +39,8 @@ const variantSchema = new Schema({
   price: { type: Number, min: 0, required: true },
   stock: { type: Number, min: 0},
   html_text_attributes: { type: String }, // dung cho render attribute
-  Images: [imageSchema],
-  Attributes: [attributeSchema],
+  Images: { type: [imageSchema], default: [] },
+  Attributes: { type: [attributeSchema], default: [] },
   is_active: { type: Boolean, required: true, default: true },
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now },
@@ -57,9 +57,9 @@ const productSchema = new Schema({
   price_max: { type: Number, min: 0 },
   short_description: { type: String, required: true },
   detail_description: { type: String, required: true },
-  Images: [imageSchema],
-  Warehouses: [warehouseSchema],
-  Variants: [variantSchema],
+  Images: { type: [imageSchema], default: [] },
+  Warehouses: { type: [warehouseSchema], default: [] },
+  Variants: { type: [variantSchema], default: [] },
   is_active: { type: Boolean, required: true, default: true },
 }, { timestamps: true }); 
 
@@ -107,46 +107,114 @@ productSchema.methods.checkQuantity = function( quantityOrdered, sku) {
 // Cập nhật số lượng sau khi đặt hàng thành công đẩy vào waiting_for_delivery
 productSchema.methods.updateStockAfterOrder = function(quantityOrdered, sku) {
   let list_warehouses = [];
+
   this.Warehouses.forEach(warehouse => {
     warehouse.warehouse_variants.forEach(wv => {
-      if (wv.sku === sku){
-        if (quantityOrdered <= wv.quantity) {
+
+      if (wv.sku === sku && quantityOrdered > 0) {
+
+        const available = wv.quantity - wv.waiting_for_delivery;
+        if (available <= 0) return;
+
+        if (quantityOrdered <= available) {
+          // Lấy hết từ kho này
           wv.waiting_for_delivery += quantityOrdered;
+
+          list_warehouses.push({
+            warehouseId: warehouse._id,
+            sku,
+            quantity: quantityOrdered   // số lượng thực tế lấy từ kho này
+          });
+
           quantityOrdered = 0;
-          list_warehouses.push({warehouseId: warehouse._id, sku: sku, quantity: quantityOrdered});
-        } else {
-          quantityOrdered -= wv.quantity;
-          wv.waiting_for_delivery += wv.quantity;
-          list_warehouses.push({warehouseId: warehouse._id, sku: sku, quantity: wv.quantity});
+        } 
+        else {
+          // Lấy hết available từ kho này
+          wv.waiting_for_delivery += available;
+
+          list_warehouses.push({
+            warehouseId: warehouse._id,
+            sku,
+            quantity: available          // số lượng thực tế lấy từ kho này
+          });
+
+          quantityOrdered -= available;
         }
       }
     });
   });
+
   return list_warehouses;
-};
+};// trả về danh sách kho (đã trừ - tức là kho lấy mẫu nào số lượng bao nhiêu) hàng dùng để ghi log
+
+// Hoàn trả stock sau khi hủy đơn hàng, giảm waiting_for_delivery
+productSchema.methods.revertStockAfterCancel = function(quantityCanceled, sku) {
+  let list_warehouses = [];
+
+  this.Warehouses.forEach(warehouse => {
+    warehouse.warehouse_variants.forEach(wv => {
+      if (wv.sku === sku && quantityCanceled > 0) {
+        const canRevert = Math.min(quantityCanceled, wv.waiting_for_delivery);
+        wv.waiting_for_delivery -= canRevert;
+        list_warehouses.push({
+          warehouseId: warehouse._id,
+          sku,
+          quantity: canRevert
+        });
+        quantityCanceled -= canRevert;
+      }
+    });
+  });
+
+  return list_warehouses;
+}; // trả về danh sách kho (đã hoàn trả - tức là kho trả mẫu nào số lượng bao nhiêu) hàng dùng để ghi log
+
 
 // Xuất hàng giảm quantity, waiting_for_delivery
 productSchema.methods.exportStockAfterShipping = function(quantityShipped, sku) {
   let list_warehouses = [];
+
   this.Warehouses.forEach(warehouse => {
     warehouse.warehouse_variants.forEach(wv => {
-      if (wv.sku === sku){
-        if (quantityShipped <= wv.waiting_for_delivery) {
+
+      if (wv.sku === sku && quantityShipped > 0) {
+
+        const availableWaiting = wv.waiting_for_delivery;
+        if (availableWaiting <= 0) return;
+
+        if (quantityShipped <= availableWaiting) {
           wv.quantity -= quantityShipped;
           wv.waiting_for_delivery -= quantityShipped;
+
+          list_warehouses.push({
+            warehouseId: warehouse._id,
+            sku,
+            quantity: quantityShipped  // số lượng thực tế xuất từ kho này
+          });
+
           quantityShipped = 0;
-          list_warehouses.push({ warehouseId: warehouse._id, sku: sku, quantity: quantityShipped });
-        } else {
-          quantityShipped -= wv.waiting_for_delivery;
-          wv.quantity -= wv.waiting_for_delivery;
+        } 
+        else {
+          // Xuất hết availableWaiting từ kho này
+          wv.quantity -= availableWaiting;
           wv.waiting_for_delivery = 0;
-          list_warehouses.push({ warehouseId: warehouse._id, sku: sku, quantity: wv.waiting_for_delivery });
+
+          list_warehouses.push({
+            warehouseId: warehouse._id,
+            sku,
+            quantity: availableWaiting  // số lượng thực tế xuất
+          });
+
+          quantityShipped -= availableWaiting;
         }
       }
+
     });
   });
+
   return list_warehouses;
 };
+
 
 // Trả về min và max price của product dựa trên các variant
 productSchema.pre("save",  function(next) {
@@ -157,24 +225,6 @@ productSchema.pre("save",  function(next) {
   }
   next();
 });
-
-// productSchema.index(
-//   { 'Variants.sku': 1 }, 
-//   { 
-//     unique: true, 
-//     sparse: true, // Bỏ qua documents không có sku hoặc sku = null
-//     partialFilterExpression: { 'Variants.sku': { $exists: true, $ne: null } }
-//   }
-// );
-
-productSchema.index(
-  { 'Warehouses.warehouse_variants.sku': 1 }, 
-  { 
-    unique: true, 
-    sparse: true, // Bỏ qua documents không có sku hoặc sku = null
-    partialFilterExpression: { 'Warehouses.warehouse_variants.sku': { $exists: true, $ne: null } }
-  }
-);
 
 const Product = mongoose.models.Product || model("Product", productSchema);
 export default Product;

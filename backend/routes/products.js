@@ -1,7 +1,7 @@
 import express from 'express';
 import Product from '../models/Product.js';
 import { protect, admin } from '../middleware/auth.js';
-import { getProductsInfoForOrder, getArrangeAlphabet, getProductByCategory, getArrangePrice, createWarehouseByProductId, createVariantByProductId, updateWarehouseById, getAllWarehouseByProduct, getProductById, deleteProductById, createProduct, updateProduct, getAllProducts, deleteVariantBySku, updateVariantBySku } from '../controller/productController.js';
+import {  createVariantByWarehouseId, updateWarehouseVariantBySku, deleteWarehouseVariantBySku, deleteWarehouseById, getProductsInfoForOrder, getArrangeAlphabet, getProductByCategory, getArrangePrice, createWarehouseByProductId, createVariantByProductId, updateWarehouseById, getAllWarehouseByProduct, getProductById, deleteProductById, createProduct, updateProduct, getAllProducts, deleteVariantBySku, updateVariantBySku } from '../controller/productController.js';
 
 const router = express.Router();
 
@@ -47,7 +47,7 @@ router.get('/category/:categoryId', getProductByCategory);
 router.get('', async (req, res) => {
   console.log('GET /api/products ', req.query);
   try {
-    const pageSize = Number(req.query.pageSize) || 12;
+    const pageSize = Number(req.query.pageSize) || 20;
     const page = Number(req.query.page) || 1;
     const keyword = req.query.keyword
       ? {
@@ -151,6 +151,27 @@ router.post('/:id/warehouses', protect, admin, createWarehouseByProductId);
 // @route   PUT /api/products/:id/warehouses/:warehouseId
 // @access  Private/Admin
 router.put('/:id/warehouses/:warehouseId', protect, admin, updateWarehouseById);
+
+// @desc    Delete warehouse by ID
+// @route   DELETE /api/products/:id/warehouses/:warehouse_id
+// @access  Private/Admin
+router.delete('/:id/warehouses/:warehouse_id', protect, admin, deleteWarehouseById);
+
+// @desc    Create warehouse variant
+// @route   POST /api/products/:id/warehouses/:warehouse_id/variant
+// @access  Private/Admin
+router.post('/:id/warehouses/:warehouse_id/variant', protect, admin, createVariantByWarehouseId);
+
+// @desc    Update warehouse variant
+// @route   PUT /api/products/:id/warehouses/:warehouse_id/variant
+// @access  Private/Admin
+router.put('/:id/warehouses/:warehouse_id/variant', protect, admin, updateWarehouseVariantBySku);
+
+
+// @desc    Delete warehouse variant by SKU
+// @route   DELETE /api/products/:id/warehouses/:warehouse_id/variant?sku=<sku>
+// @access  Private/Admin
+router.delete('/:id/warehouses/:warehouse_id/variant', protect, admin, deleteWarehouseVariantBySku);
 
 // @desc    Create new review
 // @route   POST /api/products/:id/reviews

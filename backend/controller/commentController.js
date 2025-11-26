@@ -13,7 +13,7 @@ const createComment = async (req, res) => {
             try {
                 token = req.headers.authorization.split(' ')[1];
                 const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                const user = await User.findById(decoded.id).select('-password');
+                const user = await User.findById(decoded._id).select('-password');
                 console.log("Token", token);
                 console.log("User", user);
 
