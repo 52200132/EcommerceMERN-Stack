@@ -1,4 +1,3 @@
-import { parse } from "dotenv";
 import Product from "../models/Product.js";
 
 // Product Order (sắp xếp thứ tự sản phẩm)
@@ -152,6 +151,32 @@ const updateProduct = async (req, res) => {
     res.status(500).json({ ec: 500, em: error.message });
   }
 }
+
+export const getTopSellingProducts = async (req, res) => {
+  try {
+    const topProducts = await Product.find({})
+      .sort({ quantity_sold: -1 })
+      .limit(10)
+      .select('-detail_description -Images -Variants -Warehouses -createdAt -updatedAt -__v');
+
+    res.json({ ec: 0, em: 'Get Top Selling Products Successfully', dt: topProducts });
+  } catch (error) {
+    res.status(500).json({ ec: 500, em: error.message });
+  }
+};
+
+export const getNewProducts = async (req, res) => {
+  try {
+    const newProducts = await Product.find({})
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .select('-detail_description -Images -Variants -Warehouses -createdAt -updatedAt -__v');
+
+    res.json({ ec: 0, em: 'Get New Products Successfully', dt: newProducts });
+  } catch (error) {
+    res.status(500).json({ ec: 500, em: error.message });
+  }
+};
 
 // Variant Management Controllers
 const deleteVariantBySku = async (req, res) => {

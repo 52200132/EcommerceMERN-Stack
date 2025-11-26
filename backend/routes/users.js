@@ -1,7 +1,6 @@
 import express from 'express';
-import User from '../models/User.js';
 import { protect, admin } from '../middleware/auth.js';
-import {getProfile, updateProfile, updatePassword, createUserTemp, getAllCarts, getAllAddresses, getAllUsers, getUserById, addProductToCart, deleteCartItem, updateCartItem, addAddress, deleteAddress, updateAddress, updateUserById } from '../controller/userController.js'
+import { getProfile, updateProfile, updatePassword, createUserTemp, getAllCarts, getAllAddresses, getAllUsers, getUserById, addProductToCart, deleteCartItem, updateCartItem, addAddress, deleteAddress, updateAddress, updateUserById } from '../controller/userController.js'
 
 const router = express.Router();
 

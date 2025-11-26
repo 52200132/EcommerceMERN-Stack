@@ -14,7 +14,8 @@ import {
   discountCodeRoutes,
   commentRoutes,
   addressRoutes,
-  ratingRoutes
+  ratingRoutes,
+  dashboardRoutes
 } from "#tps-routes";
 import { setUpConsoleLogging, setUpWriteStream } from "#utils";
 
@@ -68,6 +69,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/ratings", ratingRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

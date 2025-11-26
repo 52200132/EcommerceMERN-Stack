@@ -1,7 +1,7 @@
 import express from 'express';
 import Product from '../models/Product.js';
 import { protect, admin } from '../middleware/auth.js';
-import {  createVariantByWarehouseId, updateWarehouseVariantBySku, deleteWarehouseVariantBySku, deleteWarehouseById, getProductsInfoForOrder, getArrangeAlphabet, getProductByCategory, getArrangePrice, createWarehouseByProductId, createVariantByProductId, updateWarehouseById, getAllWarehouseByProduct, getProductById, deleteProductById, createProduct, updateProduct, getAllProducts, deleteVariantBySku, updateVariantBySku } from '../controller/productController.js';
+import { getNewProducts, getTopSellingProducts, createVariantByWarehouseId, updateWarehouseVariantBySku, deleteWarehouseVariantBySku, deleteWarehouseById, getProductsInfoForOrder, getArrangeAlphabet, getProductByCategory, getArrangePrice, createWarehouseByProductId, createVariantByProductId, updateWarehouseById, getAllWarehouseByProduct, getProductById, deleteProductById, createProduct, updateProduct, getAllProducts, deleteVariantBySku, updateVariantBySku } from '../controller/productController.js';
 
 const router = express.Router();
 
@@ -26,6 +26,7 @@ router.get('/all', protect, admin, getAllProducts);
 // @route   GET /api/products/top?number=<number>
 // @access  Public
 // chưa xong đâu, còn rating để nó sắp xếp
+// TODO: có tính top rating à?
 router.get('/top', async (req, res) => {
   try {
     const number = Number(req.query.number) || 10;
@@ -35,6 +36,20 @@ router.get('/top', async (req, res) => {
     res.status(500).json({ ec: 500, em: error.message });
   }
 });
+
+// @desc    Get top selling products
+// @route   GET /api/products/top_selling
+// @access  Public
+router.get('/top_selling', getTopSellingProducts);
+
+// @desc    Get new products
+// @route   GET /api/products/new_products
+// @access  Public
+router.get('/new_products', getNewProducts);
+
+// @desc    Get new products
+// @route   GET /api/products/new_products
+// @access  Public
 
 // @desc    Get product categories
 // @route   GET /api/products/category/:categoryId
@@ -67,8 +82,8 @@ router.get('', async (req, res) => {
     const [count, products] = await Promise.all([
       Product.countDocuments(query),
       Product.find(query)
-        .select('-Warehouses -detail_description -created_at -short_description') // Loại bỏ các trường không cần thiết
-        .sort({ created_at: -1 })
+        .select('-Warehouses -detail_description -createdAt -short_description') // Loại bỏ các trường không cần thiết
+        .sort({ createdAt: -1 })
         // .lean() // Quan trọng: trả về plain objects thay vì Mongoose documents
         .limit(pageSize)
         .skip(pageSize * (page - 1))
