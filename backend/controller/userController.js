@@ -81,7 +81,7 @@ export const createUserTemp = async (req, res) => {
 export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find({}).select('-password');
-    res.json({ ec: 200, em: "Lấy tất cả người dùng thành công", dt: users });
+    res.json({ ec: 0, em: "Lấy tất cả người dùng thành công", dt: users });
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
   }
@@ -92,7 +92,7 @@ export const getUserById = async (req, res) => {
     const user = await User.findById(req.params.user_id).select('-password');
 
     if (user) {
-      res.json({ ec: 200, em: "Lấy thông tin người dùng thành công", dt: user });
+      res.json({ ec: 0, em: "Lấy thông tin người dùng thành công", dt: user });
     } else {
       res.status(404).json({ ec: 404, em: "User not found" });
     }
@@ -113,7 +113,7 @@ export const updateUserById = async (req, res) => {
     ).select('-password');
 
     if (user) {
-      res.json({ ec: 200, em: "Cập nhật thông tin người dùng thành công", dt: user });
+      res.json({ ec: 0, em: "Cập nhật thông tin người dùng thành công", dt: user });
     } else {
       res.status(404).json({ ec: 404, em: "User not found" });
     }

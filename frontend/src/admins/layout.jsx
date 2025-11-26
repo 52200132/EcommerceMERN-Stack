@@ -8,6 +8,7 @@ import 'admin-lte/dist/css/adminlte.css'
 import './index.scss';
 
 import ModalDialog from "./components/layout/modal-dialog";
+import { default as MD2 } from '#a-components/modal-dialog';
 import Sidebar from "./components/layout/sidebar";
 import Header from "./components/layout/header";
 import Breadcrumb from './components/layout/breadcrumb';
@@ -34,6 +35,9 @@ const Layout = () => {
 
       {/* Modal */}
       <ModalDialog />
+
+      {/* Modal is managed by userModalDialogStore */}
+      <MD2 />
 
       {/* Toast */}
       <ToastContainer

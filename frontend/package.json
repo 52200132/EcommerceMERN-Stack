@@ -73,7 +73,7 @@
     "#features/*": "./src/redux-tps/features/*",
     "#components": "./src/components/index-components.js",
     "#components/*": "./src/components/*",
-    "#a-components": "./src/components/index-components.js",
-    "#a-components/*": "./src/components/*"
+    "#a-components": "./src/admins/components/index-components.js",
+    "#a-components/*": "./src/admins/components/*"
   }
 }

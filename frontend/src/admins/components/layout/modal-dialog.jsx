@@ -23,7 +23,6 @@ const ModalDialog = () => {
 
   if (!selector && ModalContent === AttributesVariant) return
 
-  console.log('RENDER: modal-dialog');
   return (
     <>
       <Modal

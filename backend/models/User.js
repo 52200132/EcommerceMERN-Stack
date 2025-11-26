@@ -76,6 +76,9 @@ const userSchema = new Schema({
   Addresses: { type: [addressSchema], required: true },
   Carts: { type: [cartSchema], default: [] },
   Linked_accounts: { type: [linkedAccountSchema], default: [] },
+  is_banned: { type: Boolean, default: false },
+  banned_at: { type: Date, default: null },
+  banned_reason: { type: String, default: null }
 }, { timestamps: true });
 
 //  Export 

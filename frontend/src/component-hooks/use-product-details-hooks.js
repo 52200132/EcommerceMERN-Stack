@@ -51,7 +51,7 @@ export const productDetailsHooks = {
         mainSlider?.destroy();
         thumbnailsSlider?.destroy();
       }
-    }, [imagesSlider]);
+    }, [imagesSlider, selectorProductImagesSlider, selectorThumbnails]);
 
     return { imagesSlider, mainSliderRef }
   },

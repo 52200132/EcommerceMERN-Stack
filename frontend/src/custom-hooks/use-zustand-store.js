@@ -88,3 +88,30 @@ export const useOffCanvasStore = create(
     getActiveOffCanvasBody: () => get().activateOffCanvasBody,
   }))
 );
+
+export const userModalDialogStore = create(
+  immer((set, get) => ({
+    show: false,
+    title: '',
+    bodyComponent: null,
+    bodyProps: {},
+    setShow: (value) => set((state) => {
+      state.show = value;
+    }),
+    setTitle: (title) => set((state) => {
+      state.title = title;
+    }),
+    setBodyComponent: (component) => set((state) => {
+      state.bodyComponent = component;
+    }),
+    setBodyProps: (props) => set((state) => {
+      state.bodyProps = props;
+    }),
+    reset: () => set((state) => {
+      state.show = false;
+      state.title = '';
+      state.bodyComponent = null;
+      state.bodyProps = {};
+    }),
+  }))
+);

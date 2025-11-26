@@ -13,8 +13,8 @@
       "#features": ["redux-tps/features/index-features.js"],
       "#components/*": ["components/*"],
       "#components": ["components/index-components.js"],
-      "#a-components/*": ["components/*"],
-      "#a-components": ["components/index-components.js"]
+      "#a-components/*": ["admins/components/*"],
+      "#a-components": ["admins/components/index-components.js"]
     }
   }
 }
