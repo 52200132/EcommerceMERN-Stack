@@ -69,18 +69,19 @@ export const productDetailsHooks = {
 
     const [selectedVariant, setSelectedVariant] = useState(() => productVariants?.[0] ?? null);
 
-    // useEffect(() => {
-    //   if (!productVariants.length) {
-    //     return;
-    //   }
+    useEffect(() => {
+      if (!productVariants.length) {
+        return;
+      }
 
-    //   setSelectedVariant(prev => {
-    //     if (prev && productVariants.some(v => v.sku === prev.sku)) {
-    //       return prev;
-    //     }
-    //     return productVariants[0];
-    //   });
-    // }, [productVariants]);
+      setSelectedVariant(prev => {
+        if (prev && productVariants.some(v => v.sku === prev.sku)) {
+          return prev;
+        }
+        return productVariants[0];
+      });
+    }, [productVariants]);
+
     return { productVariants, selectedVariant, setSelectedVariant };
   },
 };

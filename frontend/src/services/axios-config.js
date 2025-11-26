@@ -58,6 +58,7 @@ export const axiosBaseQuery = ({ baseUrl } = { baseUrl: '' }) =>
       if (showSuccessToast) toast.success(useMessageFromResponse ? result?.em || message.success : message.success);
       return { data: result }
     } catch (axiosError) {
+      if (typeof callbackfn === 'function') callbackfn(axiosError, true);
       if (showErrorToast) toast.error(useMessageFromResponse ? axiosError?.em || message.error : message.error);
       return { error: axiosError }
     } finally {

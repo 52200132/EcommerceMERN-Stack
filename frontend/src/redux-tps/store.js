@@ -1,9 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit'
 
-import { productReducer, modalReducer, componentReducer, authReducer, productDetailsReducer } from '#features'
+import {
+  productReducer, modalReducer, componentReducer, authReducer, productDetailsReducer,
+  userProfileReducer
+} from '#features'
 
 // Import the API slice
-import { productApi, addressesApi, authApi, ratingApi } from '#services'
+import { productApi, addressesApi, authApi, ratingApi, backendApi } from '#services'
 
 export const store = configureStore({
   reducer: {
@@ -11,7 +14,9 @@ export const store = configureStore({
     modal: modalReducer,
     component: componentReducer,
     auth: authReducer,
+    userProfile: userProfileReducer,
     productDetails: productDetailsReducer,
+    [backendApi.reducerPath]: backendApi.reducer,
     [productApi.reducerPath]: productApi.reducer,
     [addressesApi.reducerPath]: addressesApi.reducer,
     [authApi.reducerPath]: authApi.reducer,
@@ -19,6 +24,7 @@ export const store = configureStore({
   },
   middleware: (getDefaultMiddleware) => {
     return getDefaultMiddleware().concat(
+      backendApi.middleware,
       productApi.middleware,
       addressesApi.middleware,
       authApi.middleware,

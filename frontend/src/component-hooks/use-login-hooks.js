@@ -52,9 +52,9 @@ export const useLoginForm = () => {
     try {
       axiosBaseQueryUtil.toggleAllBehaviors(true);
       axiosBaseQueryUtil.overlay = overlayPreloader;
-      axiosBaseQueryUtil.callbackfn = (data) => {
+      axiosBaseQueryUtil.callbackfn = (data, hasError) => {
+        if (hasError) return;
         navigate('/');
-        console.log('Login successful:', data);
         dispatch(setCredentials(data?.dt));
       };
       axiosBaseQueryUtil.flowMessages = [

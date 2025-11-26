@@ -1,3 +1,4 @@
+import { clearCacheGroup } from "#middleware";
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 
@@ -6,16 +7,16 @@ export const getProfile = async (req, res) => {
   try {
     const user_id = req.user._id;
     const profile = await User.findById(user_id).select('-password -points -Carts -Addresses -Linked_accounts -updatedAt -__v');
-    res.json({ ec: 200, me: "Lấy thông tin profile thành công", dt: profile });
+    res.json({ ec: 200, em: "Lấy thông tin profile thành công", dt: profile });
   } catch (error) {
-    res.status(500).json({ ec: 500, me: error.message });
+    res.status(500).json({ ec: 500, em: error.message });
   }
 };
 
 export const updateProfile = async (req, res) => {
   try {
     const updateData = {
-      username: req.body.username,
+      usernaem: req.body.username,
       email: req.body.email,
       image: req.body.image,
       gender: req.body.gender
@@ -25,11 +26,11 @@ export const updateProfile = async (req, res) => {
       updateData,
       { new: true }
     ).select('-password -points -Carts -Addresses -Linked_accounts -updatedAt -__v');
-
-    res.json({ ec: 200, me: "Cập nhật thông tin thành công", dt: updatedUser });
+    clearCacheGroup('userProfile');
+    res.json({ ec: 0, em: "Cập nhật thông tin thành công", dt: updatedUser });
 
   } catch (error) {
-    res.status(500).json({ ec: 500, me: error.message });
+    res.status(500).json({ ec: 500, em: error.message });
   }
 };
 
@@ -40,48 +41,49 @@ export const updatePassword = async (req, res) => {
 
     // Load lại user từ DB để có trường password
     const user = await User.findById(req.user._id);
-    if (!user) return res.status(404).json({ ec: 404, me: "User not found" });
+    if (!user) return res.status(404).json({ ec: 404, em: "User not found" });
 
     // So sánh mật khẩu cũ
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ ec: 400, me: "Mật khẩu cũ không đúng" });
+      return res.status(400).json({ ec: 400, em: "Mật khẩu cũ không đúng" });
     }
 
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(new_password, salt);
     await user.save();
 
-    res.json({ ec: 0, me: "Cập nhật mật khẩu thành công" });
+    res.json({ ec: 0, em: "Cập nhật mật khẩu thành công" });
   } catch (error) {
-    res.status(500).json({ ec: 500, me: error.message });
+    res.status(500).json({ ec: 500, em: error.message });
   }
 };
 
 // Tạo user tạm để gán đơn hàng
 export const createUserTemp = async (req, res) => {
   try {
-    const { username , email, Addresses } = req.body;
+    const { username, email, Addresses } = req.body;
     const user = new User({
-      username: username,
+      usernaem: username,
       password: "12345678",
       email: email,
       Addresses: Addresses
     });
-    
+
     const createdUser = await user.save();
-    res.status(201).json({ ec: 201, me: "Tạo user tạm thành công", dt: user});
+    res.status(201).json({ ec: 201, em: "Tạo user tạm thành công", dt: user });
   } catch (error) {
-    res.status(500).json({ ec: 500, me: error.message });
+    res.status(500).json({ ec: 500, em: error.message });
   }
 };
-  // Admin :User Management Controllers
+
+// Admin :User Management Controllers
 export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find({}).select('-password');
-    res.json({ ec: 200, me: "Lấy tất cả người dùng thành công", dt: users });
+    res.json({ ec: 200, em: "Lấy tất cả người dùng thành công", dt: users });
   } catch (error) {
-    res.status(500).json({ ec: 500, me: error.message });
+    res.status(500).json({ ec: 500, em: error.message });
   }
 };
 
@@ -90,12 +92,12 @@ export const getUserById = async (req, res) => {
     const user = await User.findById(req.params.user_id).select('-password');
 
     if (user) {
-      res.json({ ec: 200, me: "Lấy thông tin người dùng thành công", dt: user });
+      res.json({ ec: 200, em: "Lấy thông tin người dùng thành công", dt: user });
     } else {
-      res.status(404).json({ ec: 404, me: "User not found" });
+      res.status(404).json({ ec: 404, em: "User not found" });
     }
   } catch (error) {
-    res.status(500).json({ ec: 500, me: error.message });
+    res.status(500).json({ ec: 500, em: error.message });
   }
 };
 
@@ -111,13 +113,13 @@ export const updateUserById = async (req, res) => {
     ).select('-password');
 
     if (user) {
-      res.json({ ec: 200, me: "Cập nhật thông tin người dùng thành công", dt: user });
+      res.json({ ec: 200, em: "Cập nhật thông tin người dùng thành công", dt: user });
     } else {
-      res.status(404).json({ ec: 404, me: "User not found" });
+      res.status(404).json({ ec: 404, em: "User not found" });
     }
 
   } catch (error) {
-    res.status(500).json({ ec: 500, me: error.message });
+    res.status(500).json({ ec: 500, em: error.message });
   }
 };
 
@@ -126,8 +128,8 @@ export const addProductToCart = async (req, res) => {
   try {
     const { product_id, variant, quantity } = req.body;
 
-    const cart = req.user.Carts.find(item => 
-      item.product_id.toString() === product_id && 
+    const cart = req.user.Carts.find(item =>
+      item.product_id.toString() === product_id &&
       JSON.stringify(item.variant.sku) === JSON.stringify(variant.sku)
     );
 
@@ -137,24 +139,24 @@ export const addProductToCart = async (req, res) => {
     } else {
       // Thêm sản phẩm mới vào giỏ hàng
       req.user.Carts.push({
-        product_id, 
+        product_id,
         variant,
         quantity
       });
     }
 
     await req.user.save(); // sẽ cast và validate đúng
-    return res.json({ ec:200, me:'Thêm thành công', dt: req.user.Carts });
+    return res.json({ ec: 200, em: 'Thêm thành công', dt: req.user.Carts });
   } catch (err) {
-    return res.status(500).json({ ec:500, me: err.message });
+    return res.status(500).json({ ec: 500, em: err.message });
   }
 };
 
 export const getAllCarts = async (req, res) => {
   try {
-    res.json({ ec: 200, me: "Lấy giỏ hàng thành công", dt: req.user.Carts });
+    res.json({ ec: 200, em: "Lấy giỏ hàng thành công", dt: req.user.Carts });
   } catch (error) {
-    res.status(500).json({ ec: 500, me: error.message });
+    res.status(500).json({ ec: 500, em: error.message });
   }
 };
 
@@ -164,12 +166,12 @@ export const deleteCartItem = async (req, res) => {
     const product_id = req.params.product_id;
     const { sku } = req.query;
 
-    const cartItem = req.user.Carts.find(item => 
-      item.product_id.toString() === product_id && 
+    const cartItem = req.user.Carts.find(item =>
+      item.product_id.toString() === product_id &&
       JSON.stringify(item.variant.sku) === JSON.stringify(sku)
     );
     if (!cartItem) {
-      return res.status(404).json({ ec: 404, me: "Không tìm thấy sản phẩm trong giỏ hàng" });
+      return res.status(404).json({ ec: 404, em: "Không tìm thấy sản phẩm trong giỏ hàng" });
     }
 
     const result = await User.updateOne(
@@ -177,12 +179,12 @@ export const deleteCartItem = async (req, res) => {
       { $pull: { Carts: { product_id: product_id, "variant.sku": sku } } }
     );
     if (result.modifiedCount > 0) {
-      res.json({ ec: 200, me: 'Cart item removed' });
+      res.json({ ec: 200, em: 'Cart item removed' });
     } else {
-      res.status(404).json({ ec: 404, me: 'Cart item not found' });
+      res.status(404).json({ ec: 404, em: 'Cart item not found' });
     }
   } catch (error) {
-    res.status(500).json({ ec: 500, me: error.message });
+    res.status(500).json({ ec: 500, em: error.message });
   }
 };
 
@@ -194,35 +196,35 @@ export const updateCartItem = async (req, res) => {
     // tham số cập nhật
     const { variant, quantity } = req.body;
 
-    const cartItem = req.user.Carts.find(item => 
-      item.product_id.toString() === product_id && 
+    const cartItem = req.user.Carts.find(item =>
+      item.product_id.toString() === product_id &&
       JSON.stringify(item.variant.sku) === JSON.stringify(sku)
     );
     if (!cartItem) {
-      return res.status(404).json({ ec: 404, me: "Không tìm thấy sản phẩm trong giỏ hàng" });
+      return res.status(404).json({ ec: 404, em: "Không tìm thấy sản phẩm trong giỏ hàng" });
     }
     cartItem.variant = variant || cartItem.variant;
     cartItem.quantity = quantity || cartItem.quantity;
 
     await req.user.save();
-    res.json({ ec: 200, me: "Cập nhật sản phẩm trong giỏ hàng thành công", dt: cartItem });
+    res.json({ ec: 200, em: "Cập nhật sản phẩm trong giỏ hàng thành công", dt: cartItem });
 
   } catch (error) {
-    res.status(500).json({ ec: 500, me: error.message });
+    res.status(500).json({ ec: 500, em: error.message });
   }
 };
 
 // Address Management Controllers
 export const getAllAddresses = async (req, res) => {
   try {
-    res.json({ ec: 200, me: "Lấy địa chỉ thành công", dt: req.user.Addresses });
+    res.json({ ec: 0, em: "Lấy địa chỉ thành công", dt: req.user.Addresses });
   } catch (error) {
-    res.status(500).json({ ec: 500, me: error.message });
+    res.status(500).json({ ec: 500, em: error.message });
   }
 };
 
 // Đặt tất cả địa chỉ isDefault = false
-const setDefaultAddress = (user) => {
+export const setDefaultAddress = (user) => {
   user.Addresses.forEach(addr => {
     addr.isDefault = false;
   });
@@ -237,9 +239,9 @@ export const addAddress = async (req, res) => {
     }
     req.user.Addresses.push({ receiver, phone, country, province, district, ward, street, postalCode, isDefault });
     await req.user.save();
-    res.json({ ec: 200, me: "Thêm địa chỉ thành công", dt: req.user.Addresses });
+    res.json({ ec: 0, em: "Thêm địa chỉ thành công", dt: req.user.Addresses });
   } catch (error) {
-    res.status(500).json({ ec: 500, me: error.message });
+    res.status(500).json({ ec: 500, em: error.message });
   }
 };
 
@@ -263,13 +265,13 @@ export const updateAddress = async (req, res) => {
       address.isDefault = isDefault || address.isDefault;
 
       await req.user.save();
-      res.json({ ec: 200, me: "Cập nhật địa chỉ thành công", dt: address });
+      res.json({ ec: 0, em: "Cập nhật địa chỉ thành công", dt: address });
     } else {
-      res.status(404).json({ ec: 404, me: "Không tìm thấy địa chỉ" });
+      res.status(404).json({ ec: 404, em: "Không tìm thấy địa chỉ" });
     }
 
   } catch (error) {
-    res.status(500).json({ ec: 500, me: error.message });
+    res.status(500).json({ ec: 500, em: error.message });
   }
 };
 
@@ -277,19 +279,17 @@ export const deleteAddress = async (req, res) => {
   try {
     const address_id = req.params.address_id;
     if (req.user.Addresses.id(address_id).isDefault) {
-      return res.status(400).json({ ec: 400, me: "Không thể xóa địa chỉ mặc định" });
+      return res.status(400).json({ ec: 400, em: "Không thể xóa địa chỉ mặc định" });
     }
     const deleteResult = await User.updateOne(
       { _id: req.user._id },
       { $pull: { Addresses: { _id: address_id } } }
     );
     if (deleteResult.modifiedCount === 0) {
-      return res.status(404).json({ ec: 404, me: "Không tìm thấy địa chỉ để xóa" });
+      return res.status(404).json({ ec: 404, em: "Không tìm thấy địa chỉ để xóa" });
     }
-    res.json({ ec: 200, me: "Xóa địa chỉ thành công" });
+    res.json({ ec: 200, em: "Xóa địa chỉ thành công" });
   } catch (error) {
-    res.status(500).json({ ec: 500, me: error.message });
+    res.status(500).json({ ec: 500, em: error.message });
   }
 };
-
-// TODO: Thêm ảnh đại diện người dùng/ lưu ảnh về máy chủ

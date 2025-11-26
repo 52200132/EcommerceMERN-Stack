@@ -7,6 +7,8 @@ export const authInitialState = {
     email: '',
     isManager: false,
     token: '',
+    image: '',
+    gender: ''
   }
 }
 

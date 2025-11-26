@@ -46,24 +46,25 @@ const linkedAccountSchema = new Schema({
 
 //Hash password
 const salt = await bcrypt.genSalt(10);
-const hashedPassword = await bcrypt.hash(process.env.USER_PASSWORD_DEFAULT, salt);
+const hashedPassword = await bcrypt.hash(process.env.USER_PASSWORD_DEFAULT || '12345678', salt);
 
 // Main: User Schema 
 const userSchema = new Schema({
-  username: { type: String, 
-    required: true, 
-    trim: true, 
-    minlength: [2, 'Username must be at least 2 characters'] 
+  username: {
+    type: String,
+    required: true,
+    trim: true,
+    minlength: [2, 'Username must be at least 2 characters']
   },
-  email: { 
-    type: String, 
-    required: true, 
-    match: [/^.+@.+\..+$/, 'Please fill a valid email address'], 
+  email: {
+    type: String,
+    required: true,
+    match: [/^.+@.+\..+$/, 'Please fill a valid email address'],
     unique: true
   },
-  password: { 
-    type: String, 
-    required: true, 
+  password: {
+    type: String,
+    required: true,
     minlength: [8, 'Password must be at least 8 characters'],
     default: hashedPassword
   },

@@ -23,7 +23,7 @@ const openWindowPopup = (url) => {
     `width=${width},height=${height},top=${top},left=${left}`
   );
   const timer = setInterval(() => {
-    if (popup?.opener?.closed) {
+    if (popup?.closed) {
       clearInterval(timer);
       closeOverlayPreloader();
     }
@@ -114,7 +114,7 @@ const UserActions = () => {
           }
         >
           <div className="tps-user-brief-info">
-            <img title={`Xin chào ${user?.username || 'Bạn'}`} src={user?.avatarPath || unknownAvatar} alt="User Avatar" className='user-avatar' />
+            <img title={`Xin chào ${user?.username || 'Bạn'}`} src={user?.image || unknownAvatar} alt="User Avatar" className='user-avatar' />
             <div className='user-greeting d-none d-lg-block'>
               <p>Xin chào,</p>
               <p>{user?.username || 'Bạn'}</p>
