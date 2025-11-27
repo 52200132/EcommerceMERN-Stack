@@ -78,14 +78,59 @@ export const createUserTemp = async (req, res) => {
 };
 
 // Admin :User Management Controllers
+
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find({}).select('-password');
-    res.json({ ec: 0, em: "Lấy tất cả người dùng thành công", dt: users });
+    const {
+      page = 1,
+      limit = 10,
+      q = '',
+      status,
+      role,
+    } = req.query;
+
+    const pageNumber = Math.max(parseInt(page, 10) || 1, 1);
+    const pageSize = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
+    const query = {};
+
+    if (q) {
+      query.$or = [
+        { username: { $regex: q, $options: 'i' } },
+        { email: { $regex: q, $options: 'i' } },
+      ];
+    }
+
+    if (status === 'active') query.isActive = true;
+    if (status === 'inactive') query.isActive = false;
+    if (status === 'banned') query.is_banned = true;
+
+    if (role === 'manager') query.isManager = true;
+    if (role === 'user') query.isManager = false;
+
+    const [total, users] = await Promise.all([
+      User.countDocuments(query),
+      User.find(query)
+        .select('-password')
+        .sort({ createdAt: -1 })
+        .skip(pageSize * (pageNumber - 1))
+        .limit(pageSize),
+    ]);
+
+    res.json({
+      ec: 0,
+      em: "Get all users successfully",
+      dt: {
+        users,
+        page: pageNumber,
+        pages: Math.ceil(total / pageSize),
+        total,
+      }
+    });
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
   }
 };
+
 
 export const getUserById = async (req, res) => {
   try {
@@ -101,19 +146,54 @@ export const getUserById = async (req, res) => {
   }
 };
 
+
 export const updateUserById = async (req, res) => {
   try {
     const user_id = req.params.user_id;
-    // Thông tin người dùng 
-    const { username, email, image, gender, password, points, isActive } = req.body;
+    const {
+      username,
+      email,
+      image,
+      gender,
+      password,
+      points,
+      isActive,
+      isManager,
+      is_banned,
+      banned_reason,
+    } = req.body;
+
+    const updateData = {};
+    if (username !== undefined) updateData.username = username;
+    if (email !== undefined) updateData.email = email;
+    if (image !== undefined) updateData.image = image;
+    if (gender !== undefined) updateData.gender = gender;
+    if (points !== undefined) updateData.points = Number(points);
+    if (typeof isActive === 'boolean') updateData.isActive = isActive;
+    if (typeof isManager === 'boolean') updateData.isManager = isManager;
+
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      updateData.password = await bcrypt.hash(password, salt);
+    }
+
+    if (typeof is_banned === 'boolean') {
+      updateData.is_banned = is_banned;
+      updateData.banned_reason = is_banned ? (banned_reason || null) : null;
+      updateData.banned_at = is_banned ? new Date() : null;
+      if (is_banned) {
+        updateData.isActive = false;
+      }
+    }
+
     const user = await User.findByIdAndUpdate(
       user_id,
-      { username, email, image, gender, password, points, isActive },
-      { new: true }
+      { $set: updateData },
+      { new: true, runValidators: true }
     ).select('-password');
 
     if (user) {
-      res.json({ ec: 0, em: "Cập nhật thông tin người dùng thành công", dt: user });
+      res.json({ ec: 0, em: "User updated successfully", dt: user });
     } else {
       res.status(404).json({ ec: 404, em: "User not found" });
     }
@@ -122,6 +202,7 @@ export const updateUserById = async (req, res) => {
     res.status(500).json({ ec: 500, em: error.message });
   }
 };
+
 
 // Cart Management Controllers
 export const addProductToCart = async (req, res) => {

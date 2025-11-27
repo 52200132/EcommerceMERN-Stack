@@ -15,7 +15,7 @@ import TableProducts from 'admins/components/products/table/table-products';
 
 import { useDispatch } from 'react-redux';
 import { useGetProductsQuery } from 'services/product-api';
-import { Button } from 'react-bootstrap';
+import { Button, Form } from 'react-bootstrap';
 
 const ManageProductsLayout = () => {
   const dispatch = useDispatch()
@@ -36,6 +36,10 @@ const ManageProductsLayout = () => {
     updatedAt: { from: '', to: '' }
   });
   const { data, isLoading } = useGetProductsQuery({ page, pageSize });
+  const handlePageSizeChange = (value) => {
+    setPageSize(value);
+    setPage(1);
+  };
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
@@ -188,20 +192,35 @@ const ManageProductsLayout = () => {
       {/* Products Table */}
       <TableProducts {...{ products, isLoading }} />
 
-      {/* Phân trang */}
-      <PaginationControl {...{
-        page,
-        between: 3,
-        total: totalRow,
-        limit: pageSize,
-        changePage: (page) => {
-          setPage(page)
-        },
-        next: true,
-        last: true,
-        ellipsis: 1
-      }}
-      />
+      {/* Chọn số dòng mỗi trang */}
+      <div className='pagination-bar'>
+        <div className='page-size-row'>
+          <Form.Select
+            className='w-auto'
+            size='sm'
+            value={pageSize}
+            onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+          >
+            {[5, 10, 20, 50].map((size) => (
+              <option key={size} value={size}>{size} / trang</option>
+            ))}
+          </Form.Select>
+        </div>
+        {/* Phân trang */}
+
+        <div className='pagination-row'>
+          <PaginationControl
+            page={page}
+            between={3}
+            total={totalRow}
+            limit={pageSize}
+            changePage={(nextPage) => setPage(nextPage)}
+            next
+            last
+            ellipsis={1}
+          />
+        </div>
+      </div>
     </>
   );
 };

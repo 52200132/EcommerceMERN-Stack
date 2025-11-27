@@ -95,6 +95,7 @@ export const userModalDialogStore = create(
     title: '',
     bodyComponent: null,
     bodyProps: {},
+    formValues: {},
     setShow: (value) => set((state) => {
       state.show = value;
     }),

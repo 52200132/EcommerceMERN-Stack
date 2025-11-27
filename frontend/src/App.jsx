@@ -18,6 +18,7 @@ import CRUDetailsDescription from './admins/pages/product/cru-dd-page';
 import ProfilePage from 'pages/profile/profile-page';
 import PasswordChangePage from 'pages/profile/password-change-page';
 import AddressPage from 'pages/profile/address-page';
+import ManageUsersPage from 'admins/pages/manage-users/manage-users-page';
 
 // import NotFoundPage from './pages/NotFoundPage'; // Optional: Create a 404 page component
 // import './App.css';
@@ -78,6 +79,7 @@ const App = () => {
             <Route path="edit-product/:productId" element={<CRUProduct action='update' />} />
             <Route path="add-product/description" element={<CRUDetailsDescription />} />
           </Route>
+          <Route path="manage-users" element={<ManageUsersPage />} />
         </Route>
 
       </Routes>

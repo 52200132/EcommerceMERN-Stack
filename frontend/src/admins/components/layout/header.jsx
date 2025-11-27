@@ -1,6 +1,12 @@
 import { Link } from 'react-router-dom'
 
-const Header = (props) => {
+const Header = ({ onToggleSidebar }) => {
+  const handleToggleSidebar = (event) => {
+    event.preventDefault();
+    if (onToggleSidebar) {
+      onToggleSidebar();
+    }
+  };
 
   return (
     <>
@@ -11,9 +17,9 @@ const Header = (props) => {
           {/* <!--begin::Start Navbar Links--> */}
           <ul className="navbar-nav">
             <li className="nav-item">
-              <Link className="nav-link" data-lte-toggle="sidebar" to="#" role="button">
+              <button type="button" className="nav-link btn btn-link px-2 nav-link-toggle" onClick={handleToggleSidebar}>
                 <i className="bi bi-list"></i>
-              </Link>
+              </button>
             </li>
             <li className="nav-item d-none d-md-block"><Link to="#" className="nav-link">Home</Link></li>
             <li className="nav-item d-none d-md-block"><Link to="#" className="nav-link">Contact</Link></li>
