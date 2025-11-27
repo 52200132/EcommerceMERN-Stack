@@ -109,7 +109,7 @@ export const createOrder = async (req, res) => {
                         Phí vận chuyển: ${newOrder.shipment.fee.toLocaleString()} VND
                         Mã giảm giá: ${newOrder.discount_code || "Không có"}
                         Giảm giá: -${newOrder.discount.toLocaleString()} VND
-                        Sử dụng điểm KHTT: -${newOrder.points_used*1000} VND
+                        Sử dụng điểm KHTT: -${(newOrder.points_used * 1000).toLocaleString()} VND
                         
                         Tổng thanh toán: ${newOrder.grand_total.toLocaleString()} VND
 
@@ -162,20 +162,20 @@ export const createOrder = async (req, res) => {
                             <td style="padding:5px 0; text-align:right;">${newOrder.total_amount.toLocaleString()} VND</td>
                         </tr>
                         <tr>
+                            <td style="padding:5px 0;">Phí vận chuyển:</td>
+                            <td style="padding:5px 0; text-align:right;">${newOrder.shipment.fee.toLocaleString()} VND</td>
+                        </tr>
+                        <tr>
                             <td style="padding:5px 0;">Mã giảm giá:</td>
                             <td style="padding:5px 0; text-align:right;">${newOrder.discount_code || "Không có"}</td>
                         </tr>
                         <tr>
                             <td style="padding:5px 0;">Giảm giá:</td>
-                            <td style="padding:5px 0; text-align:right;">${newOrder.discount.toLocaleString()} VND</td>
+                            <td style="padding:5px 0; text-align:right;">-${newOrder.discount.toLocaleString()} VND</td>
                         </tr>
                         <tr>
-                            <td style="padding:5px 0;">Điểm đã sử dụng:</td>
-                            <td style="padding:5px 0; text-align:right;">${newOrder.points_used}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding:5px 0;">Phí vận chuyển:</td>
-                            <td style="padding:5px 0; text-align:right;">${newOrder.shipment.fee.toLocaleString()} VND</td>
+                            <td style="padding:5px 0;">Sử dụng điểm KHTT:</td>
+                            <td style="padding:5px 0; text-align:right;">-${(newOrder.points_used*1000).toLocaleString()} VND</td>
                         </tr>
                         <tr style="border-top:1px solid #ddd;">
                             <td style="padding:10px 0; font-size:16px;"><b>Tổng thanh toán:</b></td>
@@ -284,7 +284,7 @@ export const createOrder = async (req, res) => {
                         Phí vận chuyển: ${newOrder.shipment.fee.toLocaleString()} VND
                         Mã giảm giá: ${newOrder.discount_code || "Không có"}
                         Giảm giá: -${newOrder.discount.toLocaleString()} VND
-                        Sử dụng điểm KHTT: -${newOrder.points_used*1000} VND
+                        Sử dụng điểm KHTT: -${(newOrder.points_used * 1000).toLocaleString()} VND
                         Tổng thanh toán: ${newOrder.grand_total.toLocaleString()} VND
 
                         Phương thức thanh toán: ${newOrder.payment_method}
@@ -336,20 +336,20 @@ export const createOrder = async (req, res) => {
                         <td style="padding:5px 0; text-align:right;">${newOrder.total_amount.toLocaleString()} VND</td>
                     </tr>
                     <tr>
+                        <td style="padding:5px 0;">Phí vận chuyển:</td>
+                        <td style="padding:5px 0; text-align:right;">${newOrder.shipment.fee.toLocaleString()} VND</td>
+                    </tr>
+                    <tr>
                         <td style="padding:5px 0;">Mã giảm giá:</td>
                         <td style="padding:5px 0; text-align:right;">${newOrder.discount_code || "Không có"}</td>
                     </tr>
                     <tr>
                         <td style="padding:5px 0;">Giảm giá:</td>
-                        <td style="padding:5px 0; text-align:right;">${newOrder.discount.toLocaleString()} VND</td>
+                        <td style="padding:5px 0; text-align:right;">-${newOrder.discount.toLocaleString()} VND</td>
                     </tr>
                     <tr>
                         <td style="padding:5px 0;">Điểm đã sử dụng:</td>
-                        <td style="padding:5px 0; text-align:right;">${newOrder.points_used}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding:5px 0;">Phí vận chuyển:</td>
-                        <td style="padding:5px 0; text-align:right;">${newOrder.shipment.fee.toLocaleString()} VND</td>
+                        <td style="padding:5px 0; text-align:right;">-${(newOrder.points_used * 1000).toLocaleString()} VND</td>
                     </tr>
                     <tr style="border-top:1px solid #ddd;">
                         <td style="padding:10px 0; font-size:16px;"><b>Tổng thanh toán:</b></td>
@@ -537,7 +537,7 @@ export const updateOrderStatus = async (req, res) => {
                 const product = await Product.findById(item.product_id);
                 if (product) {
                     // Cập nhật stock
-                    const list_warehouses = product.updateStockAfterOrder(item.quantity, item.variant.sku);
+                    const list_warehouses = product.exportStockAfterShipping(item.quantity, item.variant.sku);
                     // Cập nhật số lượng đã bán cho variant
                     const variant = product.Variants.find(v => v.sku === item.variant.sku);
                     if (variant) {

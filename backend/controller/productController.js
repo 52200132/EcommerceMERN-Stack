@@ -395,10 +395,12 @@ export const getProductsInfoForOrder = async (req, res) => {
           const variant_info = {
             sku: variant.sku,
             price: variant.price,
+            cost_price: variant.cost_price,
             attributes: attributes_info
           }
           const result_item = {
             product_id: product._id,
+            category_id: product.category_id,
             product_name: product.product_name,
             quantity: parseInt(qty, 10) || 1,
             variant: variant_info

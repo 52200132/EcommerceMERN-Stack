@@ -37,6 +37,7 @@ const variantSchema = new Schema({
   // sku: { type: String, required: true, unique: true },
   sku: { type: String, required: true },
   price: { type: Number, min: 0, required: true },
+  cost_price: { type: Number, min: 0, required: true },
   stock: { type: Number, min: 0, default: 0 }, // tổng stock của variant, tính từ các kho
   html_text_attributes: { type: String }, // dung cho render attribute
   Images: { type: [imageSchema], default: [] },
