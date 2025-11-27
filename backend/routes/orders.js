@@ -38,7 +38,7 @@ router.put('/:order_id/status', protect, admin, updateOrderStatus);
 // @desc    Update order status
 // @route   PUT /api/orders/:order_id/cancel
 // @access  Public - User
-router.put('/:order_id/cancel', protect, userCancelOrder); // TODO: test chức năng hủy đơn hàng của user
+router.put('/:order_id/cancel', protect, userCancelOrder);
 
 // @desc    Update order to paid
 // @route   PUT /api/orders/:id/pay

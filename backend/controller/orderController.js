@@ -61,9 +61,14 @@ export const createOrder = async (req, res) => {
                     return sum + item.variant.price * item.quantity;
                 }, 0);
 
-                // tính giảm giá từ mã giảm giá nếu có
+                // tính giảm giá từ mã giảm giá (nếu có và đủ điều kiện)
                 const Dcode = await DiscountCode.findOne({ code: discount_code });
-                const discount = Dcode ? Dcode.discount : 0;
+                let discount = 0;
+                if (Dcode && Dcode.condition <= total_amount && Dcode.limit > 0) {
+                    discount = Dcode.discount;
+                    Dcode.limit -= 1;
+                    await Dcode.save();
+                }
 
                 // tính grand_total
                 const grand_total = Math.max(0, total_amount + shipment.fee - discount - points_used * 1000);
@@ -101,10 +106,11 @@ export const createOrder = async (req, res) => {
                         }
 
                         Tổng tiền sản phẩm: ${newOrder.total_amount.toLocaleString()} VND
-                        Mã giảm giá: ${newOrder.discount_code || "Không có"}
-                        Giảm giá: ${newOrder.discount.toLocaleString()} VND
-                        Điểm đã sử dụng: ${newOrder.points_used}
                         Phí vận chuyển: ${newOrder.shipment.fee.toLocaleString()} VND
+                        Mã giảm giá: ${newOrder.discount_code || "Không có"}
+                        Giảm giá: -${newOrder.discount.toLocaleString()} VND
+                        Sử dụng điểm KHTT: -${(newOrder.points_used * 1000).toLocaleString()} VND
+                        
                         Tổng thanh toán: ${newOrder.grand_total.toLocaleString()} VND
 
                         Phương thức thanh toán: ${newOrder.payment_method}
@@ -156,20 +162,20 @@ export const createOrder = async (req, res) => {
                             <td style="padding:5px 0; text-align:right;">${newOrder.total_amount.toLocaleString()} VND</td>
                         </tr>
                         <tr>
+                            <td style="padding:5px 0;">Phí vận chuyển:</td>
+                            <td style="padding:5px 0; text-align:right;">${newOrder.shipment.fee.toLocaleString()} VND</td>
+                        </tr>
+                        <tr>
                             <td style="padding:5px 0;">Mã giảm giá:</td>
                             <td style="padding:5px 0; text-align:right;">${newOrder.discount_code || "Không có"}</td>
                         </tr>
                         <tr>
                             <td style="padding:5px 0;">Giảm giá:</td>
-                            <td style="padding:5px 0; text-align:right;">${newOrder.discount.toLocaleString()} VND</td>
+                            <td style="padding:5px 0; text-align:right;">-${newOrder.discount.toLocaleString()} VND</td>
                         </tr>
                         <tr>
-                            <td style="padding:5px 0;">Điểm đã sử dụng:</td>
-                            <td style="padding:5px 0; text-align:right;">${newOrder.points_used}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding:5px 0;">Phí vận chuyển:</td>
-                            <td style="padding:5px 0; text-align:right;">${newOrder.shipment.fee.toLocaleString()} VND</td>
+                            <td style="padding:5px 0;">Sử dụng điểm KHTT:</td>
+                            <td style="padding:5px 0; text-align:right;">-${(newOrder.points_used*1000).toLocaleString()} VND</td>
                         </tr>
                         <tr style="border-top:1px solid #ddd;">
                             <td style="padding:10px 0; font-size:16px;"><b>Tổng thanh toán:</b></td>
@@ -229,7 +235,7 @@ export const createOrder = async (req, res) => {
                 email,
                 Addresses
             });
-            
+
             // tính tổng tiền hàng
             const total_amount = Items.reduce((sum, item) => {
                 return sum + item.variant.price * item.quantity;
@@ -275,10 +281,10 @@ export const createOrder = async (req, res) => {
                     }
 
                         Tổng tiền sản phẩm: ${newOrder.total_amount.toLocaleString()} VND
-                        Mã giảm giá: ${newOrder.discount_code || "Không có"}
-                        Giảm giá: ${newOrder.discount.toLocaleString()} VND
-                        Điểm đã sử dụng: ${newOrder.points_used}
                         Phí vận chuyển: ${newOrder.shipment.fee.toLocaleString()} VND
+                        Mã giảm giá: ${newOrder.discount_code || "Không có"}
+                        Giảm giá: -${newOrder.discount.toLocaleString()} VND
+                        Sử dụng điểm KHTT: -${(newOrder.points_used * 1000).toLocaleString()} VND
                         Tổng thanh toán: ${newOrder.grand_total.toLocaleString()} VND
 
                         Phương thức thanh toán: ${newOrder.payment_method}
@@ -330,20 +336,20 @@ export const createOrder = async (req, res) => {
                         <td style="padding:5px 0; text-align:right;">${newOrder.total_amount.toLocaleString()} VND</td>
                     </tr>
                     <tr>
+                        <td style="padding:5px 0;">Phí vận chuyển:</td>
+                        <td style="padding:5px 0; text-align:right;">${newOrder.shipment.fee.toLocaleString()} VND</td>
+                    </tr>
+                    <tr>
                         <td style="padding:5px 0;">Mã giảm giá:</td>
                         <td style="padding:5px 0; text-align:right;">${newOrder.discount_code || "Không có"}</td>
                     </tr>
                     <tr>
                         <td style="padding:5px 0;">Giảm giá:</td>
-                        <td style="padding:5px 0; text-align:right;">${newOrder.discount.toLocaleString()} VND</td>
+                        <td style="padding:5px 0; text-align:right;">-${newOrder.discount.toLocaleString()} VND</td>
                     </tr>
                     <tr>
                         <td style="padding:5px 0;">Điểm đã sử dụng:</td>
-                        <td style="padding:5px 0; text-align:right;">${newOrder.points_used}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding:5px 0;">Phí vận chuyển:</td>
-                        <td style="padding:5px 0; text-align:right;">${newOrder.shipment.fee.toLocaleString()} VND</td>
+                        <td style="padding:5px 0; text-align:right;">-${(newOrder.points_used * 1000).toLocaleString()} VND</td>
                     </tr>
                     <tr style="border-top:1px solid #ddd;">
                         <td style="padding:10px 0; font-size:16px;"><b>Tổng thanh toán:</b></td>
@@ -398,7 +404,7 @@ export const getStatusHistoryByOrderId = async (req, res) => {
     try {
         const order_id = req.params.order_id;
         const user_id = req.user._id;
-        const order = await Order.findById(order_id, user_id).select('StatusHistory').populate('StatusHistory.change_by', 'username').sort('-createdAt');
+        const order = await Order.findById(order_id, user_id).select('StatusHistory').populate('StatusHistory.change_by', 'username isManager').sort('-createdAt');
         res.status(201).json({ ec: 0, em: "Status History getted successfully", dt: order.StatusHistory });
     } catch (error) {
         res.status(500).json({ ec: 500, em: error.message });
@@ -408,7 +414,7 @@ export const getStatusHistoryByOrderId = async (req, res) => {
 export const getOrderById = async (req, res) => {
     try {
         const order_id = req.params.order_id;
-        const order = await Order.findById(order_id).populate('StatusHistory.change_by', 'username email').populate('user_id', 'username');
+        const order = await Order.findById(order_id).populate('StatusHistory.change_by', 'username isManager').populate('user_id', 'username email');
         res.status(201).json({ ec: 0, em: "Order getted successfully", dt: order });
     } catch (error) {
         res.status(500).json({ ec: 500, em: error.message });
@@ -452,7 +458,7 @@ export const getAllOrders = async (req, res) => {
             createdAtFilter.$lt = new Date(today.getFullYear(), today.getMonth() + 1, 1);
         }
 
-        // Chỉ gán created_at nếu có filter
+        // Chỉ gán createdAt nếu có filter
         if (Object.keys(createdAtFilter).length > 0) {
             query.createdAt = createdAtFilter;
         }
@@ -486,15 +492,26 @@ export const getAllOrders = async (req, res) => {
 export const updateOrderStatus = async (req, res) => {
     try {
         const order_id = req.params.order_id;
-        const { order_status } = req.body;
-        const order = await Order.findById(order_id).select('_id user_id order_status StatusHistory points_used total_amount');
+        const newStatus = req.body.order_status;
+
+        const order = await Order.findById(order_id).select('_id user_id Items order_status StatusHistory points_used total_amount');
         if (!order) {
             return res.status(404).json({ ec: 404, em: "Order not found" });
         }
-        order.order_status = order_status;
+        const oldStatus = order.order_status;
+        // Không cho cập nhật nếu trạng thái không thay đổi
+        if (oldStatus === newStatus) {
+            return res.status(400).json({ ec: 400, em: "Order status is the same as the current status" });
+        }
+
+        // Không cho đổi trạng thái trừ khi đang ở trạng thái pending
+        if (oldStatus === "delivered" || oldStatus === "cancelled") {
+            return res.status(400).json({ ec: 400, em: "Status order cannot be changed once delivered or cancelled" });
+        }
+        order.order_status = newStatus;
         // Cập nhật lịch sử thay đổi trạng thái
         order.StatusHistory.push({
-            status: order_status,
+            status: newStatus,
             change_at: new Date(),
             change_by: req.user._id
         });
@@ -515,16 +532,22 @@ export const updateOrderStatus = async (req, res) => {
             // console.log('User points after delivery:', user.points);
             await user.save();
 
-            // xử lý cập nhật số lượng đã bán
-            order.Items.forEach(async (item) => {
+            // Xử lý cập nhật stock và số lượng đã bán
+            for (const item of order.Items) {
                 const product = await Product.findById(item.product_id);
                 if (product) {
-                    const list_warehouses = product.updateStockAfterOrder(item.quantity, item.variant.sku);
+                    // Cập nhật stock
+                    const list_warehouses = product.exportStockAfterShipping(item.quantity, item.variant.sku);
+                    // Cập nhật số lượng đã bán cho variant
+                    const variant = product.Variants.find(v => v.sku === item.variant.sku);
+                    if (variant) {
+                        variant.sold = (variant.sold || 0) + item.quantity;
+                    }
+                    // Cập nhật tổng số lượng đã bán của sản phẩm
+                    product.quantity_sold = product.Variants.reduce((sum, v) => sum + (v.sold || 0), 0);
                     await product.save();
-                    // res.status(200).json({ ec: 0, em: 'Stock updated', dt: list_warehouses });
                 }
-            });
-
+            }
         }
 
         // Nếu đơn bị hủy sau khi đã giao thì trừ điểm
@@ -536,17 +559,17 @@ export const updateOrderStatus = async (req, res) => {
             // console.log('User points after cancellation:', user.points);
             await user.save();
 
-            // xử lý hoàn trả số lượng đặt đặt hàng về kho
-            order.Items.forEach(async (item) => {
+            // Xử lý hoàn trả số lượng đặt hàng về kho khi hủy đơn
+            for (const item of order.Items) {
                 const product = await Product.findById(item.product_id);
                 if (product) {
-                    // Giảm waiting_for_delivery và tăng quantity
+                    // Giảm waiting_for_delivery và tăng quantity trong kho
                     const list_warehouses = product.revertStockAfterCancel(item.quantity, item.variant.sku);
                     await product.save();
                 }
-            });
+            }
         }
-        await order.populate('StatusHistory.change_by', 'username email');
+        await order.populate('StatusHistory.change_by', 'username isManager');
 
         res.status(200).json({ ec: 0, em: "Order status updated successfully", dt: order });
 
@@ -558,15 +581,26 @@ export const updateOrderStatus = async (req, res) => {
 export const userCancelOrder = async (req, res) => {
     try {
         const order_id = req.params.order_id;
-        const { order_status } = req.body;
-        const order = await Order.findById(order_id).select('_id user_id order_status StatusHistory points_used total_amount');
+        const newStatus = req.body.order_status;
+
+        const order = await Order.findById(order_id).select('_id user_id Items order_status StatusHistory points_used total_amount');
         if (!order) {
             return res.status(404).json({ ec: 404, em: "Order not found" });
         }
-        order.order_status = order_status;
+        const oldStatus = order.order_status;
+        // Không cho cập nhật nếu trạng thái không thay đổi
+        if (oldStatus === newStatus) {
+            return res.status(400).json({ ec: 400, em: "Order status is the same as the current status" });
+        }
+
+        // Không cho đổi trạng thái trừ khi đang ở trạng thái pending
+        if (oldStatus !== "pending") {
+            return res.status(400).json({ ec: 400, em: "Only pending orders can change status" });
+        }
+        order.order_status = newStatus;
         // Cập nhật lịch sử thay đổi trạng thái
         order.StatusHistory.push({
-            status: order_status,
+            status: newStatus,
             change_at: new Date(),
             change_by: req.user._id
         });
@@ -588,21 +622,23 @@ export const userCancelOrder = async (req, res) => {
             // console.log('User points after cancellation:', user.points);
             await user.save();
 
-            // xử lý hoàn trả số lượng đặt đặt hàng về kho
-            order.Items.forEach(async (item) => {
+            // Xử lý hoàn trả số lượng đặt hàng về kho khi hủy đơn
+            for (const item of order.Items) {
                 const product = await Product.findById(item.product_id);
                 if (product) {
-                    // Giảm waiting_for_delivery và tăng quantity
+                    // Giảm waiting_for_delivery và tăng quantity trong kho
                     const list_warehouses = product.revertStockAfterCancel(item.quantity, item.variant.sku);
                     await product.save();
                 }
-            });
+            }
         }
-        await order.populate('StatusHistory.change_by', 'username email');
+        await order.populate('StatusHistory.change_by', 'username isManager');
 
-        res.status(200).json({ ec: 0, em: "Order status User cancelled successfully", dt: order });
+        res.status(200).json({ ec: 0, em: "Order status updated successfully", dt: order });
 
     } catch (error) {
         res.status(500).json({ ec: 500, em: error.message });
     }
 };
+
+// TODO: cập nhật trạng thái đơn hàng khi thanh toán online thành công

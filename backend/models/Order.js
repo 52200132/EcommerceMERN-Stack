@@ -13,11 +13,13 @@ const orderItemVariantSchema = new Schema({
     }
   ],
   price: { type: Number, required: true },
+  cost_price: { type: Number, required: true, min: 0 }
 }, { _id: false });
 
 //  Subschema: orderItemSchema 
 const orderItemSchema = new Schema({
   product_id: { type: Schema.Types.ObjectId, ref: "Product", required: true },
+  category_name: { type: String, required: true },
   product_name: { type: String, required: true },
   quantity: { type: Number, required: true, min: 1 },
   variant: { type: orderItemVariantSchema, required: true },
@@ -43,7 +45,7 @@ const statusHistorySchema = new Schema({
     required: true
   },
   change_at: { type: Date, required: true },
-  change_by: { type: Schema.Types.ObjectId, ref: "User", default: null },
+  change_by: { type: Schema.Types.ObjectId, ref: "User", default: null }
 }, { _id: false });
 
 // Subschema: shipmentSchema

@@ -22,7 +22,7 @@ const warehouseVariantSchema = new Schema({
   // sku: { type: String, required: true, unique: true },
   sku: { type: String, required: true },
   quantity: { type: Number, required: true, min: 0 },
-  waiting_for_delivery: { type: Number, required: true, min: 0 },
+  waiting_for_delivery: { type: Number, min: 0, default: 0 },
 }, { _id: false });
 
 //  Subschema: warehouseSchema
@@ -37,14 +37,14 @@ const variantSchema = new Schema({
   // sku: { type: String, required: true, unique: true },
   sku: { type: String, required: true },
   price: { type: Number, min: 0, required: true },
-  stock: { type: Number, min: 0},
+  cost_price: { type: Number, min: 0, required: true },
+  stock: { type: Number, min: 0, default: 0 }, // tổng stock của variant, tính từ các kho
   html_text_attributes: { type: String }, // dung cho render attribute
   Images: { type: [imageSchema], default: [] },
   Attributes: { type: [attributeSchema], default: [] },
   is_active: { type: Boolean, required: true, default: true },
-  created_at: { type: Date, default: Date.now },
-  updated_at: { type: Date, default: Date.now },
-}, { _id: false });
+  sold: { type: Number, min: 0, default: 0 }
+}, { _id: false, timestamps: true });
 
 //  Main Schema: productSchema 
 const productSchema = new Schema({

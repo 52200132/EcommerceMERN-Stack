@@ -8,3 +8,4 @@ export { default as commentRoutes } from "./comments.js";
 export { default as addressRoutes } from "./addresses.js";
 export { default as ratingRoutes } from "./ratings.js";
 export { default as uploadRoutes } from "./upload.js";
+export { default as dashboardRoutes } from "./dashboard.js";

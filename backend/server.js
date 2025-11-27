@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 import passport from "passport";
 import "./passport.js";
 // Import route files
-import { 
+import {
   authRoutes,
   brandRoutes,
   productRoutes,
@@ -15,7 +15,8 @@ import {
   commentRoutes,
   addressRoutes,
   ratingRoutes,
-  uploadRoutes
+  uploadRoutes,
+  dashboardRoutes
 } from "#tps-routes";
 import { setUpConsoleLogging, setUpWriteStream, uploadConfig } from "#utils";
 
@@ -73,6 +74,7 @@ app.use("/api/comments", commentRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/ratings", ratingRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
