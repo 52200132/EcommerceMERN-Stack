@@ -19,7 +19,7 @@ const orderItemVariantSchema = new Schema({
 //  Subschema: orderItemSchema 
 const orderItemSchema = new Schema({
   product_id: { type: Schema.Types.ObjectId, ref: "Product", required: true },
-  category_id: { type: Schema.Types.ObjectId, ref: "Category", required: true },
+  category_name: { type: String, required: true },
   product_name: { type: String, required: true },
   quantity: { type: Number, required: true, min: 1 },
   variant: { type: orderItemVariantSchema, required: true },

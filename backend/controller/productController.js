@@ -1,4 +1,5 @@
 import Product from "../models/Product.js";
+import Category from "../models/Category.js";
 
 // Product Order (sắp xếp thứ tự sản phẩm)
 const getArrangeAlphabet = async (req, res) => {
@@ -387,7 +388,7 @@ export const getProductsInfoForOrder = async (req, res) => {
     let results = [];
     for (const item of items) {
       const { product_id, sku, qty } = item;
-      const product = await Product.findById(product_id);
+      const product = await Product.findById(product_id).populate('category_id', 'category_name');
       if (product) {
         const variant = product.Variants.find(variant => variant.sku === sku);
         if (variant) {
@@ -400,7 +401,7 @@ export const getProductsInfoForOrder = async (req, res) => {
           }
           const result_item = {
             product_id: product._id,
-            category_id: product.category_id,
+            category_name: product.category_id.category_name,
             product_name: product.product_name,
             quantity: parseInt(qty, 10) || 1,
             variant: variant_info

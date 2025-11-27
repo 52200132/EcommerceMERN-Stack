@@ -141,8 +141,8 @@ export const getDashboardAdvanced = async (req, res) => {
           ],
           category: [
             { $unwind: "$Items" },
-            { $group: { _id: "$Items.category_id", total_quantity: { $sum: "$Items.quantity" } } },
-            { $project: { category_id: "$_id", total_quantity: 1, _id: 0 } }
+            { $group: { _id: "$Items.category_name", total_quantity: { $sum: "$Items.quantity" } } },
+            { $project: { category_name: "$_id", total_quantity: 1, _id: 0 } }
           ],
           timeline: [
             { $unwind: "$Items" },
