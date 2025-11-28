@@ -96,6 +96,7 @@ export const userModalDialogStore = create(
     bodyComponent: null,
     bodyProps: {},
     formValues: {},
+    size: 'lg',
     setShow: (value) => set((state) => {
       state.show = value;
     }),
@@ -107,6 +108,9 @@ export const userModalDialogStore = create(
     }),
     setBodyProps: (props) => set((state) => {
       state.bodyProps = props;
+    }),
+    setSize: (size) => set((state) => {
+      state.size = size;
     }),
     reset: () => set((state) => {
       state.show = false;

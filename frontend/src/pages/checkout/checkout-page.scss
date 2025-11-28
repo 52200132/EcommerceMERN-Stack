@@ -1,0 +1,49 @@
+.checkout-page {
+  .step-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: #f3f4f6;
+    color: #4b5563;
+    font-weight: 600;
+
+    &.active {
+      background: #e0f2fe;
+      color: #0ea5e9;
+    }
+
+    &.done {
+      background: #ecfdf3;
+      color: #16a34a;
+    }
+
+    &__number {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      border: 1px solid #e5e7eb;
+      font-weight: 700;
+    }
+  }
+
+  .order-summary {
+    border-radius: 12px;
+    box-shadow: 0 10px 20px rgba(17, 24, 39, 0.05);
+
+    &__items {
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .total-line {
+      border-top: 1px solid #e5e7eb;
+      padding-top: 8px;
+      margin-top: 8px;
+    }
+  }
+}

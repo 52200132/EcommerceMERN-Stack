@@ -27,7 +27,7 @@ const warehouseVariantSchema = new Schema({
 
 //  Subschema: warehouseSchema
 const warehouseSchema = new Schema({
-  name : { type: String, required: true },
+  name: { type: String, required: true },
   location: { type: String },
   warehouse_variants: { type: [warehouseVariantSchema], default: [] }
 }, { _id: true });
@@ -61,10 +61,10 @@ const productSchema = new Schema({
   Warehouses: { type: [warehouseSchema], default: [] },
   Variants: { type: [variantSchema], default: [] },
   is_active: { type: Boolean, required: true, default: true },
-}, { timestamps: true }); 
+}, { timestamps: true });
 
 // Hàm tính lại stock cho các variant dựa trên thông tin trong Warehouses
-productSchema.methods.recalculateStock = function() {
+productSchema.methods.recalculateStock = function () {
   this.Variants.forEach(variant => {
     let totalStock = 0;
     // this.Warehouses.forEach(warehouse => {
@@ -79,7 +79,7 @@ productSchema.methods.recalculateStock = function() {
   });
 };
 // Tính stock theo sku của variant
-productSchema.methods.getStockBySku = function(sku) {
+productSchema.methods.getStockBySku = function (sku) {
   let totalStock = 0;
   this.Warehouses.forEach(warehouse => {
     warehouse.warehouse_variants.forEach(wv => {
@@ -96,7 +96,7 @@ productSchema.methods.getStockBySku = function(sku) {
 // chỉ gọi product.recalculateStock(); khi dùng get product
 
 // Kiểm tra số lượng đặt hàng
-productSchema.methods.checkQuantity = function( quantityOrdered, sku) {
+productSchema.methods.checkQuantity = function (quantityOrdered, sku) {
   let quantityAvailable = this.getStockBySku(sku);
   if (quantityOrdered > quantityAvailable) {
     return false;
@@ -105,7 +105,7 @@ productSchema.methods.checkQuantity = function( quantityOrdered, sku) {
 };
 
 // Cập nhật số lượng sau khi đặt hàng thành công đẩy vào waiting_for_delivery
-productSchema.methods.updateStockAfterOrder = function(quantityOrdered, sku) {
+productSchema.methods.updateStockAfterOrder = function (quantityOrdered, sku) {
   let list_warehouses = [];
 
   this.Warehouses.forEach(warehouse => {
@@ -127,7 +127,7 @@ productSchema.methods.updateStockAfterOrder = function(quantityOrdered, sku) {
           });
 
           quantityOrdered = 0;
-        } 
+        }
         else {
           // Lấy hết available từ kho này
           wv.waiting_for_delivery += available;
@@ -148,7 +148,7 @@ productSchema.methods.updateStockAfterOrder = function(quantityOrdered, sku) {
 };// trả về danh sách kho (đã trừ - tức là kho lấy mẫu nào số lượng bao nhiêu) hàng dùng để ghi log
 
 // Hoàn trả stock sau khi hủy đơn hàng, giảm waiting_for_delivery
-productSchema.methods.revertStockAfterCancel = function(quantityCanceled, sku) {
+productSchema.methods.revertStockAfterCancel = function (quantityCanceled, sku) {
   let list_warehouses = [];
 
   this.Warehouses.forEach(warehouse => {
@@ -171,7 +171,7 @@ productSchema.methods.revertStockAfterCancel = function(quantityCanceled, sku) {
 
 
 // Xuất hàng giảm quantity, waiting_for_delivery
-productSchema.methods.exportStockAfterShipping = function(quantityShipped, sku) {
+productSchema.methods.exportStockAfterShipping = function (quantityShipped, sku) {
   let list_warehouses = [];
 
   this.Warehouses.forEach(warehouse => {
@@ -193,7 +193,7 @@ productSchema.methods.exportStockAfterShipping = function(quantityShipped, sku) 
           });
 
           quantityShipped = 0;
-        } 
+        }
         else {
           // Xuất hết availableWaiting từ kho này
           wv.quantity -= availableWaiting;
@@ -215,13 +215,25 @@ productSchema.methods.exportStockAfterShipping = function(quantityShipped, sku) 
   return list_warehouses;
 };
 
+// Lấy image_url của product dựa trên variant sku
+productSchema.statics.getImageUrlByVariantSKU = async function (productId, variantSku) {
+  const product = await this.findById(productId).lean();
+  if (!product) return null;
+
+  const variant = product.Variants.find(v => v.sku === variantSku);
+  if (!variant || !variant.Images || variant.Images.length === 0) return null;
+
+  const primaryImage = variant.Images.find(img => img.is_primary) || variant.Images[0];
+  return primaryImage.url;
+}
+
 
 // Trả về min và max price của product dựa trên các variant
-productSchema.pre("save",  function(next) {
+productSchema.pre("save", function (next) {
   if (this.Variants && this.Variants.length > 0) {
-  let prices = this.Variants.map(variant => variant.price);
-  this.price_min = Math.min(...prices);
-  this.price_max = Math.max(...prices);
+    let prices = this.Variants.map(variant => variant.price);
+    this.price_min = Math.min(...prices);
+    this.price_max = Math.max(...prices);
   }
   next();
 });

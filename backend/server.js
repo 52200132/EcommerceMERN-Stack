@@ -68,7 +68,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/brands", brandRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/discount_codes", discountCodeRoutes);
+app.use("/api/discount-codes", discountCodeRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/addresses", addressRoutes);

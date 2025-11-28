@@ -34,6 +34,7 @@ const cartSchema = new Schema({
   product_id: { type: Schema.Types.ObjectId, ref: "Product", required: true },
   variant: { type: variantSchema, required: true },
   quantity: { type: Number, required: true, min: 1 },
+  image_url: { type: String },
 }, { _id: false });
 
 // Subschema: Linked Account Schema 

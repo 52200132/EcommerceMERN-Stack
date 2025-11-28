@@ -1,6 +1,27 @@
 import Product from "../models/Product.js";
 import Category from "../models/Category.js";
 
+/** Lấy danh sách sản phẩm để hiện trên giao diện */
+export const getProducts = async (req, res) => {
+  const {
+    category_id,
+    category_name,
+    brand_id,
+    brand_name,
+    sort_by, // price_asc, price_desc, name_asc, name_desc, quantity_sold_desc, newest, newest_desc
+    price_min,
+    price_max,
+    page,
+    limit,
+    search,
+    q
+  } = req.query;
+
+  const pageNumber = Math.max(parseInt(page, 10) || 1, 1);
+  const pageSize = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
+}
+
+
 // Product Order (sắp xếp thứ tự sản phẩm)
 const getArrangeAlphabet = async (req, res) => {
   try {
@@ -344,15 +365,15 @@ export const updateWarehouseVariantBySku = async (req, res) => {
 
     const product = await Product.UpdateOne(
       { _id: id, "Warehouses._id": warehouse_id, "Warehouses.warehouse_variants.sku": sku },
-      { 
+      {
         $set: {
           "Warehouses.$.warehouse_variants.$[wv].quantity": quantity,
           "Warehouses.$.warehouse_variants.$[wv].waiting_for_delivery": waiting_for_delivery
-        } 
+        }
       },
       {
-        arrayFilters: [ { "wv.sku": sku } ]
-      } 
+        arrayFilters: [{ "wv.sku": sku }]
+      }
     );
     res.json({ ec: 0, em: 'Warehouse Variant updated', dt: product.Warehouses.id(warehouse_id) });
   } catch (error) {
@@ -393,6 +414,8 @@ export const getProductsInfoForOrder = async (req, res) => {
         const variant = product.Variants.find(variant => variant.sku === sku);
         if (variant) {
           const attributes_info = variant.Attributes.filter(attr => attr.type === 'appearance');
+          const image_url = await Product.getImageUrlByVariantSKU(product_id, variant.sku);
+          const available_stock = product.getStockBySku(variant.sku);
           const variant_info = {
             sku: variant.sku,
             price: variant.price,
@@ -404,6 +427,8 @@ export const getProductsInfoForOrder = async (req, res) => {
             category_name: product.category_id.category_name,
             product_name: product.product_name,
             quantity: parseInt(qty, 10) || 1,
+            image_url,
+            available_stock,
             variant: variant_info
           };
           results.push(result_item);

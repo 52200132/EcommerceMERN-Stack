@@ -4,11 +4,82 @@ import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import bcrypt from "bcryptjs";
 
+const CART_TAX_RATE = 0.08;
+const SHIPPING_OPTIONS = [
+  { method: "Ship Nhanh", fee: 30000, note: "Nhận từ 2-3 ngày" },
+  { method: "Hỏa tốc", fee: 60000, note: "Nhận trong ngày" },
+];
+
+const parseQuantity = (value) => {
+  const qty = parseInt(value, 10);
+  return Number.isNaN(qty) || qty < 1 ? 1 : qty;
+};
+
+const buildCartTotals = (carts = []) => {
+  const subtotal = carts.reduce((sum, item) => {
+    const price = item?.variant?.price || 0;
+    return sum + price * item.quantity;
+  }, 0);
+  const tax = Math.round(subtotal * CART_TAX_RATE);
+  const itemsCount = carts.reduce((sum, item) => sum + item.quantity, 0);
+  return { subtotal, tax, itemsCount };
+};
+
+const toPlain = (doc) => {
+  if (!doc) return doc;
+  if (typeof doc.toObject === "function") return doc.toObject({ depopulate: true });
+  if (typeof doc.toJSON === "function") return doc.toJSON();
+  return JSON.parse(JSON.stringify(doc));
+};
+
+const enrichCartItems = async (cartItems = []) => {
+  const productCache = new Map();
+  const enriched = [];
+
+  for (const item of cartItems) {
+    const productId = item.product_id;
+    const sku = item?.variant?.sku;
+    const productKey = String(productId);
+    let product = productCache.get(productKey);
+    if (!product) {
+      product = await Product.findById(productId).populate("category_id", "category_name");
+      productCache.set(productKey, product);
+    }
+    const variantDoc = product?.Variants?.find((v) => v.sku === sku);
+    const image_url =
+      item.image_url || (product ? await Product.getImageUrlByVariantSKU(productId, sku) : null);
+    const available_stock = product ? product.getStockBySku(sku) : 0;
+
+    const baseItem = toPlain(item);
+    const variantFromCart = toPlain(baseItem?.variant || item?.variant);
+
+    enriched.push({
+      ...(item.toObject ? item.toObject() : { ...item }),
+      product_name: product?.product_name,
+      category_name: product?.category_id?.category_name,
+      available_stock,
+      variant: {
+        ...variantFromCart,
+        price: variantDoc?.price ?? item?.variant?.price ?? 0,
+      },
+      image_url,
+    });
+  }
+
+  return enriched;
+};
+
+const buildCartResponse = async (cartItems = []) => {
+  const carts = await enrichCartItems(cartItems);
+  const totals = buildCartTotals(carts);
+  return { carts, totals, shippingOptions: SHIPPING_OPTIONS };
+};
+
 // Profile Management Controllers
 export const getProfile = async (req, res) => {
   try {
     const user_id = req.user._id;
-    const profile = await User.findById(user_id).select('-password -points -Carts -Addresses -Linked_accounts -updatedAt -__v');
+    const profile = await User.findById(user_id).select('-password -Carts -Addresses -Linked_accounts -updatedAt -__v');
     res.json({ ec: 200, em: "Lấy thông tin profile thành công", dt: profile });
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
@@ -17,12 +88,12 @@ export const getProfile = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const updateData = {
-      usernaem: req.body.username,
-      email: req.body.email,
-      image: req.body.image,
-      gender: req.body.gender
-    };
+    const updateData = {};
+    ["username", "email", "image", "gender"].forEach((key) => {
+      if (req.body[key] !== undefined) {
+        updateData[key] = req.body[key];
+      }
+    });
     const updatedUser = await User.findByIdAndUpdate(
       req.user._id,
       updateData,
@@ -66,14 +137,14 @@ export const createUserTemp = async (req, res) => {
   try {
     const { username, email, Addresses } = req.body;
     const user = new User({
-      usernaem: username,
+      username: username,
       password: "12345678",
       email: email,
       Addresses: Addresses
     });
 
     const createdUser = await user.save();
-    res.status(201).json({ ec: 201, em: "Tạo user tạm thành công", dt: user });
+    res.status(201).json({ ec: 201, em: "Tạo user tạm thành công", dt: createdUser });
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
   }
@@ -210,26 +281,62 @@ export const updateUserById = async (req, res) => {
 export const addProductToCart = async (req, res) => {
   try {
     const { product_id, variant, quantity } = req.body;
+    const sku = variant?.sku;
+    const qty = parseQuantity(quantity);
 
-    const cart = req.user.Carts.find(item =>
-      item.product_id.toString() === product_id &&
-      JSON.stringify(item.variant.sku) === JSON.stringify(variant.sku)
+    const product = await Product.findById(product_id);
+    if (!product) {
+      return res.status(404).json({ ec: 404, em: "Product not found" });
+    }
+    const variantDoc = product.Variants.find((v) => v.sku === sku);
+    if (!variantDoc) {
+      return res.status(404).json({ ec: 404, em: "Variant not found" });
+    }
+
+    const cartItem = req.user.Carts.find(
+      (item) => item.product_id.toString() === product_id && item.variant.sku === sku
     );
+    const newQuantity = cartItem ? cartItem.quantity + qty : qty;
+    if (!product.checkQuantity(newQuantity, sku)) {
+      return res
+        .status(400)
+        .json({ ec: 0, em: "Khong du so luong trong kho cho san pham nay" });
+    }
 
-    if (cart) {
-      // Nếu sản phẩm đã có trong giỏ hàng với variant giống nhau, tăng số lượng
-      cart.quantity += quantity;
+    const variantInfo = {
+      sku: variantDoc.sku,
+      price: variantDoc.price,
+      attributes: variantDoc.Attributes.filter((attr) => attr.type === 'appearance'),
+    };
+    const image_url = await Product.getImageUrlByVariantSKU(product_id, variantDoc.sku);
+
+    if (cartItem) {
+      cartItem.quantity = newQuantity;
+      cartItem.variant = variantInfo;
+      cartItem.image_url = image_url;
     } else {
-      // Thêm sản phẩm mới vào giỏ hàng
       req.user.Carts.push({
         product_id,
-        variant,
-        quantity
+        variant: variantInfo,
+        quantity: newQuantity,
+        image_url,
       });
     }
 
-    await req.user.save(); // sẽ cast và validate đúng
-    return res.json({ ec: 200, em: 'Thêm thành công', dt: req.user.Carts });
+    await req.user.save();
+    const response = await buildCartResponse(req.user.Carts);
+    return res.json({
+      ec: 0,
+      em: 'Them vao gio hang thanh cong',
+      dt: {
+        ...response, added_item: {
+          product_id,
+          variant: variantInfo,
+          quantity: qty,
+          image_url
+        }
+      },
+    });
   } catch (err) {
     return res.status(500).json({ ec: 500, em: err.message });
   }
@@ -237,7 +344,12 @@ export const addProductToCart = async (req, res) => {
 
 export const getAllCarts = async (req, res) => {
   try {
-    res.json({ ec: 200, em: "Lấy giỏ hàng thành công", dt: req.user.Carts });
+    const response = await buildCartResponse(req.user.Carts);
+    res.json({
+      ec: 0,
+      em: 'Lay gio hang thanh cong',
+      dt: response,
+    });
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
   }
@@ -245,24 +357,32 @@ export const getAllCarts = async (req, res) => {
 
 export const deleteCartItem = async (req, res) => {
   try {
-    // tham số lọc ra cart cần xóa
     const product_id = req.params.product_id;
     const { sku } = req.query;
 
-    const cartItem = req.user.Carts.find(item =>
-      item.product_id.toString() === product_id &&
-      JSON.stringify(item.variant.sku) === JSON.stringify(sku)
+    const cartItem = req.user.Carts.find(
+      (item) => item.product_id.toString() === product_id && item.variant.sku === sku
     );
     if (!cartItem) {
-      return res.status(404).json({ ec: 404, em: "Không tìm thấy sản phẩm trong giỏ hàng" });
+      return res.status(404).json({ ec: 404, em: 'Khong tim thay san pham trong gio hang' });
     }
 
     const result = await User.updateOne(
       { _id: req.user._id },
-      { $pull: { Carts: { product_id: product_id, "variant.sku": sku } } }
+      { $pull: { Carts: { product_id: product_id, 'variant.sku': sku } } }
     );
     if (result.modifiedCount > 0) {
-      res.json({ ec: 200, em: 'Cart item removed' });
+      const updatedUser = await User.findById(req.user._id).select('Carts');
+      const response = await buildCartResponse(updatedUser.Carts);
+      res.json({
+        ec: 0, em: 'Cart item removed', dt: {
+          ...response,
+          removed_item: {
+            product_id,
+            variant: { sku }
+          }
+        }
+      });
     } else {
       res.status(404).json({ ec: 404, em: 'Cart item not found' });
     }
@@ -273,25 +393,55 @@ export const deleteCartItem = async (req, res) => {
 
 export const updateCartItem = async (req, res) => {
   try {
-    // tham số lọc ra cart cần cập nhật
     const { product_id } = req.params;
     const { sku } = req.query;
-    // tham số cập nhật
     const { variant, quantity } = req.body;
 
-    const cartItem = req.user.Carts.find(item =>
-      item.product_id.toString() === product_id &&
-      JSON.stringify(item.variant.sku) === JSON.stringify(sku)
+    const cartItem = req.user.Carts.find(
+      (item) => item.product_id.toString() === product_id && item.variant.sku === sku
     );
     if (!cartItem) {
-      return res.status(404).json({ ec: 404, em: "Không tìm thấy sản phẩm trong giỏ hàng" });
+      return res.status(404).json({ ec: 404, em: 'Khong tim thay san pham trong gio hang' });
     }
-    cartItem.variant = variant || cartItem.variant;
-    cartItem.quantity = quantity || cartItem.quantity;
+
+    const product = await Product.findById(product_id);
+    if (!product) {
+      return res.status(404).json({ ec: 404, em: 'Product not found' });
+    }
+
+    const nextSku = variant?.sku || sku;
+    const variantDoc = product.Variants.find((v) => v.sku === nextSku);
+    if (!variantDoc) {
+      return res.status(404).json({ ec: 404, em: 'Variant not found' });
+    }
+
+    const nextQuantity = parseQuantity(quantity || cartItem.quantity);
+    if (!product.checkQuantity(nextQuantity, nextSku)) {
+      return res.status(400).json({ ec: 400, em: 'Khong du so luong trong kho' });
+    }
+
+    cartItem.variant = {
+      sku: variantDoc.sku,
+      price: variantDoc.price,
+      attributes: variantDoc.Attributes.filter((attr) => attr.type === 'appearance'),
+    };
+    cartItem.quantity = nextQuantity;
+    cartItem.image_url = await Product.getImageUrlByVariantSKU(product_id, variantDoc.sku);
 
     await req.user.save();
-    res.json({ ec: 200, em: "Cập nhật sản phẩm trong giỏ hàng thành công", dt: cartItem });
-
+    const response = await buildCartResponse(req.user.Carts);
+    res.json({
+      ec: 0,
+      em: 'Cap nhat san pham trong gio hang thanh cong',
+      dt: {
+        ...response, update_item: {
+          product_id,
+          variant: cartItem.variant,
+          quantity: cartItem.quantity,
+          image_url: cartItem.image_url,
+        }
+      },
+    });
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
   }

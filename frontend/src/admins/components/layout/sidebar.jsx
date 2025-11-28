@@ -34,6 +34,7 @@ const NAV_ITEMS = [
   },
   { id: 'manage-products', label: 'Quản lý sản phẩm', to: '/admin/manage-products', icon: 'bi-box' },
   { id: 'manage-users', label: 'Quản lý người dùng', to: '/admin/manage-users', icon: 'bi-people' },
+  { id: 'manage-discounts', label: 'Quản lý mã giảm giá', to: '/admin/manage-discounts', icon: 'bi-ticket' },
 ];
 
 const SidebarNav = ({ expanded, onToggle, collapsed }) => {

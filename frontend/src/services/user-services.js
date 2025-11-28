@@ -23,14 +23,14 @@ export const userApi = backendApi.injectEndpoints({
         method: 'PUT',
         data: passwordPayload,
       }),
-      // invalidatesTags: ['User'],
     }),
+    /** addresses endpoints */
     getAddresses: builder.query({
       query: () => ({
         url: '/users/addresses',
         method: 'GET',
       }),
-      providesTags: (r, e, arg) => {
+      providesTags: (r) => {
         const addresses = r?.dt || [];
         return [
           ...addresses.map(({ _id }) => ({ type: 'UserAddresses', id: _id })),
@@ -54,7 +54,7 @@ export const userApi = backendApi.injectEndpoints({
       }),
       invalidatesTags: (r, e, { address_id }) => [
         { type: 'UserAddresses', id: address_id },
-        { type: 'UserAddresses', id: 'LIST' }
+        { type: 'UserAddresses', id: 'LIST' },
       ],
     }),
     deleteAddress: builder.mutation({
@@ -64,20 +64,113 @@ export const userApi = backendApi.injectEndpoints({
       }),
       invalidatesTags: (r, e, address_id) => [
         { type: 'UserAddresses', id: address_id },
-        { type: 'UserAddresses', id: 'LIST' }
+        { type: 'UserAddresses', id: 'LIST' },
       ],
+    }),
+    /** carts endpoints */
+    getCart: builder.query({
+      query: () => ({
+        url: '/users/cart',
+        method: 'GET',
+      }),
+      // providesTags: ['Cart'],
+    }),
+    addToCart: builder.mutation({
+      query: (payload) => ({
+        url: '/users/cart',
+        method: 'POST',
+        data: payload,
+      }),
+      // invalidatesTags: ['Cart'],
+    }),
+    updateCartItem: builder.mutation({
+      query: ({ product_id, sku, ...payload }) => ({
+        url: `/users/cart/${product_id}`,
+        method: 'PUT',
+        params: { sku },
+        data: payload,
+      }),
+      // invalidatesTags: ['Cart'],
+    }),
+    deleteCartItem: builder.mutation({
+      query: ({ product_id, sku }) => ({
+        url: `/users/cart/${product_id}`,
+        method: 'DELETE',
+        params: { sku },
+      }),
+      // invalidatesTags: ['Cart'],
+    }),
+    /** orders endpoints */
+    createOrder: builder.mutation({
+      query: (orderPayload) => ({
+        url: '/orders',
+        method: 'POST',
+        data: orderPayload,
+      }),
+      invalidatesTags: ['Cart', 'Orders'],
+    }),
+    getMyOrders: builder.query({
+      query: () => ({
+        url: '/orders/myorders',
+        method: 'GET',
+      }),
+      providesTags: ['Orders'],
+    }),
+    getOrderById: builder.query({
+      query: (orderId) => ({
+        url: `/orders/${orderId}`,
+        method: 'GET',
+      }),
+      providesTags: (r, e, orderId) => [{ type: 'OrderDetail', id: orderId }],
+    }),
+    getOrderStatusHistory: builder.query({
+      query: (orderId) => ({
+        url: `/orders/${orderId}/history_status`,
+        method: 'GET',
+      }),
+      providesTags: (r, e, orderId) => [{ type: 'OrderDetail', id: orderId }],
+    }),
+    applyDiscountCode: builder.mutation({
+      query: (payload) => ({
+        url: '/discount-codes/use',
+        method: 'POST',
+        data: payload,
+      }),
+    }),
+    getProductsInfoForOrder: builder.mutation({
+      query: (itemsPayload) => ({
+        url: '/products/info_for_order/bulk',
+        method: 'POST',
+        data: { items: itemsPayload },
+      }),
     }),
   }),
   overrideExisting: false,
 });
 
 export const {
+  // profile 
   useGetProfileQuery,
   useUpdateProfileMutation,
   useUpdatePasswordMutation,
+  // addresses
   useGetAddressesQuery,
   useLazyGetAddressesQuery,
   useAddAddressMutation,
   useUpdateAddressMutation,
   useDeleteAddressMutation,
+  // carts
+  useGetCartQuery,
+  useLazyGetCartQuery,
+  useAddToCartMutation,
+  useUpdateCartItemMutation,
+  useDeleteCartItemMutation,
+  // orders
+  useCreateOrderMutation,
+  useGetMyOrdersQuery,
+  useGetOrderByIdQuery,
+  useGetOrderStatusHistoryQuery,
+  // discount & info
+  useApplyDiscountCodeMutation,
+  useGetProductsInfoForOrderMutation,
 } = userApi;

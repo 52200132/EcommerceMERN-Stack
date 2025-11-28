@@ -7,10 +7,39 @@ import FollowUs from '../../common/FollowUs';
 
 import './header.scss';
 import CategoriesBtn from './categories-btn';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { useGetCartQuery } from '#services';
 
 const Header = () => {
+  const user = useSelector((state) => state.auth.user);
+  const isLoggedIn = !!user?.token;
+  const [guestCartCount, setGuestCartCount] = useState(0);
+  // const { data: cartData } = useGetCartQuery(undefined, { skip: !isLoggedIn });
+  const itemsCartCount = useSelector((state) => state.userProfile.cart_list.length);
   const headerMiddleRef = useRef(null);
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      const loadCount = () => {
+        try {
+          const cart = JSON.parse(localStorage.getItem('guest_cart')) || [];
+          const count = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
+          setGuestCartCount(count);
+        } catch (error) {
+          setGuestCartCount(0);
+        }
+      };
+      loadCount();
+      const handleUpdate = () => loadCount();
+      window.addEventListener('storage', handleUpdate);
+      window.addEventListener('guest-cart-updated', handleUpdate);
+      return () => {
+        window.removeEventListener('storage', handleUpdate);
+        window.removeEventListener('guest-cart-updated', handleUpdate);
+      };
+    }
+  }, [isLoggedIn]);
   useEffect(() => {
     let lastScrollY = window.scrollY;
     const navbar = headerMiddleRef.current;
@@ -47,6 +76,8 @@ const Header = () => {
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const cartCount = isLoggedIn ? itemsCartCount : guestCartCount;
 
   return (
     <header className="header navbar-area header-container">
@@ -143,10 +174,10 @@ const Header = () => {
                   <div className="cart-items">
                     <Link to="/cart" className="main-btn">
                       <i className="lni lni-cart"></i>
-                      <span className="total-items">2</span>
+                      <span className="total-items">{cartCount}</span>
                     </Link>
                     {/* Shopping Item */}
-                    <div className="shopping-item">
+                    {/* <div className="shopping-item">
                       <div className="dropdown-cart-header">
                         <span>2 Items</span>
                         <Link to="/cart">View Cart</Link>
@@ -190,7 +221,7 @@ const Header = () => {
                           <Link to="/checkout" className="btn animate">Checkout</Link>
                         </div>
                       </div>
-                    </div>
+                    </div> */}
                     {/*/ End Shopping Item */}
                   </div>
                 </div>

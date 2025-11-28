@@ -4,6 +4,7 @@ import { Suspense, lazy } from 'react'
 import HomePage from './pages/HomePage';
 import ProductsPage from './pages/ProductsPage';
 import CartPage from './pages/cart/cart-page';
+import CheckoutPage from './pages/checkout/checkout-page';
 import ContactPage from './pages/ContactPage';
 import AboutPage from './pages/AboutPage';
 import LoginPage from './pages/auth/login-page';
@@ -19,6 +20,7 @@ import ProfilePage from 'pages/profile/profile-page';
 import PasswordChangePage from 'pages/profile/password-change-page';
 import AddressPage from 'pages/profile/address-page';
 import ManageUsersPage from 'admins/pages/manage-users/manage-users-page';
+import ManageDiscountCodePage from 'admins/pages/manage-discount-code/manage-discount-code';
 
 // import NotFoundPage from './pages/NotFoundPage'; // Optional: Create a 404 page component
 // import './App.css';
@@ -50,6 +52,7 @@ const App = () => {
             <Route path='password-change' element={<PasswordChangePage />} />
           </Route>
           <Route path='cart' element={<CartPage />} />
+          <Route path='checkout' element={<CheckoutPage />} />
           <Route path='contact' element={<ContactPage />} />
           <Route path='about' element={<AboutPage />} />
           <Route path='login' element={<LoginPage />} />
@@ -80,6 +83,7 @@ const App = () => {
             <Route path="add-product/description" element={<CRUDetailsDescription />} />
           </Route>
           <Route path="manage-users" element={<ManageUsersPage />} />
+          <Route path="manage-discounts" element={<ManageDiscountCodePage />} />
         </Route>
 
       </Routes>

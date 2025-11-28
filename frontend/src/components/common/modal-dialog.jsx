@@ -1,23 +1,36 @@
 import { Button, Modal } from 'react-bootstrap';
-import { createElement } from 'react';
+import { cloneElement, createElement } from 'react';
 import { userModalDialogStore, useShallow } from '#custom-hooks';
 
+const renderBodyComponent = (bodyComponent, bodyProps) => {
+  if (typeof bodyComponent === 'function') {
+    return createElement(bodyComponent, { ...bodyProps });
+  } else if (bodyComponent) {
+    const BodyComponent = bodyComponent;
+    return cloneElement(BodyComponent, { ...bodyProps });
+  } else {
+    return bodyComponent;
+  }
+};
+
 const ModalDialog = () => {
-  const { show, setShow, bodyProps, bodyComponent, title } = userModalDialogStore(
+  const { show, setShow, bodyProps, bodyComponent, title, size } = userModalDialogStore(
     useShallow(zs => ({
       show: zs.show,
       setShow: zs.setShow,
       bodyProps: zs.bodyProps,
       bodyComponent: zs.bodyComponent,
       title: zs.title,
+      size: zs.size,
     }))
   );
+
   return (
     <>
       <Modal
         show={show}
         onHide={() => setShow(false)}
-        size="xl"
+        size={size}
         aria-labelledby="contained-modal-title-vcenter"
         centered
         backdrop="static"
@@ -28,7 +41,7 @@ const ModalDialog = () => {
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {bodyComponent && createElement(bodyComponent, { ...bodyProps })}
+          {renderBodyComponent(bodyComponent, bodyProps)}
         </Modal.Body>
         <Modal.Footer>
           <Button onClick={() => setShow(false)}>Đóng</Button>

@@ -11,13 +11,29 @@ import { formatCurrency } from '#utils';
 import { useRenderCount, useTpsGetState, useTpsSelector } from '#custom-hooks';
 import { productDetailsHooks } from '#component-hooks/use-product-details-hooks';
 import { setProduct, setRatings } from '#features/product-details-slice';
-import { useGetProductByIdQuery, useGetRatingsByProductQuery } from '#services';
+import { useAddToCartMutation, useGetProductByIdQuery, useGetRatingsByProductQuery } from '#services';
+
+const GUEST_CART_KEY = 'guest_cart';
+const loadGuestCart = () => {
+  try {
+    return JSON.parse(localStorage.getItem(GUEST_CART_KEY)) || [];
+  } catch (error) {
+    return [];
+  }
+};
+
+const persistGuestCart = (items) => {
+  localStorage.setItem(GUEST_CART_KEY, JSON.stringify(items));
+  window.dispatchEvent(new Event('guest-cart-updated'));
+};
 
 const ProductDetails = () => {
   useRenderCount('ProductDetails', 'ui');
+  const userToken = useTpsGetState(state => state?.auth?.user?.token, false);
   const userId = useTpsGetState(state => state?.auth?.user?._id, false);
   const { productNameSlug } = useParams();
   const dispatch = useDispatch();
+  const [addToCart, { isLoading: isAddingCart }] = useAddToCartMutation();
   const { data } = useGetProductByIdQuery(productNameSlug)
   const { data: ratingData } = useGetRatingsByProductQuery({ productId: productNameSlug, userId });
   useEffect(() => {
@@ -42,6 +58,40 @@ const ProductDetails = () => {
     productVariants, selectedVariant, setSelectedVariant
   } = productDetailsHooks.useProductVariants(product);
   const displayPrice = formatCurrency((selectedVariant && selectedVariant.price) || product?.price || 0);
+
+  const handleAddToCart = () => {
+    if (!product?._id || !selectedVariant) return;
+    const payload = {
+      product_id: product._id,
+      variant: { sku: selectedVariant.sku },
+      quantity: 1,
+    };
+    if (userToken) {
+      addToCart(payload);
+      return;
+    }
+    const current = loadGuestCart();
+    const existingIndex = current.findIndex(
+      (ci) => ci.product_id === product._id && ci.variant?.sku === selectedVariant.sku
+    );
+    if (existingIndex !== -1) {
+      current[existingIndex].quantity += 1;
+    } else {
+      current.push({
+        product_id: product._id,
+        product_name: product.product_name,
+        variant: {
+          sku: selectedVariant.sku,
+          price: selectedVariant.price,
+          attributes: selectedVariant.attributes || [],
+        },
+        quantity: 1,
+        image_url: selectedVariant.imageUrl,
+        available_stock: selectedVariant.getOrigin()?.stock,
+      });
+    }
+    persistGuestCart(current);
+  };
 
   const renderTechnical = (attrArr = []) => {
     const visibleAttrs = attrArr.filter(attr => attr.is_show_in_table);
@@ -93,7 +143,14 @@ const ProductDetails = () => {
                     <Row className='align-items-end'>
                       <Col lg={4} md={4} xs={12}>
                         <div className='button cart-button'>
-                          <button className='btn' style={{ width: '100%' }}>Thêm vào giỏ</button>
+                          <button
+                            className='btn'
+                            style={{ width: '100%' }}
+                            onClick={handleAddToCart}
+                            disabled={!selectedVariant || isAddingCart}
+                          >
+                            Thêm vào giỏ
+                          </button>
                         </div>
                       </Col>
                       <Col lg={4} md={4} xs={12}>

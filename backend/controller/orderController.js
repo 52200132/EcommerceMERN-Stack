@@ -1,99 +1,318 @@
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
-import DiscountCode from '../models/DiscountCode.js';
+import DiscountCode from "../models/DiscountCode.js";
 import User from "../models/User.js";
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
 import transporter from "../mail.js";
+
+const TAX_RATE = 0.08; // thuong dung VAT 8% - co the thay doi neu can
+
+const buildError = (message, statusCode = 400) => {
+	const error = new Error(message);
+	error.statusCode = statusCode;
+	return error;
+};
+
+const parseQuantity = (value) => {
+	const qty = parseInt(value, 10);
+	return Number.isNaN(qty) || qty < 1 ? 1 : qty;
+};
+
+const getUserFromAuthHeader = async (req) => {
+	try {
+		const authHeader = req.headers.authorization || "";
+		if (!authHeader.startsWith("Bearer ")) return null;
+		const token = authHeader.split(" ")[1];
+		const decoded = jwt.verify(token, process.env.JWT_SECRET);
+		if (!decoded?._id) return null;
+		return await User.findById(decoded._id).select("-password");
+	} catch (error) {
+		return null;
+	}
+};
+
+const normalizeItemsWithStock = async (itemsPayload = []) => {
+	if (!Array.isArray(itemsPayload) || itemsPayload.length === 0) {
+		throw buildError("Items are required to create an order");
+	}
+
+	const productCache = new Map();
+	const normalizedItems = [];
+	const metas = [];
+
+	for (const rawItem of itemsPayload) {
+		const productId = rawItem?.product_id || rawItem?.productId;
+		const sku = rawItem?.variant?.sku || rawItem?.sku || rawItem?.variantSku;
+		const qty = parseQuantity(rawItem?.quantity ?? rawItem?.qty);
+
+		if (!productId || !sku) {
+			throw buildError("Each item requires product_id and sku");
+		}
+
+		const productKey = String(productId);
+		let product = productCache.get(productKey);
+		if (!product) {
+			product = await Product.findById(productId).populate("category_id", "category_name");
+			if (!product) {
+				throw buildError(`Product not found for id ${productId}`);
+			}
+			productCache.set(productKey, product);
+		}
+
+		const variant = product.Variants.find((v) => v.sku === sku);
+		if (!variant) {
+			throw buildError(`Variant ${sku} not found for product ${product.product_name}`);
+		}
+
+		if (!product.checkQuantity(qty, sku)) {
+			throw buildError(`San pham ${product.product_name} khong du so luong dat hang`);
+		}
+
+		normalizedItems.push({
+			data: {
+				product_id: product._id,
+				category_name: product?.category_id?.category_name || "",
+				product_name: product.product_name,
+				quantity: qty,
+				variant: {
+					sku: variant.sku,
+					price: variant.price,
+					cost_price: variant.cost_price,
+					attributes: variant.Attributes.filter((attr) => attr.type === "appearance"),
+				},
+			},
+			meta: { product, sku, qty },
+		});
+	}
+
+	return {
+		normalizedItems: normalizedItems.map((item) => item.data),
+		metas: normalizedItems.map((item) => item.meta),
+	};
+};
+
+const reserveStockForOrder = async (metas = []) => {
+	for (const meta of metas) {
+		meta.product.updateStockAfterOrder(meta.qty, meta.sku);
+		await meta.product.save();
+	}
+};
+
+const rollbackStockReservation = async (metas = []) => {
+	for (const meta of metas) {
+		try {
+			meta.product.revertStockAfterCancel(meta.qty, meta.sku);
+			await meta.product.save();
+		} catch (error) {
+			console.error("Rollback stock failed", error.message);
+		}
+	}
+};
+
+const resolveShippingAddress = (userDoc, shippingAddressId, guestShippingAddress, addressesPayload = []) => {
+	if (userDoc) {
+		if (!userDoc?.Addresses?.length) {
+			throw buildError("User does not have any saved address", 400);
+		}
+		if (shippingAddressId) {
+			const foundAddress = userDoc.Addresses.id(shippingAddressId);
+			if (!foundAddress) {
+				throw buildError("Shipping address not found", 404);
+			}
+			return foundAddress;
+		}
+		return userDoc.Addresses.find((addr) => addr.isDefault) || userDoc.Addresses[0];
+	}
+
+	const addressCandidate = guestShippingAddress || addressesPayload[0];
+	if (!addressCandidate) {
+		throw buildError("Shipping address is required for guest checkout");
+	}
+	const requiredFields = [
+		"receiver",
+		"phone",
+		"country",
+		"province",
+		"district",
+		"ward",
+		"street",
+		"postalCode",
+	];
+	const missing = requiredFields.filter((field) => !addressCandidate[field]);
+	if (missing.length) {
+		throw buildError(`Missing shipping address fields: ${missing.join(", ")}`);
+	}
+	return addressCandidate;
+};
+
+const formatCurrency = (value = 0) => Number(value || 0).toLocaleString("vi-VN");
+
+const stripShippingAddressFields = (address) => ({
+	receiver: address.receiver,
+	phone: address.phone,
+	country: address.country,
+	province: address.province,
+	district: address.district,
+	ward: address.ward,
+	street: address.street,
+	postalCode: address.postalCode,
+});
 
 // User functions
 export const createOrder = async (req, res) => {
-    try {
+	try {
+		const {
+			Items = [],
+			discount_code,
+			points_used = 0,
+			shipping_address_id,
+			shipment,
+			payment_method,
+			notes,
+			tax_fee,
+			username,
+			email,
+			Addresses = [],
+			shipping_address,
+		} = req.body;
 
-        const {
-            Items, // mảng các item trong đơn hàng frontend xử lý truyền vào gọi Post /api/products/info_for_order/bulk lấy Items
-            discount_code,
-            points_used,
-            shipping_address_id, // truyền id của địa chỉ đã lưu trong user
-            shipment,
-            payment_method,
-            notes,
+		// buoc 1: xac dinh user neu co token
+		const authedUser = await getUserFromAuthHeader(req);
+		const isLoggedIn = !!authedUser;
 
-            // Cho khách ko đăng nhập
-            username,
-            email,
-            Addresses
-        } = req.body;
+		// buoc 2: chuan hoa item + tru ton kho cho waiting_for_delivery
+		const { normalizedItems, metas } = await normalizeItemsWithStock(Items);
 
-        // Kiểm tra đăng nhập
-        let token;
-        if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-            try {
-                token = req.headers.authorization.split(' ')[1];
-                const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                const user = await User.findById(decoded._id).select('-password');
-                // console.log("env", process.env.JWT_SECRET);
-                // console.log("Decoded id:", decoded);
-                // console.log("Token", token);
-                // console.log("User", user);
+		// buoc 3: tinh toan tong tien
+		const subtotal = normalizedItems.reduce(
+			(sum, item) => sum + item.variant.price * item.quantity,
+			0
+		);
+		const shippingPayload = shipment || { method: "Standard", fee: 0, note: "" };
+		if (!shippingPayload?.method) {
+			throw buildError("Shipping method is required");
+		}
+		shippingPayload.fee = Number(shippingPayload.fee || 0);
+		if (Number.isNaN(shippingPayload.fee)) {
+			shippingPayload.fee = 0;
+		}
+		const taxAmount =
+			typeof tax_fee === "number" && tax_fee >= 0
+				? tax_fee
+				: Math.round(subtotal * TAX_RATE);
 
-                // Kiểm tra số lượng đặt hàng với stock
-                for (const item of Items) {
-                    const product = await Product.findById(item.product_id);
-                    if (!product.checkQuantity(item.quantity, item.variant.sku)) {
-                        return res.status(400).json({ ec: 400, em: `Sản phẩm ${item.product_name} không đủ số lượng đặt hàng` });
-                    }
-                    const list_warehouses = product.updateStockAfterOrder(item.quantity, item.variant.sku);
-                    await product.save();
-                }
+		const allowedPaymentMethods = ["COD", "banking", "credit_card"];
+		if (!payment_method || !allowedPaymentMethods.includes(payment_method)) {
+			throw buildError("Invalid payment method");
+		}
 
-                // Xử lý tạo đơn hàng cho user đã đăng nhập
-                const user_id = user._id;
+		// giai quyet ma giam gia
+	let appliedDiscountCode = null;
+	let discount = 0;
+	if (discount_code) {
+		appliedDiscountCode = await DiscountCode.findOne({ code: discount_code });
+		if (!appliedDiscountCode) {
+			throw buildError("Discount code not found", 404);
+		}
+		if (!appliedDiscountCode.canUse(subtotal)) {
+			throw buildError("Discount code is not applicable or has reached maximum usage");
+		}
+		discount = appliedDiscountCode.calculateDiscount(subtotal);
+		if (discount <= 0) {
+			throw buildError("Discount code is not applicable for this order amount");
+		}
+	}
 
-                // lấy địa chỉ giao hàng từ user
-                const shipping_address = user.Addresses.id(shipping_address_id);
+		// diem tich luy
+		let pointsToUse = isLoggedIn ? Math.max(0, parseInt(points_used, 10) || 0) : 0;
+		if (isLoggedIn && pointsToUse > authedUser.points) {
+			pointsToUse = authedUser.points;
+		}
+		const pointsDiscount = pointsToUse * 1000;
 
-                // cập nhật điểm người dùng nếu có sử dụng điểm
-                user.points = Math.max(0, user.points - points_used);
-                await user.save();
+		const grand_total = Math.max(
+			0,
+			subtotal + shippingPayload.fee + taxAmount - discount - pointsDiscount
+		);
+		const loyalty_points_earned = Math.floor(grand_total / 10000);
 
-                // tính tổng tiền hàng
-                const total_amount = Items.reduce((sum, item) => {
-                    return sum + item.variant.price * item.quantity;
-                }, 0);
+		// buoc 4: xu ly user + dia chi giao hang
+		let orderUser = authedUser;
+		if (!orderUser) {
+			if (!email || !username) {
+				throw buildError("Guest checkout requires username and email");
+			}
+			orderUser = await User.findOne({ email });
+			if (!orderUser) {
+				const normalizedAddresses = Addresses.length
+					? Addresses.map((addr, index) => ({
+						...stripShippingAddressFields(addr),
+						isDefault: index === 0 ? true : addr.isDefault,
+					}))
+					: [];
+				if (!normalizedAddresses.length) {
+					throw buildError("Guest checkout requires at least one address");
+				}
+				orderUser = await User.create({
+					username,
+					email,
+					Addresses: normalizedAddresses,
+				});
+			}
+			// guest khong duoc dung diem
+			pointsToUse = 0;
+		}
 
-                // tính giảm giá từ mã giảm giá (nếu có và đủ điều kiện)
-                const Dcode = await DiscountCode.findOne({ code: discount_code });
-                let discount = 0;
-                if (Dcode && Dcode.condition <= total_amount && Dcode.limit > 0) {
-                    discount = Dcode.discount;
-                    Dcode.limit -= 1;
-                    await Dcode.save();
-                }
+		const shippingAddress = resolveShippingAddress(
+			isLoggedIn ? orderUser : null,
+			shipping_address_id,
+			shipping_address,
+			orderUser?.Addresses?.length ? orderUser.Addresses : Addresses
+		);
+		const normalizedShippingAddress = stripShippingAddressFields(
+			shippingAddress?.toObject ? shippingAddress.toObject() : shippingAddress
+		);
 
-                // tính grand_total
-                const grand_total = Math.max(0, total_amount + shipment.fee - discount - points_used * 1000);
+		let stockReserved = false;
+		let pointsDeducted = false;
+		try {
+			await reserveStockForOrder(metas);
+			stockReserved = true;
 
-                const newOrder = await new Order({
-                    user_id,
-                    Items,
-                    discount_code,
-                    points_used,
-                    shipping_address,
-                    total_amount,
-                    discount,
-                    grand_total,
-                    shipment,
-                    payment_method,
-                    notes
-                });
-                await newOrder.save();
+			const newOrder = await Order.create({
+				user_id: orderUser._id,
+				Items: normalizedItems,
+				discount_code: discount_code || undefined,
+				points_used: pointsToUse,
+				shipping_address: normalizedShippingAddress,
+				total_amount: subtotal,
+				discount,
+				tax_fee: taxAmount,
+				grand_total,
+				loyalty_points_earned,
+				shipment: shippingPayload,
+				payment_method,
+				notes,
+			});
 
-                // Gửi email xác nhận đơn hàng
-                await transporter.sendMail({
-                    from: `"Your App" <${process.env.EMAIL_USER}>`,
-                    to: user.email,
-                    subject: "Xác nhận đơn hàng",
-                    text: `
+			if (isLoggedIn) {
+				orderUser.points = Math.max(0, (orderUser.points || 0) - pointsToUse);
+				await orderUser.save();
+				pointsDeducted = true;
+			}
+
+			if (appliedDiscountCode) {
+				appliedDiscountCode.usedCount += 1;
+				await appliedDiscountCode.save();
+			}
+
+			const emailTarget = orderUser.email;
+			if (emailTarget) {
+				await transporter.sendMail({
+					from: `"Your App" <${process.env.EMAIL_USER}>`,
+					to: emailTarget,
+					subject: "Xác nhận đơn hàng",
+					text: `
                         Cảm ơn bạn đã đặt hàng tại cửa hàng của chúng tôi!
 
                         Mã đơn hàng: ${newOrder._id}
@@ -101,9 +320,9 @@ export const createOrder = async (req, res) => {
 
                         Sản phẩm:
                             ${newOrder.Items.map(i =>
-                        `- ${i.product_name} | SKU: ${i.variant.sku} | SL: ${i.quantity} | Giá: ${i.variant.price.toLocaleString()} VND`
-                    ).join('\n')
-                        }
+						`- ${i.product_name} | SKU: ${i.variant.sku} | SL: ${i.quantity} | Giá: ${i.variant.price.toLocaleString()} VND`
+					).join('\n')
+						}
 
                         Tổng tiền sản phẩm: ${newOrder.total_amount.toLocaleString()} VND
                         Phí vận chuyển: ${newOrder.shipment.fee.toLocaleString()} VND
@@ -120,7 +339,7 @@ export const createOrder = async (req, res) => {
 
                         Chúng tôi sẽ tiếp tục cập nhật khi đơn hàng được xử lý.
                         `,
-                    html: `
+					html: `
                     <div style="width:100%; background:#f5f5f5; padding:20px 0; font-family:Arial, sans-serif;">
                     <div style="max-width:600px; background:white; margin:auto; padding:20px; border-radius:8px;">
 
@@ -175,7 +394,7 @@ export const createOrder = async (req, res) => {
                         </tr>
                         <tr>
                             <td style="padding:5px 0;">Sử dụng điểm KHTT:</td>
-                            <td style="padding:5px 0; text-align:right;">-${(newOrder.points_used*1000).toLocaleString()} VND</td>
+                            <td style="padding:5px 0; text-align:right;">-${(newOrder.points_used * 1000).toLocaleString()} VND</td>
                         </tr>
                         <tr style="border-top:1px solid #ddd;">
                             <td style="padding:10px 0; font-size:16px;"><b>Tổng thanh toán:</b></td>
@@ -204,441 +423,300 @@ export const createOrder = async (req, res) => {
                     </div>
                     </div>
                     `,
-                });
+				});
 
-                return res.status(201).json({ ec: 0, em: "Order created successfully", dt: newOrder });
-            } catch (authError) {
-                console.log("Invalid token, treating as guest");
-            }
-        }
-        // Đơn hàng cho khách không đăng nhập
-        else {
-            // Kiểm tra nếu email đã được tạo tài khoản
-            const userExists = await User.findOne({ email });
-            if (userExists) {
-                return res.status(400).json({ ec: 400, em: "Email đã tạo tài khoản, xin hãy đăng nhập" });
-            }
+			}
 
-            // Kiểm tra số lượng đặt hàng với stock/ nếu ok thì cập nhật waiting_for_delivery
-            for (const item of Items) {
-                const product = await Product.findById(item.product_id);
-                if (!product.checkQuantity(item.quantity, item.variant.sku)) {
-                    return res.status(400).json({ ec: 400, em: `Sản phẩm ${item.product_name} không đủ số lượng đặt hàng` });
-                }
-                const list_warehouses = product.updateStockAfterOrder(item.quantity, item.variant.sku);
-                await product.save();
-            }
-
-            // Tạo user tạm để gán đơn hàng
-            const user = await User.create({
-                username,
-                email,
-                Addresses
-            });
-
-            // tính tổng tiền hàng
-            const total_amount = Items.reduce((sum, item) => {
-                return sum + item.variant.price * item.quantity;
-            }, 0);
-
-            // tính giảm giá từ mã giảm giá nếu có
-            const Dcode = await DiscountCode.findOne({ code: discount_code });
-            const discount = Dcode ? Dcode.discount : 0;
-
-            // tính grand_total
-            const grand_total = Math.max(0, total_amount + shipment.fee - discount);
-
-            const newOrder = await new Order({
-                user_id: user._id,
-                Items,
-                discount_code,
-                points_used: 0, // khách ko đăng nhập ko dùng điểm
-                shipping_address: user.Addresses[0], // lấy địa chỉ đầu tiên
-                total_amount,
-                discount,
-                grand_total,
-                shipment,
-                payment_method,
-                notes
-            });
-            await newOrder.save();
-
-            // Gửi email xác nhận đơn hàng
-            await transporter.sendMail({
-                from: `"Your App" <${process.env.EMAIL_USER}>`,
-                to: user.email,
-                subject: "Xác nhận đơn hàng",
-                text: `
-                        Cảm ơn bạn đã đặt hàng tại cửa hàng của chúng tôi!
-
-                        Mã đơn hàng: ${newOrder._id}
-                        Trạng thái: ${newOrder.order_status}
-
-                        Sản phẩm:
-                            ${newOrder.Items.map(i =>
-                    `- ${i.product_name} | SKU: ${i.variant.sku} | SL: ${i.quantity} | Giá: ${i.variant.price.toLocaleString()} VND`
-                ).join('\n')
-                    }
-
-                        Tổng tiền sản phẩm: ${newOrder.total_amount.toLocaleString()} VND
-                        Phí vận chuyển: ${newOrder.shipment.fee.toLocaleString()} VND
-                        Mã giảm giá: ${newOrder.discount_code || "Không có"}
-                        Giảm giá: -${newOrder.discount.toLocaleString()} VND
-                        Sử dụng điểm KHTT: -${(newOrder.points_used * 1000).toLocaleString()} VND
-                        Tổng thanh toán: ${newOrder.grand_total.toLocaleString()} VND
-
-                        Phương thức thanh toán: ${newOrder.payment_method}
-                        Địa chỉ nhận hàng: ${newOrder.shipping_address.receiver}, ${newOrder.shipping_address.street}, ${newOrder.shipping_address.ward}, ${newOrder.shipping_address.district}, ${newOrder.shipping_address.province}
-
-                        Ghi chú: ${newOrder.notes || "Không có"}
-
-                        Chúng tôi sẽ tiếp tục cập nhật khi đơn hàng được xử lý.
-                        `,
-                html: `
-                    <div style="width:100%; background:#f5f5f5; padding:20px 0; font-family:Arial, sans-serif;">
-                    <div style="max-width:600px; background:white; margin:auto; padding:20px; border-radius:8px;">
-
-                        <h2 style="text-align:center; color:#333;">Cảm ơn bạn đã đặt hàng!</h2>
-
-                        <p>Xin chào <b>${newOrder.shipping_address.receiver}</b>,</p>
-                        <p>Cảm ơn bạn đã mua sắm tại cửa hàng của chúng tôi. Dưới đây là thông tin đơn hàng của bạn:</p>
-
-                        <!-- Order Info -->
-                        <table width="100%" style="border-collapse:collapse; margin-top:15px;">
-                        <tr>
-                            <td style="padding:8px 0;"><b>Mã đơn hàng:</b></td>
-                            <td style="padding:8px 0;">${newOrder._id}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding:8px 0;"><b>Trạng thái:</b></td>
-                            <td style="padding:8px 0;">${newOrder.order_status}</td>
-                        </tr>
-                        </table>
-
-                    <h3 style="margin-top:25px;">🛒 Sản phẩm đã mua</h3>
-                    <table width="100%" style="border-collapse:collapse;">
-                    ${newOrder.Items.map((i) => `
-                        <tr style="border-bottom:1px solid #ddd;">
-                        <td style="padding:10px 0;">
-                            <b>${i.product_name}</b><br>
-                            <small>SKU: ${i.variant.sku}</small><br>
-                            <small>Số lượng: ${i.quantity}</small><br>
-                            <small>Giá: ${i.variant.price.toLocaleString()} VND</small>
-                        </td>
-                        </tr>
-                    `).join('')}
-                    </table>
-
-                    <h3 style="margin-top:25px;">💰 Chi tiết thanh toán</h3>
-                    <table width="100%" style="border-collapse:collapse;">
-                    <tr>
-                        <td style="padding:5px 0;">Tổng tiền sản phẩm:</td>
-                        <td style="padding:5px 0; text-align:right;">${newOrder.total_amount.toLocaleString()} VND</td>
-                    </tr>
-                    <tr>
-                        <td style="padding:5px 0;">Phí vận chuyển:</td>
-                        <td style="padding:5px 0; text-align:right;">${newOrder.shipment.fee.toLocaleString()} VND</td>
-                    </tr>
-                    <tr>
-                        <td style="padding:5px 0;">Mã giảm giá:</td>
-                        <td style="padding:5px 0; text-align:right;">${newOrder.discount_code || "Không có"}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding:5px 0;">Giảm giá:</td>
-                        <td style="padding:5px 0; text-align:right;">-${newOrder.discount.toLocaleString()} VND</td>
-                    </tr>
-                    <tr>
-                        <td style="padding:5px 0;">Điểm đã sử dụng:</td>
-                        <td style="padding:5px 0; text-align:right;">-${(newOrder.points_used * 1000).toLocaleString()} VND</td>
-                    </tr>
-                    <tr style="border-top:1px solid #ddd;">
-                        <td style="padding:10px 0; font-size:16px;"><b>Tổng thanh toán:</b></td>
-                        <td style="padding:10px 0; text-align:right; font-size:16px; color:#d9534f;">
-                        <b>${newOrder.grand_total.toLocaleString()} VND</b>
-                        </td>
-                    </tr>
-                    </table>
-
-                    <h3 style="margin-top:25px;">📍 Địa chỉ giao hàng</h3>
-                    <p style="line-height:1.6;">
-                    ${newOrder.shipping_address.receiver}<br/>
-                    ${newOrder.shipping_address.street}, ${newOrder.shipping_address.ward}<br/>
-                    ${newOrder.shipping_address.district}, ${newOrder.shipping_address.province}<br/>
-                    SĐT: ${newOrder.shipping_address.phone}
-                    </p>
-
-                    <h3 style="margin-top:25px;">📝 Ghi chú</h3>
-                    <p>${newOrder.notes || "Không có"}</p>
-
-                    <p style="margin-top:30px;">
-                    Chúng tôi sẽ thông báo cho bạn khi đơn hàng được xử lý.<br>
-                    <b>Cảm ơn bạn đã mua sắm tại cửa hàng!</b>
-                    </p>
-
-                </div>
-                </div>
-                `,
-            });
-
-            res.status(201).json({ ec: 0, em: "Order created successfully", dt: newOrder });
-        }
-    } catch (error) {
-        res.status(500).json({ ec: 500, em: error.message });
-    }
-
-    // TODO: Sau khi tạo đơn hàng (nếu thanh toán online) gọi phương thức thanh toán tích hợp
+			return res.status(201).json({ ec: 0, em: "Order created successfully", dt: newOrder });
+		} catch (innerError) {
+			if (pointsDeducted && isLoggedIn) {
+				orderUser.points = (orderUser.points || 0) + pointsToUse;
+				await orderUser.save();
+			}
+			if (stockReserved) {
+				await rollbackStockReservation(metas);
+			}
+			throw innerError;
+		}
+	} catch (error) {
+		const statusCode = error?.statusCode || 500;
+		res.status(statusCode).json({ ec: statusCode, em: error.message });
+	}
 };
 
 export const getOrderByUserId = async (req, res) => {
-    try {
-        const user_id = req.user._id;
-        const orders = await Order.find({ user_id }).select('-StatusHistory -shipping_address -shipment -__v').sort('-createdAt');
-        res.status(201).json({ ec: 0, em: "Orders getted successfully", dt: orders });
-    } catch (error) {
-        res.status(500).json({ ec: 500, em: error.message });
-    }
+	try {
+		const user_id = req.user._id;
+		const orders = await Order.find({ user_id })
+			.select("-StatusHistory -shipment.note -__v")
+			.sort("-createdAt");
+		res.status(200).json({ ec: 0, em: "Orders retrieved successfully", dt: orders });
+	} catch (error) {
+		res.status(500).json({ ec: 500, em: error.message });
+	}
 };
-// Get status history by order ID
-// user nào thì xem được lich sử đơn hàng của user đó
+
 export const getStatusHistoryByOrderId = async (req, res) => {
-    try {
-        const order_id = req.params.order_id;
-        const user_id = req.user._id;
-        const order = await Order.findById(order_id, user_id).select('StatusHistory').populate('StatusHistory.change_by', 'username isManager').sort('-createdAt');
-        res.status(201).json({ ec: 0, em: "Status History getted successfully", dt: order.StatusHistory });
-    } catch (error) {
-        res.status(500).json({ ec: 500, em: error.message });
-    }
+	try {
+		const order_id = req.params.order_id;
+		const order = await Order.findById(order_id)
+			.select("StatusHistory user_id")
+			.populate("StatusHistory.change_by", "username isManager");
+
+		if (!order) {
+			return res.status(404).json({ ec: 404, em: "Order not found" });
+		}
+
+		const isOwner = order.user_id.toString() === req.user._id.toString();
+		if (!isOwner && !req.user.isManager) {
+			return res.status(403).json({ ec: 403, em: "Forbidden" });
+		}
+
+		const history = [...(order.StatusHistory || [])].sort(
+			(a, b) => new Date(b.change_at) - new Date(a.change_at)
+		);
+		res.status(200).json({ ec: 0, em: "Status History retrieved successfully", dt: history });
+	} catch (error) {
+		res.status(500).json({ ec: 500, em: error.message });
+	}
 };
+
 // Common function
 export const getOrderById = async (req, res) => {
-    try {
-        const order_id = req.params.order_id;
-        const order = await Order.findById(order_id).populate('StatusHistory.change_by', 'username isManager').populate('user_id', 'username email');
-        res.status(201).json({ ec: 0, em: "Order getted successfully", dt: order });
-    } catch (error) {
-        res.status(500).json({ ec: 500, em: error.message });
-    }
+	try {
+		const order_id = req.params.order_id;
+		const order = await Order.findById(order_id)
+			.populate("StatusHistory.change_by", "username isManager")
+			.populate("user_id", "username email");
+
+		if (!order) {
+			return res.status(404).json({ ec: 404, em: "Order not found" });
+		}
+		const isOwner = order.user_id?._id?.toString() === req.user._id.toString();
+		if (!isOwner && !req.user.isManager) {
+			return res.status(403).json({ ec: 403, em: "Forbidden" });
+		}
+
+		order.StatusHistory = [...(order.StatusHistory || [])].sort(
+			(a, b) => new Date(b.change_at) - new Date(a.change_at)
+		);
+		res.status(200).json({ ec: 0, em: "Order retrieved successfully", dt: order });
+	} catch (error) {
+		res.status(500).json({ ec: 500, em: error.message });
+	}
 };
 
 // Admin functions
 export const getAllOrders = async (req, res) => {
-    try {
+	try {
+		const pageSize = 20;
+		const page = 1;
 
-        const pageSize = 20;
-        const page = 1;
+		let query = {};
+		let createdAtFilter = {};
 
-        let query = {};
-        let createdAtFilter = {};
+		const { start, end, date } = req.query;
+		const today = new Date();
 
-        const { start, end, date } = req.query;
-        const today = new Date();
+		if (start && end) {
+			createdAtFilter.$gte = new Date(start);
+			createdAtFilter.$lte = new Date(end);
+		}
+		if (date === "today") {
+			createdAtFilter.$gte = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+			createdAtFilter.$lt = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+		} else if (date === "yesterday") {
+			createdAtFilter.$gte = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+			createdAtFilter.$lt = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+		} else if (date === "this_week") {
+			const firstDay = today.getDate() - today.getDay();
+			createdAtFilter.$gte = new Date(today.getFullYear(), today.getMonth(), firstDay);
+			createdAtFilter.$lt = new Date(today.getFullYear(), today.getMonth(), firstDay + 7);
+		} else if (date === "this_month") {
+			createdAtFilter.$gte = new Date(today.getFullYear(), today.getMonth(), 1);
+			createdAtFilter.$lt = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+		}
 
-        // Lọc theo khoảng thời gian: start – end
-        if (start && end) {
-            createdAtFilter.$gte = new Date(start);
-            createdAtFilter.$lte = new Date(end);
-        }
-        // Lọc theo lựa chọn : today, yesterday, this_week, this_month
-        if (date === 'today') {
-            createdAtFilter.$gte = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-            createdAtFilter.$lt = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+		if (Object.keys(createdAtFilter).length > 0) {
+			query.createdAt = createdAtFilter;
+		}
 
-        } else if (date === 'yesterday') {
-            createdAtFilter.$gte = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
-            createdAtFilter.$lt = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+		const [count, orders] = await Promise.all([
+			Order.countDocuments(query),
+			Order.find(query)
+				.select("-StatusHistory -shipping_address -shipment.note -__v")
+				.sort("-createdAt")
+				.populate("user_id", "username email")
+				.limit(pageSize)
+				.skip(pageSize * (page - 1)),
+		]);
 
-        } else if (date === 'this_week') {
-            const firstDay = today.getDate() - today.getDay();
-            createdAtFilter.$gte = new Date(today.getFullYear(), today.getMonth(), firstDay);
-            createdAtFilter.$lt = new Date(today.getFullYear(), today.getMonth(), firstDay + 7);
-
-        } else if (date === 'this_month') {
-            createdAtFilter.$gte = new Date(today.getFullYear(), today.getMonth(), 1);
-            createdAtFilter.$lt = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-        }
-
-        // Chỉ gán createdAt nếu có filter
-        if (Object.keys(createdAtFilter).length > 0) {
-            query.createdAt = createdAtFilter;
-        }
-
-        const [count, orders] = await Promise.all([
-            Order.countDocuments(query),
-            Order.find(query)
-                .select('-StatusHistory -shipping_address -shipment -__v')
-                .sort('-createdAt')
-                .populate('user_id', 'username')
-                .limit(pageSize)
-                .skip(pageSize * (page - 1))
-        ]);
-
-        res.status(201).json({
-            ec: 0,
-            em: "All Orders getted successfully",
-            dt: {
-                orders,
-                page,
-                pages: Math.ceil(count / pageSize),
-                total: count,
-            }
-        });
-    } catch (error) {
-        res.status(500).json({ ec: 500, em: error.message });
-    }
+		res.status(200).json({
+			ec: 0,
+			em: "All Orders retrieved successfully",
+			dt: {
+				orders,
+				page,
+				pages: Math.ceil(count / pageSize),
+				total: count,
+			},
+		});
+	} catch (error) {
+		res.status(500).json({ ec: 500, em: error.message });
+	}
 };
 
-// Hàm update status Admin
+const adjustDiscountUsage = async (discountCodeValue, direction = 1) => {
+	if (!discountCodeValue) return;
+	const codeDoc = await DiscountCode.findOne({ code: discountCodeValue });
+	if (!codeDoc) return;
+	const nextCount = Math.max(0, (codeDoc.usedCount || 0) + direction);
+	codeDoc.usedCount = nextCount;
+	await codeDoc.save();
+};
+
+// Ham update status Admin
 export const updateOrderStatus = async (req, res) => {
-    try {
-        const order_id = req.params.order_id;
-        const newStatus = req.body.order_status;
+	try {
+		const order_id = req.params.order_id;
+		const newStatus = req.body.order_status;
+		const allowedStatuses = ["pending", "processing", "shipped", "delivered", "cancelled"];
+		if (!allowedStatuses.includes(newStatus)) {
+			return res.status(400).json({ ec: 400, em: "Invalid order status" });
+		}
 
-        const order = await Order.findById(order_id).select('_id user_id Items order_status StatusHistory points_used total_amount');
-        if (!order) {
-            return res.status(404).json({ ec: 404, em: "Order not found" });
-        }
-        const oldStatus = order.order_status;
-        // Không cho cập nhật nếu trạng thái không thay đổi
-        if (oldStatus === newStatus) {
-            return res.status(400).json({ ec: 400, em: "Order status is the same as the current status" });
-        }
+		const order = await Order.findById(order_id).select(
+			"_id user_id Items order_status StatusHistory points_used total_amount discount_code grand_total loyalty_points_earned"
+		);
+		if (!order) {
+			return res.status(404).json({ ec: 404, em: "Order not found" });
+		}
+		const oldStatus = order.order_status;
 
-        // Không cho đổi trạng thái trừ khi đang ở trạng thái pending
-        if (oldStatus === "delivered" || oldStatus === "cancelled") {
-            return res.status(400).json({ ec: 400, em: "Status order cannot be changed once delivered or cancelled" });
-        }
-        order.order_status = newStatus;
-        // Cập nhật lịch sử thay đổi trạng thái
-        order.StatusHistory.push({
-            status: newStatus,
-            change_at: new Date(),
-            change_by: req.user._id
-        });
-        await order.save();
+		if (oldStatus === newStatus) {
+			return res.status(400).json({ ec: 400, em: "Order status is the same as the current status" });
+		}
 
-        // Xử lý điểm khách hàng thân thiết
-        // Lấy user
-        const user = await User.findById(order.user_id).select('points');
-        if (!user) {
-            return res.status(404).json({ ec: 404, em: "User not found" });
-        };
+		if (oldStatus === "delivered" || oldStatus === "cancelled") {
+			return res.status(400).json({ ec: 400, em: "Status order cannot be changed once delivered or cancelled" });
+		}
+		order.order_status = newStatus;
+		order.StatusHistory.push({
+			status: newStatus,
+			change_at: new Date(),
+			change_by: req.user._id,
+		});
+		await order.save();
 
-        // Nếu đơn được giao (delivered) thì cộng điểm
-        if (order.order_status === 'delivered') {
-            // console.log('Points used before adding for user:', user.points);
-            user.points += parseInt((order.total_amount * 0.1) / 1000);
-            // console.log(parseInt((order.total_amount * 0.1) / 1000))
-            // console.log('User points after delivery:', user.points);
-            await user.save();
+		const user = await User.findById(order.user_id).select("points");
+		if (!user) {
+			return res.status(404).json({ ec: 404, em: "User not found" });
+		}
 
-            // Xử lý cập nhật stock và số lượng đã bán
-            for (const item of order.Items) {
-                const product = await Product.findById(item.product_id);
-                if (product) {
-                    // Cập nhật stock
-                    const list_warehouses = product.exportStockAfterShipping(item.quantity, item.variant.sku);
-                    // Cập nhật số lượng đã bán cho variant
-                    const variant = product.Variants.find(v => v.sku === item.variant.sku);
-                    if (variant) {
-                        variant.sold = (variant.sold || 0) + item.quantity;
-                    }
-                    // Cập nhật tổng số lượng đã bán của sản phẩm
-                    product.quantity_sold = product.Variants.reduce((sum, v) => sum + (v.sold || 0), 0);
-                    await product.save();
-                }
-            }
-        }
+		if (order.order_status === "delivered") {
+			const pointsEarned =
+				order.loyalty_points_earned || Math.floor((order.grand_total || 0) / 10000);
+			user.points += pointsEarned;
+			await user.save();
 
-        // Nếu đơn bị hủy sau khi đã giao thì trừ điểm
-        else if (order.order_status === 'cancelled') {
-            // console.log('Points used before refunding for user:', user.points);
-            user.points += parseInt(order.points_used); // hoàn trả điểm đã dùng
-            if (user.points < 0) user.points = 0; // tránh âm
-            // console.log('Points used:', parseInt(order.points_used));
-            // console.log('User points after cancellation:', user.points);
-            await user.save();
+			for (const item of order.Items) {
+				const product = await Product.findById(item.product_id);
+				if (product) {
+					product.exportStockAfterShipping(item.quantity, item.variant.sku);
+					const variant = product.Variants.find((v) => v.sku === item.variant.sku);
+					if (variant) {
+						variant.sold = (variant.sold || 0) + item.quantity;
+					}
+					product.quantity_sold = product.Variants.reduce((sum, v) => sum + (v.sold || 0), 0);
+					await product.save();
+				}
+			}
+		} else if (order.order_status === "cancelled") {
+			user.points += parseInt(order.points_used, 10) || 0;
+			if (user.points < 0) user.points = 0;
+			await user.save();
 
-            // Xử lý hoàn trả số lượng đặt hàng về kho khi hủy đơn
-            for (const item of order.Items) {
-                const product = await Product.findById(item.product_id);
-                if (product) {
-                    // Giảm waiting_for_delivery và tăng quantity trong kho
-                    const list_warehouses = product.revertStockAfterCancel(item.quantity, item.variant.sku);
-                    await product.save();
-                }
-            }
-        }
-        await order.populate('StatusHistory.change_by', 'username isManager');
+			for (const item of order.Items) {
+				const product = await Product.findById(item.product_id);
+				if (product) {
+					product.revertStockAfterCancel(item.quantity, item.variant.sku);
+					await product.save();
+				}
+			}
+			await adjustDiscountUsage(order.discount_code, -1);
+		}
+		await order.populate("StatusHistory.change_by", "username isManager");
 
-        res.status(200).json({ ec: 0, em: "Order status updated successfully", dt: order });
-
-    } catch (error) {
-        res.status(500).json({ ec: 500, em: error.message });
-    }
+		res.status(200).json({ ec: 0, em: "Order status updated successfully", dt: order });
+	} catch (error) {
+		res.status(500).json({ ec: 500, em: error.message });
+	}
 };
-// Hàm update status User hủy đơn hàng
+
+// Ham update status User huy don hang
 export const userCancelOrder = async (req, res) => {
-    try {
-        const order_id = req.params.order_id;
-        const newStatus = req.body.order_status;
+	try {
+		const order_id = req.params.order_id;
+		const newStatus = req.body.order_status;
+		const allowedStatuses = ["pending", "processing", "shipped", "delivered", "cancelled"];
+		if (!allowedStatuses.includes(newStatus)) {
+			return res.status(400).json({ ec: 400, em: "Invalid order status" });
+		}
+		if (newStatus !== "cancelled") {
+			return res.status(400).json({ ec: 400, em: "User can only cancel pending orders" });
+		}
 
-        const order = await Order.findById(order_id).select('_id user_id Items order_status StatusHistory points_used total_amount');
-        if (!order) {
-            return res.status(404).json({ ec: 404, em: "Order not found" });
-        }
-        const oldStatus = order.order_status;
-        // Không cho cập nhật nếu trạng thái không thay đổi
-        if (oldStatus === newStatus) {
-            return res.status(400).json({ ec: 400, em: "Order status is the same as the current status" });
-        }
+		const order = await Order.findById(order_id).select(
+			"_id user_id Items order_status StatusHistory points_used total_amount discount_code grand_total loyalty_points_earned"
+		);
+		if (!order) {
+			return res.status(404).json({ ec: 404, em: "Order not found" });
+		}
+		if (order.user_id.toString() !== req.user._id.toString()) {
+			return res.status(403).json({ ec: 403, em: "Forbidden" });
+		}
+		const oldStatus = order.order_status;
 
-        // Không cho đổi trạng thái trừ khi đang ở trạng thái pending
-        if (oldStatus !== "pending") {
-            return res.status(400).json({ ec: 400, em: "Only pending orders can change status" });
-        }
-        order.order_status = newStatus;
-        // Cập nhật lịch sử thay đổi trạng thái
-        order.StatusHistory.push({
-            status: newStatus,
-            change_at: new Date(),
-            change_by: req.user._id
-        });
-        await order.save();
+		if (oldStatus === newStatus) {
+			return res.status(400).json({ ec: 400, em: "Order status is the same as the current status" });
+		}
 
-        // Xử lý điểm khách hàng thân thiết
-        // Lấy user
-        const user = await User.findById(order.user_id).select('points');
-        if (!user) {
-            return res.status(404).json({ ec: 404, em: "User not found" });
-        };
+		if (oldStatus !== "pending") {
+			return res.status(400).json({ ec: 400, em: "Only pending orders can change status" });
+		}
+		order.order_status = newStatus;
+		order.StatusHistory.push({
+			status: newStatus,
+			change_at: new Date(),
+			change_by: req.user._id,
+		});
+		await order.save();
 
-        // Nếu đơn bị hủy sau khi đã giao thì trừ điểm
-        if (order.order_status === 'cancelled') {
-            // console.log('Points used before refunding for user:', user.points);
-            user.points += parseInt(order.points_used); // hoàn trả điểm đã dùng
-            if (user.points < 0) user.points = 0; // tránh âm
-            // console.log('Points used:', parseInt(order.points_used));
-            // console.log('User points after cancellation:', user.points);
-            await user.save();
+		const user = await User.findById(order.user_id).select("points");
+		if (!user) {
+			return res.status(404).json({ ec: 404, em: "User not found" });
+		}
 
-            // Xử lý hoàn trả số lượng đặt hàng về kho khi hủy đơn
-            for (const item of order.Items) {
-                const product = await Product.findById(item.product_id);
-                if (product) {
-                    // Giảm waiting_for_delivery và tăng quantity trong kho
-                    const list_warehouses = product.revertStockAfterCancel(item.quantity, item.variant.sku);
-                    await product.save();
-                }
-            }
-        }
-        await order.populate('StatusHistory.change_by', 'username isManager');
+		if (order.order_status === "cancelled") {
+			user.points += parseInt(order.points_used, 10) || 0;
+			if (user.points < 0) user.points = 0;
+			await user.save();
 
-        res.status(200).json({ ec: 0, em: "Order status updated successfully", dt: order });
+			for (const item of order.Items) {
+				const product = await Product.findById(item.product_id);
+				if (product) {
+					product.revertStockAfterCancel(item.quantity, item.variant.sku);
+					await product.save();
+				}
+			}
+			await adjustDiscountUsage(order.discount_code, -1);
+		}
+		await order.populate("StatusHistory.change_by", "username isManager");
 
-    } catch (error) {
-        res.status(500).json({ ec: 500, em: error.message });
-    }
+		res.status(200).json({ ec: 0, em: "Order status updated successfully", dt: order });
+	} catch (error) {
+		res.status(500).json({ ec: 500, em: error.message });
+	}
 };
 
-// TODO: cập nhật trạng thái đơn hàng khi thanh toán online thành công
+// TODO: cap nhat trang thai don hang khi thanh toan online thanh cong

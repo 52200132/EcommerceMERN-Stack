@@ -3,7 +3,8 @@ import { createSlice } from '@reduxjs/toolkit'
 const initialState = {
   user_profile: {},
   user_profile_draft: {},
-  address_list: []
+  address_list: [],
+  cart_list: []
 };
 
 export const userProfileSlice = createSlice({
@@ -22,6 +23,7 @@ export const userProfileSlice = createSlice({
     clearUserProfileDraft: (state) => {
       state.user_profile_draft = {};
     },
+
     setAddressList: (state, action) => {
       state.address_list = action.payload;
     },
@@ -38,6 +40,23 @@ export const userProfileSlice = createSlice({
     },
     deleteAddressFromList: (state, action) => {
       state.address_list = state.address_list.filter(addr => addr._id !== action.payload);
+    },
+
+    setCartList: (state, action) => {
+      state.cart_list = action.payload;
+    },
+    updateCartList: (state, action) => {
+      const updatedCartItem = action.payload;
+      const index = state.cart_list.findIndex(item => item.product_id === updatedCartItem.product_id && item.variant.sku === updatedCartItem.variant.sku);
+      if (index !== -1) {
+        state.cart_list[index] = { ...state.cart_list[index], ...updatedCartItem };
+      }
+    },
+    addCartList: (state, action) => {
+      state.cart_list.push(action.payload);
+    },
+    deleteCartFromList: (state, action) => {
+      state.cart_list = state.cart_list.filter(item => !(item.product_id === action.payload.product_id && item.variant.sku === action.payload.variant.sku));
     }
   }
 });
@@ -52,6 +71,11 @@ export const {
   setAddressList,
   updateAddressList,
   addAddressList,
-  deleteAddressFromList
+  deleteAddressFromList,
+
+  setCartList,
+  updateCartList,
+  addCartList,
+  deleteCartFromList
 } = userProfileSlice.actions;
 export default userProfileSlice.reducer;

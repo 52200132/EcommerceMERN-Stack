@@ -81,11 +81,16 @@ const orderSchema = new Schema({
     required: true,
     default: "pending"
   },
-  StatusHistory: { type: [statusHistorySchema], default: [{ status: "pending", change_at: new Date(), change_by: null }] },
+  StatusHistory: {
+    type: [statusHistorySchema],
+    default: () => [{ status: "pending", change_at: new Date(), change_by: null }]
+  },
   total_amount: { type: Number, min: 0 },
   discount: { type: Number, min: 0, default: 0 },
   shipment: { type: shipmentSchema, required: true },
-  grand_total: { type: Number, min: 0},
+  tax_fee: { type: Number, min: 0, default: 0 },
+  grand_total: { type: Number, min: 0 },
+  loyalty_points_earned: { type: Number, min: 0, default: 0 },
   notes: { type: String }
 }, { timestamps: true });
 

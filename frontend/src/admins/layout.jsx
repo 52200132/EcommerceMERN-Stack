@@ -7,7 +7,7 @@ import 'overlayscrollbars/overlayscrollbars.css';
 import './index.scss';
 
 import ModalDialog from "./components/layout/modal-dialog";
-import { default as MD2 } from '#a-components/modal-dialog';
+import { default as MD2 } from '#components/common/modal-dialog';
 import Sidebar from "./components/layout/sidebar";
 import Header from "./components/layout/header";
 import Breadcrumb from './components/layout/breadcrumb';
