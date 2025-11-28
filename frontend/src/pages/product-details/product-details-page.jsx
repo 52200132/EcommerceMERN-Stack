@@ -32,6 +32,7 @@ const ProductDetails = () => {
   const userToken = useTpsGetState(state => state?.auth?.user?.token, false);
   const userId = useTpsGetState(state => state?.auth?.user?._id, false);
   const { productNameSlug } = useParams();
+  console.log(productNameSlug);
   const dispatch = useDispatch();
   const [addToCart, { isLoading: isAddingCart }] = useAddToCartMutation();
   const { data } = useGetProductByIdQuery(productNameSlug)
@@ -41,7 +42,7 @@ const ProductDetails = () => {
     if (!data?.dt) return;
     dispatch(setProduct(data?.dt || {}));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data])
+  }, [data, dispatch])
   useEffect(() => {
     console.log(ratingData);
     if (!ratingData) return;

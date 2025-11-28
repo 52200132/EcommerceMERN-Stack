@@ -1,7 +1,7 @@
 import express from 'express';
 import Product from '../models/Product.js';
 import { protect, admin } from '../middleware/auth.js';
-import { getNewProducts, getTopSellingProducts, createVariantByWarehouseId, updateWarehouseVariantBySku, deleteWarehouseVariantBySku, deleteWarehouseById, getProductsInfoForOrder, getArrangeAlphabet, getProductByCategory, getArrangePrice, createWarehouseByProductId, createVariantByProductId, updateWarehouseById, getAllWarehouseByProduct, getProductById, deleteProductById, createProduct, updateProduct, getAllProducts, deleteVariantBySku, updateVariantBySku } from '../controller/productController.js';
+import { getNewProducts, getTopSellingProducts, createVariantByWarehouseId, updateWarehouseVariantBySku, deleteWarehouseVariantBySku, deleteWarehouseById, getProductsInfoForOrder, getArrangeAlphabet, getProductByCategory, getArrangePrice, createWarehouseByProductId, createVariantByProductId, updateWarehouseById, getAllWarehouseByProduct, getProductById, deleteProductById, createProduct, updateProduct, getAllProducts, deleteVariantBySku, updateVariantBySku, getProducts } from '../controller/productController.js';
 
 const router = express.Router();
 
@@ -55,6 +55,8 @@ router.get('/new_products', getNewProducts);
 // @route   GET /api/products/category/:categoryId
 // @access  Public
 router.get('/category/:categoryId', getProductByCategory);
+
+router.get('/filter', getProducts);
 
 // @desc    Fetch all products
 // @route   GET /api/products
@@ -140,7 +142,7 @@ router.delete('/:id/variant', protect, admin, deleteVariantBySku);
 router.put('/:id', async (req, res, next) => {
   console.log(`PUT /api/products/${req.params.id}`);
   next()
-} , updateProduct);
+}, updateProduct);
 
 // @desc    Create A variant by product ID
 // @route   POST /api/products/:id/variant

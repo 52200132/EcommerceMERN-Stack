@@ -1,32 +1,171 @@
 import Product from "../models/Product.js";
 import Category from "../models/Category.js";
+import mongoose from "mongoose";
 
 /** Lấy danh sách sản phẩm để hiện trên giao diện */
 export const getProducts = async (req, res) => {
   const {
     category_id,
     category_name,
-    brand_id,
-    brand_name,
-    sort_by, // price_asc, price_desc, name_asc, name_desc, quantity_sold_desc, newest, newest_desc
+    brand_names,
+    variants_filters,
+    sort_by, // price_asc, price_desc, name_asc, name_desc, quantity_sold_desc, rating_desc
     price_min,
     price_max,
     page,
     limit,
-    search,
     q
   } = req.query;
 
   const pageNumber = Math.max(parseInt(page, 10) || 1, 1);
-  const pageSize = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
-}
+  const pageSize = Math.max(parseInt(limit, 10) || 10, 1);
+  const query = {
+    is_active: true
+  };
+
+  if (q) {
+    query.$or = [
+      { product_name: { $regex: q, $options: "i" } },
+    ];
+  }
+
+  // Convert category_id to ObjectId if provided
+  if (category_id && mongoose.Types.ObjectId.isValid(category_id)) {
+    query.category_id = new mongoose.Types.ObjectId(category_id);
+  }
+
+  let sortQuery = null;
+  if (sort_by) {
+    sortQuery = {};
+    switch (sort_by) {
+      case "name_asc":
+        sortQuery["product_name"] = 1;
+        break;
+      case "name_desc":
+        sortQuery["product_name"] = -1;
+        break;
+      case "quantity_sold_desc":
+        sortQuery["quantity_sold"] = -1;
+        break;
+      case "rating_desc":
+        sortQuery["rating"] = -1;
+        break;
+      default:
+        break;
+    }
+  }
+
+  const hasBrandNamesArray = Array.isArray(brand_names) && brand_names?.length > 0;
+
+  try {
+    const pipeline = [
+      { $match: query },
+
+      // LUÔN LUÔN lookup brand và category để lấy tên
+      {
+        $lookup: {
+          from: "brands",
+          localField: "brand_id",
+          foreignField: "_id",
+          as: "brandDetails"
+        }
+      },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "category_id",
+          foreignField: "_id",
+          as: "categoryDetails"
+        }
+      },
+
+      // Filter by brand_names nếu có
+      ...(hasBrandNamesArray ? [{
+        $match: {
+          "brandDetails.brand_name": { $in: brand_names }
+        }
+      }] : []),
+
+      // Filter by category_name nếu có (và chưa filter bằng category_id)
+      ...(category_name && !category_id ? [{
+        $match: {
+          "categoryDetails.category_name": category_name
+        }
+      }] : []),
+
+      // Sử dụng $facet để lấy cả total và data trong 1 query
+      {
+        $facet: {
+          metadata: [{ $count: "total" }],
+          products: [
+            { $sort: sortQuery || { quantity_sold: -1 } },
+            { $skip: pageSize * (pageNumber - 1) },
+            { $limit: pageSize },
+            {
+              $project: {
+                product_name: 1,
+                short_description: 1,
+                hashtag: 1,
+                quantity_sold: 1,
+                rating: 1,
+                is_active: 1,
+                stock: 1,
+                price_min: 1,
+                price_max: 1,
+                image: {
+                  $let: {
+                    vars: {
+                      // 1. Tạo biến tạm 'primaryImageObject' bằng cách lọc và lấy phần tử đầu tiên
+                      primaryImageObject: {
+                        $arrayElemAt: [{
+                          $filter: {
+                            input: "$Images",
+                            as: "img",
+                            cond: { $eq: ["$$img.is_primary", true] }
+                          }
+                        }, 0] // Lấy phần tử đầu tiên (index 0)
+                      }
+                    },
+                    // 2. Output: Truy cập trường 'url' của biến tạm đó
+                    in: "$$primaryImageObject.url"
+                  },
+                },
+                brand_name: { $arrayElemAt: ["$brandDetails.brand_name", 0] },
+                category_name: { $arrayElemAt: ["$categoryDetails.category_name", 0] }
+              }
+            }
+          ]
+        }
+      }
+    ];
+
+    const result = await Product.aggregate(pipeline);
+    const total = result[0].metadata[0]?.total || 0;
+    const products = result[0].products || [];
+    const pages = Math.ceil(total / pageSize);
+
+    res.status(200).json({
+      ec: 0,
+      em: 'Lấy danh sách sản phẩm thành công',
+      dt: {
+        products,
+        total,
+        pages,
+        current_page: pageNumber,
+        page_size: pageSize
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ ec: 500, em: error.message });
+  }
+};
 
 
 // Product Order (sắp xếp thứ tự sản phẩm)
 const getArrangeAlphabet = async (req, res) => {
   try {
     const { order } = req.query;
-    if (order !== 'asc') {
+    if (order !== "asc") {
       const products = await Product.find({}).select("-detail_description -Images -Variants -Warehouses -createdAt -updatedAt -__v").sort({ product_name: -1 });
       res.json({ ec: 0, em: "Get Products Z-A Successfully", dt: products });
     }
@@ -42,12 +181,12 @@ const getArrangeAlphabet = async (req, res) => {
 const getArrangePrice = async (req, res) => {
   try {
     const { order } = req.query;
-    if (order !== 'asc') {
-      const products = await Product.find({}).select("-detail_description -Images -Variants -Warehouses -createdAt -updatedAt -__v").sort({ 'Variants.price': -1 });
+    if (order !== "asc") {
+      const products = await Product.find({}).select("-detail_description -Images -Variants -Warehouses -createdAt -updatedAt -__v").sort({ "Variants.price": -1 });
       res.json({ ec: 0, em: "Get Products Price High to Low Successfully", dt: products });
     }
     else {
-      const products = await Product.find({}).select("-detail_description -Images -Variants -Warehouses -createdAt -updatedAt -__v").sort({ 'Variants.price': 1 });
+      const products = await Product.find({}).select("-detail_description -Images -Variants -Warehouses -createdAt -updatedAt -__v").sort({ "Variants.price": 1 });
       res.json({ ec: 0, em: "Get Products Price Low to High Successfully", dt: products });
     }
   } catch (error) {
@@ -83,7 +222,7 @@ const getProductById = async (req, res) => {
       product.recalculateStock();
       res.json({ ec: 0, em: "Get Product Successfully", dt: product });
     } else {
-      res.status(404).json({ ec: 404, em: 'Product not found' });
+      res.status(404).json({ ec: 404, em: "Product not found" });
     }
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
@@ -96,9 +235,9 @@ const deleteProductById = async (req, res) => {
 
     if (product) {
       await Product.deleteOne({ _id: product._id });
-      res.json({ ec: 0, em: 'Product removed' });
+      res.json({ ec: 0, em: "Product removed" });
     } else {
-      res.status(404).json({ ec: 404, em: 'Product not found' });
+      res.status(404).json({ ec: 404, em: "Product not found" });
     }
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
@@ -167,7 +306,7 @@ const updateProduct = async (req, res) => {
       // ghi log đường dẫn POST
       res.json({ ec: 0, em: "Product updated successfully", dt: updatedProduct });
     } else {
-      res.status(404).json({ ec: 404, em: 'Product not found' });
+      res.status(404).json({ ec: 404, em: "Product not found" });
     }
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
@@ -179,9 +318,9 @@ export const getTopSellingProducts = async (req, res) => {
     const topProducts = await Product.find({})
       .sort({ quantity_sold: -1 })
       .limit(10)
-      .select('-detail_description -Images -Variants -Warehouses -createdAt -updatedAt -__v');
+      .select("-detail_description -Images -Variants -Warehouses -createdAt -updatedAt -__v");
 
-    res.json({ ec: 0, em: 'Get Top Selling Products Successfully', dt: topProducts });
+    res.json({ ec: 0, em: "Get Top Selling Products Successfully", dt: topProducts });
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
   }
@@ -192,9 +331,9 @@ export const getNewProducts = async (req, res) => {
     const newProducts = await Product.find({})
       .sort({ createdAt: -1 })
       .limit(10)
-      .select('-detail_description -Images -Variants -Warehouses -createdAt -updatedAt -__v');
+      .select("-detail_description -Images -Variants -Warehouses -createdAt -updatedAt -__v");
 
-    res.json({ ec: 0, em: 'Get New Products Successfully', dt: newProducts });
+    res.json({ ec: 0, em: "Get New Products Successfully", dt: newProducts });
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
   }
@@ -208,9 +347,9 @@ const deleteVariantBySku = async (req, res) => {
     if (product) {
       product.Variants = product.Variants.filter(variant => variant.sku !== sku);
       await product.save();
-      res.json({ ec: 0, em: 'Variant removed', dt: product });
+      res.json({ ec: 0, em: "Variant removed", dt: product });
     } else {
-      res.status(404).json({ ec: 404, em: 'Product not found' });
+      res.status(404).json({ ec: 404, em: "Product not found" });
     }
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
@@ -226,7 +365,7 @@ const createVariantByProductId = async (req, res) => {
         sku, price, html_text_attributes, Images, Attributes, is_active
       });
       await product.save();
-      res.json({ ec: 0, em: 'Variant created', dt: product });
+      res.json({ ec: 0, em: "Variant created", dt: product });
     }
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
@@ -248,9 +387,9 @@ const updateVariantBySku = async (req, res) => {
         variant.is_active = is_active !== undefined ? is_active : variant.is_active;
       }
       variant = await product.save();
-      res.json({ ec: 0, em: 'Variant updated', dt: variant });
+      res.json({ ec: 0, em: "Variant updated", dt: variant });
     } else {
-      res.status(404).json({ ec: 404, em: 'Product not found' });
+      res.status(404).json({ ec: 404, em: "Product not found" });
     }
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
@@ -262,7 +401,7 @@ const getAllWarehouseByProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     const warehouses = product.Warehouses;
-    res.json({ ec: 0, em: 'Get all warehouses successfully', dt: warehouses });
+    res.json({ ec: 0, em: "Get all warehouses successfully", dt: warehouses });
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
   }
@@ -274,12 +413,12 @@ const createWarehouseByProductId = async (req, res) => {
     const { name, location, warehouse_variants } = req.body;
 
     const product = await Product.findById(id);
-    if (!product) { res.status(404).json({ ec: 404, em: 'Product not found' }); }
+    if (!product) { res.status(404).json({ ec: 404, em: "Product not found" }); }
     product.Warehouses.push({
       name, location, warehouse_variants
     });
     await product.save();
-    res.json({ ec: 0, em: 'Warehouse created', dt: product.Warehouses });
+    res.json({ ec: 0, em: "Warehouse created", dt: product.Warehouses });
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
   }
@@ -299,9 +438,9 @@ const updateWarehouseById = async (req, res) => {
         warehouse.warehouse_variants = warehouse_variants || warehouse.warehouse_variants;
       }
       await product.save();
-      res.json({ ec: 0, em: 'Warehouse updated', dt: warehouse });
+      res.json({ ec: 0, em: "Warehouse updated", dt: warehouse });
     } else {
-      res.status(404).json({ ec: 404, em: 'Product not found' });
+      res.status(404).json({ ec: 404, em: "Product not found" });
     }
   } catch (error) {
 
@@ -348,9 +487,9 @@ export const createVariantByWarehouseId = async (req, res) => {
         });
       }
       await product.save();
-      res.json({ ec: 0, em: 'Warehouse Variant created', dt: warehouse });
+      res.json({ ec: 0, em: "Warehouse Variant created", dt: warehouse });
     } else {
-      res.status(404).json({ ec: 404, em: 'Product not found' });
+      res.status(404).json({ ec: 404, em: "Product not found" });
     }
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
@@ -375,7 +514,7 @@ export const updateWarehouseVariantBySku = async (req, res) => {
         arrayFilters: [{ "wv.sku": sku }]
       }
     );
-    res.json({ ec: 0, em: 'Warehouse Variant updated', dt: product.Warehouses.id(warehouse_id) });
+    res.json({ ec: 0, em: "Warehouse Variant updated", dt: product.Warehouses.id(warehouse_id) });
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
   }
@@ -409,11 +548,11 @@ export const getProductsInfoForOrder = async (req, res) => {
     let results = [];
     for (const item of items) {
       const { product_id, sku, qty } = item;
-      const product = await Product.findById(product_id).populate('category_id', 'category_name');
+      const product = await Product.findById(product_id).populate("category_id", "category_name");
       if (product) {
         const variant = product.Variants.find(variant => variant.sku === sku);
         if (variant) {
-          const attributes_info = variant.Attributes.filter(attr => attr.type === 'appearance');
+          const attributes_info = variant.Attributes.filter(attr => attr.type === "appearance");
           const image_url = await Product.getImageUrlByVariantSKU(product_id, variant.sku);
           const available_stock = product.getStockBySku(variant.sku);
           const variant_info = {
@@ -435,7 +574,7 @@ export const getProductsInfoForOrder = async (req, res) => {
         }
       }
     }
-    return res.json({ ec: 0, em: 'Get products info for order successfully', dt: results });
+    return res.json({ ec: 0, em: "Get products info for order successfully", dt: results });
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
   }

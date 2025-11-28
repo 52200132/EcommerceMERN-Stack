@@ -1,19 +1,22 @@
-import { Link } from 'react-router-dom';
+import { formatCurrency } from '#utils';
+import { Link, useNavigate } from 'react-router-dom';
+import slugify from 'slugify';
 
 const Product = ({ product }) => {
 	const {
-		id,
-		name,
+		_id,
+		product_name,
 		image,
-		// category,
-		price,
+		category_name = "category",
+		price_min,
 		originalPrice,
 		rating,
+		quantity_sold,
 		// reviewCount,
 		isNew,
 		salePercentage
 	} = product;
-
+	const navigate = useNavigate();
 	// Generate star rating
 	const renderStars = (rating) => {
 		const stars = [];
@@ -36,33 +39,36 @@ const Product = ({ product }) => {
 		return stars;
 	};
 
+	const categorySlug = slugify(category_name, { lower: true, trim: true });
+	console.log('Category Slug:', categorySlug);
+
 	return (
-		<div className="col-lg-3 col-md-6 col-12">
+		<div className="col-lg-3 col-md-6 col-12" onClick={() => navigate(`/${categorySlug}/${_id}`)}>
 			{/* Start Single Product */}
 			<div className="single-product">
 				<div className="product-image">
-					<img src={image} alt={name} />
+					<img src={image} alt={product_name} />
 					{isNew && <span className="new-tag">New</span>}
 					{salePercentage && <span className="sale-tag">-{salePercentage}%</span>}
 					<div className="button">
-						<Link to={`/product/${id}`} className="btn">
+						<Link to={`/${categorySlug}/${_id}`} className="btn">
 							<i className="lni lni-cart"></i> Thêm vào giỏ
 						</Link>
 					</div>
 				</div>
 				<div className="product-info">
-					{/* <span className="category">{category}</span> */}
+					<span className="category">{category_name}</span>
 					<h4 className="title">
-						<Link to={`/product/${id}`}>{name}</Link>
+						<Link to={`/${categorySlug}/${_id}`}>{product_name}</Link>
 					</h4>
 					<ul className="review">
 						{renderStars(rating)}
-						<li><span>{rating} • Đã bán {0}</span></li>
+						<li><span>{rating} • Đã bán {quantity_sold}</span></li>
 					</ul>
 					<div className="price">
-						<span>${price}</span>
-						{originalPrice && originalPrice > price && (
-							<span className="discount-price">${originalPrice}</span>
+						<span>{formatCurrency(price_min)}</span>
+						{originalPrice && originalPrice > price_min && (
+							<span className="discount-price">{formatCurrency(originalPrice)}</span>
 						)}
 					</div>
 				</div>
