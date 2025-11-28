@@ -2,17 +2,16 @@ import { Outlet } from "react-router-dom";
 import { Flip, ToastContainer } from "react-toastify";
 import { createPortal } from "react-dom";
 
-import Footer from "#components/Footer";
-import { Header } from '#components';
+import { Header, Footer } from "#components/layout";
 
 const Layout = () => {
   return (
     <>
       <Header />
       <div className="tps-content-container">
-        <Outlet/>
+        <Outlet />
       </div>
-      <Footer/>
+      <Footer />
 
       {/* Toast */}
       {createPortal(<ToastContainer

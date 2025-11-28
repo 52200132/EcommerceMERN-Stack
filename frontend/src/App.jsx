@@ -1,12 +1,11 @@
 import { Routes, Route } from "react-router-dom";
 import { Suspense, lazy } from "react"
 
-import HomePage from "./pages/HomePage";
-import ProductsPage from "./pages/ProductsPage";
+import HomePage from "./pages/home-page/home-page";
 import CartPage from "./pages/cart/cart-page";
 import CheckoutPage from "./pages/checkout/checkout-page";
 import ContactPage from "./pages/ContactPage";
-import AboutPage from "./pages/AboutPage";
+import AboutPage from "./pages/home-page/about-page";
 import LoginPage from "./pages/auth/login-page";
 import RegisterPage from "./pages/auth/register-page";
 import ProductDetails from "./pages/product-details/product-details-page";
@@ -45,7 +44,6 @@ const App = () => {
             ))} */}
           <Route path="/:categorySlug/:productNameSlug" element={<ProductDetails />} />
           <Route index element={<HomePage />} />
-          <Route path="products" element={<ProductsPage />} />
           <Route path="user-info" element={<UserProfileLayout />} >
             <Route index element={<ProfilePage />} />
             <Route path="profile" element={<ProfilePage />} />

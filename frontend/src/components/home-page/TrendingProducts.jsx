@@ -1,7 +1,7 @@
 import { Col, Container, Row } from 'react-bootstrap';
 
 import React from 'react';
-import Product from './common/product';
+import Product from '../common/product';
 
 const TrendingProducts = () => {
 	// Sample product data - trong thực tế sẽ lấy từ API
