@@ -26,6 +26,7 @@ const createComment = async (req, res) => {
                 await newComment.save();
                 return res.status(201).json({ec: 0, em: "Comment created successfully", dt: newComment});
             } catch (authError) {
+                console.error("Auth error:", authError.message);
                 console.log("Invalid token, treating as guest");
             }
         }

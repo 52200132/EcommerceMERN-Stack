@@ -31,10 +31,10 @@ export const createOrder = async (req, res) => {
                 token = req.headers.authorization.split(' ')[1];
                 const decoded = jwt.verify(token, process.env.JWT_SECRET);
                 const user = await User.findById(decoded._id).select('-password');
-                // console.log("env", process.env.JWT_SECRET);
-                // console.log("Decoded id:", decoded);
-                // console.log("Token", token);
-                // console.log("User", user);
+                console.log("env", process.env.JWT_SECRET);
+                console.log("Decoded id:", decoded);
+                console.log("Token", token);
+                console.log("User", user);
 
                 // Kiểm tra số lượng đặt hàng với stock
                 for (const item of Items) {
@@ -73,7 +73,7 @@ export const createOrder = async (req, res) => {
                 // tính grand_total
                 const grand_total = Math.max(0, total_amount + shipment.fee - discount - points_used * 1000);
 
-                const newOrder = await new Order({
+                const newOrder = new Order({
                     user_id,
                     Items,
                     discount_code,
@@ -86,6 +86,7 @@ export const createOrder = async (req, res) => {
                     payment_method,
                     notes
                 });
+
                 await newOrder.save();
 
                 // Gửi email xác nhận đơn hàng
@@ -175,7 +176,7 @@ export const createOrder = async (req, res) => {
                         </tr>
                         <tr>
                             <td style="padding:5px 0;">Sử dụng điểm KHTT:</td>
-                            <td style="padding:5px 0; text-align:right;">-${(newOrder.points_used*1000).toLocaleString()} VND</td>
+                            <td style="padding:5px 0; text-align:right;">-${(newOrder.points_used * 1000).toLocaleString()} VND</td>
                         </tr>
                         <tr style="border-top:1px solid #ddd;">
                             <td style="padding:10px 0; font-size:16px;"><b>Tổng thanh toán:</b></td>
@@ -208,6 +209,7 @@ export const createOrder = async (req, res) => {
 
                 return res.status(201).json({ ec: 0, em: "Order created successfully", dt: newOrder });
             } catch (authError) {
+                console.error("Auth error:", authError.message);
                 console.log("Invalid token, treating as guest");
             }
         }
@@ -561,7 +563,7 @@ export const updateOrderStatus = async (req, res) => {
         const order_id = req.params.order_id;
         const newStatus = req.body.order_status;
 
-        const order = await Order.findById(order_id).select('_id user_id Items order_status StatusHistory points_used total_amount');
+        const order = await Order.findById(order_id).select('_id user_id Items order_status payment_method payment_status StatusHistory points_used total_amount');
         if (!order) {
             return res.status(404).json({ ec: 404, em: "Order not found" });
         }
@@ -582,7 +584,6 @@ export const updateOrderStatus = async (req, res) => {
             change_at: new Date(),
             change_by: req.user._id
         });
-        await order.save();
 
         // Xử lý điểm khách hàng thân thiết
         // Lấy user
@@ -597,7 +598,7 @@ export const updateOrderStatus = async (req, res) => {
             user.points += parseInt((order.total_amount * 0.1) / 1000);
             // console.log(parseInt((order.total_amount * 0.1) / 1000))
             // console.log('User points after delivery:', user.points);
-            await user.save();
+            // await user.save();
 
             // Xử lý cập nhật stock và số lượng đã bán
             for (const item of order.Items) {
@@ -615,6 +616,11 @@ export const updateOrderStatus = async (req, res) => {
                     await product.save();
                 }
             }
+
+            // Cập nhật trạng thái thanh toán nếu là COD
+            if (order.payment_method === 'COD') {
+                order.payment_status = 'paid';
+            }
         }
 
         // Nếu đơn bị hủy sau khi đã giao thì trừ điểm
@@ -624,7 +630,7 @@ export const updateOrderStatus = async (req, res) => {
             if (user.points < 0) user.points = 0; // tránh âm
             // console.log('Points used:', parseInt(order.points_used));
             // console.log('User points after cancellation:', user.points);
-            await user.save();
+            // await user.save();
 
             // Xử lý hoàn trả số lượng đặt hàng về kho khi hủy đơn
             for (const item of order.Items) {
@@ -635,8 +641,15 @@ export const updateOrderStatus = async (req, res) => {
                     await product.save();
                 }
             }
+            // cập nhật trạng thái thanh toán nếu là online
+            if (order.payment_method === 'banking' || order.payment_method === 'credit_card') {
+                order.payment_status = 'refunded';
+            }
         }
-        await order.populate('StatusHistory.change_by', 'username isManager');
+
+        await order.save();
+        await user.save();
+        // await order.populate('StatusHistory.change_by', 'username isManager'); // Hiểm thị
 
         res.status(200).json({ ec: 0, em: "Order status updated successfully", dt: order });
 
