@@ -72,6 +72,7 @@ const userSchema = new Schema({
   points: { type: Number, default: 0 },
   isManager: { type: Boolean, default: false },
   isActive: { type: Boolean, default: true },
+  resetPasswordFirstTime: { type: Boolean, default: false },
   Addresses: { type: [addressSchema], required: true },
   Carts: { type: [cartSchema], default: [] },
   Linked_accounts: { type: [linkedAccountSchema], default: [] },
