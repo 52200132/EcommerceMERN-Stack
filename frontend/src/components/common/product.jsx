@@ -43,18 +43,18 @@ const Product = ({ product }) => {
 	console.log('Category Slug:', categorySlug);
 
 	return (
-		<div className="col-lg-3 col-md-6 col-12" onClick={() => navigate(`/${categorySlug}/${_id}`)}>
+		<div className="col-lg-2 col-md-4 col-sm-6 col-12" onClick={() => navigate(`san-pham/${categorySlug}/${_id}`)}>
 			{/* Start Single Product */}
 			<div className="single-product">
 				<div className="product-image">
 					<img src={image} alt={product_name} />
 					{isNew && <span className="new-tag">New</span>}
 					{salePercentage && <span className="sale-tag">-{salePercentage}%</span>}
-					<div className="button">
+					{/* <div className="button">
 						<Link to={`/${categorySlug}/${_id}`} className="btn">
 							<i className="lni lni-cart"></i> Thêm vào giỏ
 						</Link>
-					</div>
+					</div> */}
 				</div>
 				<div className="product-info">
 					<span className="category">{category_name}</span>

@@ -10,6 +10,7 @@ import CategoriesBtn from './categories-btn';
 import { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useGetCartQuery } from '#services';
+import SearchBox from './search-box';
 
 const Header = () => {
   const user = useSelector((state) => state.auth.user);
@@ -148,12 +149,7 @@ const Header = () => {
                 {/* navbar search start */}
                 <div className="navbar-search search-style-5">
                   {/* <CategoriesBtn /> */}
-                  <div className="search-input">
-                    <input type="text" placeholder="Search" />
-                  </div>
-                  <div className="search-btn">
-                    <button><i className="lni lni-search-alt"></i></button>
-                  </div>
+                  <SearchBox />
                 </div>
                 {/* navbar search Ends */}
               </div>

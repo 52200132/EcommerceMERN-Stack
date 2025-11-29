@@ -9,6 +9,7 @@ import AboutPage from "./pages/home-page/about-page";
 import LoginPage from "./pages/auth/login-page";
 import RegisterPage from "./pages/auth/register-page";
 import ProductDetails from "./pages/product-details/product-details-page";
+import ProductsFilterPage from "./pages/products-filter/products-filter-page";
 import UserProfileLayout from "./pages/profile/user-profile-layout";
 
 import ManageProductsLayout from "admins/pages/product/manage-products-layout";
@@ -42,7 +43,8 @@ const App = () => {
                 element={<ProductDetails />}
               />
             ))} */}
-          <Route path="/:categorySlug/:productNameSlug" element={<ProductDetails />} />
+          <Route path="/san-pham" element={<ProductsFilterPage />} />
+          <Route path="/san-pham/:categorySlug/:productNameSlug" element={<ProductDetails />} />
           <Route index element={<HomePage />} />
           <Route path="user-info" element={<UserProfileLayout />} >
             <Route index element={<ProfilePage />} />

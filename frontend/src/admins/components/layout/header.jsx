@@ -55,7 +55,7 @@ const Header = ({ onToggleSidebar }) => {
                       <h3 className="dropdown-item-title">
                         Brad Diesel
                         <span className="float-end fs-7 text-danger"
-                          ><i className="bi bi-star-fill"></i
+                        ><i className="bi bi-star-fill"></i
                         ></span>
                       </h3>
                       <p className="fs-7">Call me whenever you can...</p>
@@ -155,7 +155,7 @@ const Header = ({ onToggleSidebar }) => {
             <li className="nav-item">
               <Link className="nav-link" to="#" data-lte-toggle="fullscreen">
                 <i data-lte-icon="maximize" className="bi bi-arrows-fullscreen"></i>
-                <i data-lte-icon="minimize" className="bi bi-fullscreen-exit" style={{display: 'none'}}></i>
+                <i data-lte-icon="minimize" className="bi bi-fullscreen-exit" style={{ display: 'none' }}></i>
               </Link>
             </li>
             {/* <!--end::Fullscreen Toggle--> */}

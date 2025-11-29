@@ -38,6 +38,12 @@ export const getProducts = async (req, res) => {
   if (sort_by) {
     sortQuery = {};
     switch (sort_by) {
+      case "price_asc":
+        sortQuery["price_min"] = 1;
+        break;
+      case "price_desc":
+        sortQuery["price_min"] = -1;
+        break;
       case "name_asc":
         sortQuery["product_name"] = 1;
         break;
@@ -56,10 +62,26 @@ export const getProducts = async (req, res) => {
   }
 
   const hasBrandNamesArray = Array.isArray(brand_names) && brand_names?.length > 0;
+  const parsedPriceMin = price_min !== undefined ? Number(price_min) : null;
+  const parsedPriceMax = price_max !== undefined ? Number(price_max) : null;
+  let minPrice = Number.isFinite(parsedPriceMin) ? parsedPriceMin : null;
+  let maxPrice = Number.isFinite(parsedPriceMax) ? parsedPriceMax : null;
+  if (minPrice !== null && maxPrice !== null && minPrice > maxPrice) {
+    [minPrice, maxPrice] = [maxPrice, minPrice];
+  }
+  const priceMatch = {};
+  if (minPrice !== null) {
+    priceMatch.price_max = { $gte: minPrice };
+  }
+  if (maxPrice !== null) {
+    priceMatch.price_min = { ...(priceMatch.price_min || {}), $lte: maxPrice };
+  }
+  const hasPriceFilter = Object.keys(priceMatch).length > 0;
 
   try {
     const pipeline = [
       { $match: query },
+      ...(hasPriceFilter ? [{ $match: priceMatch }] : []),
 
       // LUÔN LUÔN lookup brand và category để lấy tên
       {
