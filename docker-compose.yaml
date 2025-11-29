@@ -1,58 +1,27 @@
 networks:
-  # 1. Mạng nội bộ cho giao tiếp giữa các services (Back-end, DB)
   app-network:
     driver: bridge
 
 services:
-  mongo:
-    image: mongo:7
-    container_name: mongodb_db
-    restart: always
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USERNAME}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
-      - MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE}
-    networks:
-      - app-network
-    volumes:
-      - mongo-data:/data/db
-      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
-    ports:
-      - "29017:27017"
   backend:
     container_name: backend_api
     build:
       context: .
       dockerfile: backend/Dockerfile
-    # ports:
-    # - "5000:5000"
-    environment:
-      - PORT=${PORT}
-      - MONGODB_URI=${MONGODB_URI}
-      - JWT_SECRET=${JWT_SECRET}
-      - EMAIL_USER=${EMAIL_USER}
-      - EMAIL_PASS=${EMAIL_PASS}
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - FACEBOOK_APP_ID=${FACEBOOK_APP_ID}
-      - FACEBOOK_APP_SECRET=${FACEBOOK_APP_SECRET}
-      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
-      - FRONTEND_URL=${FRONTEND_URL}
-      - RESET_PASSWORD_SECRET=${RESET_PASSWORD_SECRET}
+    ports:
+    - "5000:5000"
+    env_file:
+      - ./backend/.env
     networks:
       - app-network
-    depends_on:
-      - mongo
   frontend:
     container_name: frontend_app
     build:
       context: .
-      dockerfile: frontend/dockerfile
+      dockerfile: frontend/Dockerfile
     networks:
       - app-network
     ports:
       - "3000:80"
     depends_on:
       - backend
-volumes:
-  mongo-data:
