@@ -90,7 +90,7 @@ export const createOrder = async (req, res) => {
 
                 // Gửi email xác nhận đơn hàng
                 await transporter.sendMail({
-                    from: `"Your App" <${process.env.EMAIL_USER}>`,
+                    from: `${process.env.APP_NAME} <${process.env.EMAIL_USER}>`,
                     to: user.email,
                     subject: "Xác nhận đơn hàng",
                     text: `
@@ -216,7 +216,74 @@ export const createOrder = async (req, res) => {
             // Kiểm tra nếu email đã được tạo tài khoản
             const userExists = await User.findOne({ email });
             if (userExists) {
-                return res.status(400).json({ ec: 400, em: "Email đã tạo tài khoản, xin hãy đăng nhập" });
+                await transporter.sendMail({
+                    from: `${process.env.APP_NAME} <${process.env.EMAIL_USER}>`,
+                    to: email,
+                    subject: "Email đã tạo tài khoản",
+                    text: `Xin chào ${userExists.email},
+
+                    Hệ thống ghi nhận rằng email của bạn đã được sử dụng để tạo tài khoản nhằm hỗ trợ lưu trữ và quản lý đơn hàng.
+
+                    Dưới đây là thông tin tài khoản của bạn:
+
+                    - Username: ${userExists.username}
+                    - Email: ${userExists.email}
+                    - Password mặc định: ${process.env.USER_PASSWORD_DEFAULT}
+
+                    Vui lòng đăng nhập và đổi mật khẩu ngay sau khi truy cập để đảm bảo an toàn bảo mật.
+
+                    Nếu bạn không phải là người thực hiện hành động này, vui lòng liên hệ ngay với đội ngũ hỗ trợ để được kiểm tra và xử lý.
+
+                    Trân trọng,
+                    ${process.env.APP_NAME} Team
+                    `,
+                    html: `<div style="width:100%; background:#f5f5f5; padding:20px 0; font-family:Arial, sans-serif;">
+                    <div style="max-width:600px; background:#ffffff; margin:auto; padding:25px; border-radius:8px; box-shadow:0 0 8px rgba(0,0,0,0.05);">
+
+                        <h2 style="text-align:center; color:#333; margin-bottom:5px;">Thông báo tạo tài khoản tự động</h2>
+                        <p style="text-align:center; margin:0; color:#666;">Email của bạn đã được sử dụng để tạo tài khoản.</p>
+
+                        <p style="margin-top:25px;">
+                        Xin chào <strong>${userExists.username || userExists.email}</strong>,
+                        </p>
+
+                        <p>
+                        Hệ thống đã tự động tạo tài khoản cho bạn nhằm lưu trữ thông tin đơn hàng và hỗ trợ quá trình mua sắm.
+                        Dưới đây là thông tin tài khoản:
+                        </p>
+
+                        <h3 style="margin-top:25px; color:#333;">👤 Thông tin tài khoản</h3>
+
+                        <table width="100%" style="border-collapse:collapse; margin-top:10px;">
+                        <tr>
+                            <td style="padding:8px 0; color:#555;">Email:</td>
+                            <td style="padding:8px 0; text-align:right; font-weight:bold;">${userExists.email}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:8px 0; color:#555;">Mật khẩu mặc định:</td>
+                            <td style="padding:8px 0; text-align:right; font-weight:bold; color:#d9534f;">
+                            ${process.env.USER_PASSWORD_DEFAULT}
+                            </td>
+                        </tr>
+                        </table>
+
+                        <p style="margin-top:20px;">
+                        Vui lòng đăng nhập và <strong>đổi mật khẩu ngay</strong> để đảm bảo an toàn thông tin.
+                        </p>
+
+                        <p style="margin-top:15px;">
+                        Nếu bạn không phải là người thực hiện hành động này, vui lòng liên hệ với đội ngũ hỗ trợ của chúng tôi để được kiểm tra và xử lý ngay.
+                        </p>
+
+                        <p style="margin-top:30px; text-align:center;">
+                        <b>Trân trọng,<br>${process.env.APP_NAME} Team</b>
+                        </p>
+
+                    </div>
+                    </div>
+                    `,
+                });
+                return res.status(400).json({ ec: 400, em: "Email đã tạo tài khoản, xin hãy đăng nhập. Hoặc nếu bạn chưa tạo, hãy check email của chúng tôi." });
             }
 
             // Kiểm tra số lượng đặt hàng với stock/ nếu ok thì cập nhật waiting_for_delivery
@@ -265,7 +332,7 @@ export const createOrder = async (req, res) => {
 
             // Gửi email xác nhận đơn hàng
             await transporter.sendMail({
-                from: `"Your App" <${process.env.EMAIL_USER}>`,
+                from: `${process.env.APP_NAME} <${process.env.EMAIL_USER}>`,
                 to: user.email,
                 subject: "Xác nhận đơn hàng",
                 text: `

@@ -1,4 +1,18 @@
 import Rating from "../models/Rating.js"
+import Product from "../models/Product.js";
+
+const updateMeanRating = async (product_id) => {
+    const ratings = await Rating.find({ product_id });
+    const totalRatings = await Rating.countDocuments({ product_id });
+    if (totalRatings === 0) {
+        await Product.findByIdAndUpdate(product_id, { rating: 0 });
+        return;
+    }
+    const sumRatings = ratings.reduce((sum, r) => sum + r.rating, 0);
+    const meanRating = parseFloat((sumRatings / totalRatings).toFixed(1));
+    console.log("Mean Rating:", meanRating);
+    await Product.findByIdAndUpdate(product_id, { rating: meanRating });
+};
 
 const createRating = async (req,res) => {
     try {
@@ -10,6 +24,7 @@ const createRating = async (req,res) => {
         if (checkRating)
         {
             const updateRating = await Rating.findByIdAndUpdate(checkRating._id, { rating, comment }, { new: true, runValidators: true});
+            await updateMeanRating(product_id);
             return res.status(201).json({ec: 0, em: "Rating updated successfully", dt: updateRating});
         }
         else {
@@ -20,6 +35,7 @@ const createRating = async (req,res) => {
                 comment
             })
             await newRating.save();
+            await updateMeanRating(product_id);
             return res.status(201).json({ec: 0, em: "Rating created successfully", dt: newRating});
         }
 
