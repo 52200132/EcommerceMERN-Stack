@@ -113,8 +113,9 @@ $admin-header-height: 64px;
   top: 0;
   z-index: 1030;
   border-bottom: 1px solid #e5e7eb;
-  background-color: #ffffff !important;
+  background-color: #d1e2fb !important;
   min-height: $admin-header-height;
+  box-shadow: 0 11px 16px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
 

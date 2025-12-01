@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
+import e from "express";
 
 // Lọc theo thời gian
 const buildTimeFilter = ({ annual, quarterly, monthly, weekly, startDate, endDate }) => {
@@ -54,15 +55,15 @@ const buildTimeFilter = ({ annual, quarterly, monthly, weekly, startDate, endDat
 };
 
 // Nhóm timeline
-function getTimelineGrouping({ annual, quarterly, monthly, weekly }) {
-  if (weekly && monthly) return { _id: { day: { $dayOfMonth: "$createdAt" } }, sort: { day: 1 } };
+function getTimelineGrouping({ annual, quarterly, monthly, weekly, startDate, endDate }) {
+  if ((weekly && monthly) || (startDate && endDate)) return { _id: { day: { $dayOfMonth: "$createdAt" } }, sort: { day: 1 } };
   if (monthly) return { _id: { week: { $ceil: { $divide: [{ $dayOfMonth: "$createdAt" }, 7] } } }, sort: { week: 1 } };
   if (quarterly || annual) return { _id: { month: { $month: "$createdAt" } }, sort: { month: 1 } };
   return { _id: { month: { $month: "$createdAt" } }, sort: { month: 1 } };
 }
 
 // Skeleton timeline
-function buildTimelineSkeleton({ annual, quarterly, monthly, weekly }, timelineRaw, year, month, week) {
+function buildTimelineSkeleton({ annual, quarterly, monthly, weekly, startDate, endDate }, timelineRaw, year, month, week) {
   let timeline = [];
 
   if (weekly && monthly) {
@@ -93,6 +94,13 @@ function buildTimelineSkeleton({ annual, quarterly, monthly, weekly }, timelineR
       const item = timelineRaw.find(t => t.month === m);
       timeline.push(item || { month: m, total_revenue: 0, total_profit: 0, total_products_sold: 0 });
     }
+  } else if (startDate && endDate) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    for (let d = start.getDate(); d <= end.getDate(); d++) {
+      const item = timelineRaw.find(t => t.day === d);
+      timeline.push(item || { day: d, total_revenue: 0, total_profit: 0, total_products_sold: 0 });
+    }
   }
 
   return timeline;
@@ -108,7 +116,9 @@ function buildTimelineSkeleton({ annual, quarterly, monthly, weekly }, timelineR
 export const getDashboardAdvanced = async (req, res) => {
   try {
     const { annual, quarterly, monthly, weekly, start, end } = req.query;
-    const query = buildTimeFilter({ annual, quarterly, monthly, weekly, startDate: start, endDate: end });
+    const startDate = start ? new Date(start) : null;
+    const endDate = end ? new Date(end) : null;
+    const query = buildTimeFilter({ annual, quarterly, monthly, weekly, startDate, endDate });
 
     const stats = await Order.aggregate([
       { $match: { ...query, payment_status: "paid" } },
@@ -148,7 +158,7 @@ export const getDashboardAdvanced = async (req, res) => {
             { $unwind: "$Items" },
             {
               $group: {
-                _id: getTimelineGrouping({ annual, quarterly, monthly, weekly })._id,
+                _id: getTimelineGrouping({ annual, quarterly, monthly, weekly, startDate, endDate })._id,
                 total_revenue: { $sum: "$grand_total" },
                 total_profit: {
                   $sum: {
@@ -172,7 +182,7 @@ export const getDashboardAdvanced = async (req, res) => {
                 total_products_sold: 1
               }
             },
-            { $sort: getTimelineGrouping({ annual, quarterly, monthly, weekly }).sort }
+            { $sort: getTimelineGrouping({ annual, quarterly, monthly, weekly, startDate, endDate }).sort }
           ]
         }
       }
@@ -186,7 +196,7 @@ export const getDashboardAdvanced = async (req, res) => {
         general: dt.general[0] || { total_orders: 0, total_revenue: 0, total_profit: 0 },
         category: dt.category,
         timeline: buildTimelineSkeleton(
-          { annual, quarterly, monthly, weekly },
+          { annual, quarterly, monthly, weekly, startDate, endDate },
           dt.timeline,
           Number(annual || new Date().getFullYear()),
           Number(monthly),

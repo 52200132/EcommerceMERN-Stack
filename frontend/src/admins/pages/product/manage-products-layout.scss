@@ -16,6 +16,12 @@
       color: #212529;
       margin: 0;
     }
+
+    .page-subtitle {
+      margin: 0;
+      color: #6c757d;
+      font-size: 14px;
+    }
   }
 
   // ============ Toolbar ============
@@ -69,6 +75,21 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
+
+      .search-input {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        padding: 6px 10px;
+
+        input {
+          border: none;
+          outline: none;
+          flex: 1;
+        }
+      }
 
       label {
         font-size: 13px;
@@ -218,6 +239,23 @@
   .pagination {
     .page-item {
       --bs-pagination-border-radius: 0px !important;
+    }
+  }
+
+  .pagination-bar {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .page-size-row {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .pagination-row {
+      display: flex;
+      justify-content: center;
     }
   }
 

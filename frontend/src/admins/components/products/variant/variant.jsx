@@ -1,5 +1,5 @@
+import { Button, Col, Dropdown, Form, Row } from "react-bootstrap";
 import { useDispatch } from "react-redux";
-import { Col, Dropdown, Form, Row } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CiViewTable, CiViewList } from "react-icons/ci";
@@ -18,8 +18,9 @@ import { IoTrashBinSharp } from "react-icons/io5";
 import { store } from "redux-tps/store";
 import AttributesReview from "./attributes-review";
 import MultiImageUpload from "../multi-image-upload";
+import { productInits } from "redux-tps/features/product-slice";
 
-const optionActions = {
+const OPTION_ACTIONS = {
   'create': {
     title: 'Thêm sản phẩm mới',
     'no-content': 'Nhấn để thêm mô tả chi tiết',
@@ -35,7 +36,7 @@ const optionActions = {
   }
 }
 
-const variantSchema = z.object({
+export const variantSchema = z.object({
   sku: z.string().min(1, 'Vui lòng nhập mã SKU'),
   price: z.preprocess(
     (val) => {
@@ -45,115 +46,182 @@ const variantSchema = z.object({
     },
     z.number("Không đúng định dạng").min(0, 'Giá phải lớn hơn hoặc bằng 0').default(0)
   ),
+  cost_price: z.preprocess(
+    (val) => {
+      if (/[^0-9.,]/.test(val)) return NaN
+      if (typeof val === 'string' && val[0] === '0' && val.length > 1) return NaN
+      return deformatCurrency(val)
+    },
+    z.number("Không đúng định dạng").min(0, 'Giá nhập phải lớn hơn hoặc bằng 0').default(0)
+  ),
   is_active: z.boolean().default(true),
   html_text_attributes: z.string().optional(),
 });
-const Variant = ({ selector, variantIndex, action = 'create' }) => {
+
+const Variant = ({
+  selector,
+  variantIndex,
+  action = 'create',
+  handleAttributesClick,
+  initialVariant,
+  onSubmit,
+  showAttributes = true,
+  showImages = true,
+  submitLabel = 'Lưu'
+}) => {
   const renderCount = useRef(1);
-  selector = selector || VARIANTSELECTOR_INDEX(variantIndex);
-  const dispatch = useDispatch()
-  const variant = store.getState().product.Variants[variantIndex] || {};
-  const { register, subscribe, getValues, formState: { errors } } = useForm({
+  const dispatch = useDispatch();
+  const isStandalone = Boolean(onSubmit) || Boolean(initialVariant);
+  const resolvedSelector = selector || (!isStandalone && VARIANTSELECTOR_INDEX(variantIndex));
+  const variant = isStandalone
+    ? { ...productInits.variant, ...(initialVariant || {}) }
+    : store.getState().product.Variants[variantIndex] || productInits.variant;
+
+  const { register, subscribe, getValues, formState: { errors }, handleSubmit } = useForm({
     resolver: zodResolver(variantSchema),
     defaultValues: variant,
     mode: 'all',
   });
-  const variantsImgsSelector = (state) => state.product.Variants[variantIndex].Images
+  const variantsImgsSelector = (state) => state.product.Variants?.[variantIndex || 0]?.Images;
 
   useDebounceSubscribeValues((values) => {
+    if (isStandalone || typeof variantIndex !== 'number') return;
     dispatch(updateVariantDraft({
       variantIndex,
       object: values,
     }))
   }, subscribe, 1000);
-  useEffect(() => { ++renderCount.current; return () => renderCount.current = 0 });
+  useEffect(() => { ++renderCount.current; return () => { renderCount.current = 0; }; });
   console.log('RENDER: variant-' + variantIndex + '-count-' + renderCount.current);
-  return (
-    <>
-      {/* <div style={{
-        fontSize: '20px',
-        position: "absolute",
-        top: '10px',
-        right: '10px',
-      }}>Render count: {renderCount.current}
-      </div> */}
-      <div key={`variant-${variantIndex}`} className="border rounded p-3 mb-4">
-        <h6>Biến thể {variantIndex + 1}</h6>
-        <Row>
-          {/* Mã SKU */}
-          <Col md={4}>
-            <Form.Group className="mb-3">
-              <Form.Label htmlFor={`sku-${variantIndex}`}>Mã SKU</Form.Label>
-              <Form.Control
-                id={`sku-${variantIndex}`}
-                {...register("sku")}
-                isInvalid={!!errors.sku}
-              />
-              <Form.Text className="text-danger">
-                {errors.sku && errors.sku.message}
-              </Form.Text>
-            </Form.Group>
-          </Col>
 
-          {/* Giá */}
-          <Col md={4}>
-            <Form.Group className="mb-3">
-              <Form.Label htmlFor={`price-${variantIndex}`}>Giá</Form.Label>
-              <Form.Control
-                id={`price-${variantIndex}`}
-                {...register('price')}
-                isInvalid={!!errors.price}
-                // defaultValue={formatCurrency(variant.price)}
-                onFocus={(e) => { e.target.value = getValues('price') }}
-                onBlur={(e) => {
-                  const val = e.target.value;
-                  if (/[^0-9.,]/.test(val) || (typeof val === 'string' && val[0] === '0' && val.length > 1)) {
-                    register('price').onBlur(e);
-                    return
-                  }
-                  e.target.value = val ? formatCurrency(getValues('price')) : '';
-                }}
-              />
-              <Form.Text className="text-danger">
-                {errors.price && errors.price.message}
-              </Form.Text>
-            </Form.Group>
-          </Col>
+  const shouldShowAttributes = showAttributes && !isStandalone && resolvedSelector;
+  const shouldShowImages = showImages && !isStandalone && typeof variantIndex === 'number';
+  const handleSubmitForm = onSubmit ? handleSubmit(onSubmit) : undefined;
+  const titleIndex = typeof variantIndex === 'number' ? variantIndex + 1 : '';
 
-          <Col md={4}>
-            <Form.Group className="mb-3">
-              <Form.Label htmlFor={`is_active-${variantIndex}`}>Hiển thị</Form.Label>
-              <Form.Check
-                id={`is_active-${variantIndex}`}
-                type="switch"
-                {...register('is_active')}
-              />
-            </Form.Group>
-          </Col>
-        </Row>
+  const content = (
+    <div key={`variant-${variantIndex ?? 'standalone'}`} className="border rounded p-3 mb-4">
+      <h6>Biến thể {titleIndex}</h6>
+      <Row>
+        {/* Mã SKU */}
+        <Col md={3}>
+          <Form.Group className="mb-3">
+            <Form.Label htmlFor={`sku-${variantIndex}`}>Mã SKU</Form.Label>
+            <Form.Control
+              id={`sku-${variantIndex}`}
+              {...register("sku")}
+              isInvalid={!!errors.sku}
+            />
+            <Form.Text className="text-danger">
+              {errors.sku && errors.sku.message}
+            </Form.Text>
+          </Form.Group>
+        </Col>
 
-        {/* Thuộc tính của biến thể, thông số kỹ thuật */}
-        <h6>Thuộc tính hiển thị</h6>
-        <Row>
-          <Col md={12}>
-            <ReviewAtributesBlock {...{ selector, variantIndex, action }} />
-          </Col>
-        </Row>
-        {/* <Button className="mb-3" onClick={handleShowModalForCreateAttribute}>Thêm thuộc tính</Button> */}
+        {/* Giá */}
+        <Col md={3}>
+          <Form.Group className="mb-3">
+            <Form.Label htmlFor={`price-${variantIndex}`}>Giá</Form.Label>
+            <Form.Control
+              id={`price-${variantIndex}`}
+              {...register('price')}
+              isInvalid={!!errors.price}
+              onFocus={(e) => { e.target.value = getValues('price') }}
+              onBlur={(e) => {
+                const val = e.target.value;
+                if (/[^0-9.,]/.test(val) || (typeof val === 'string' && val[0] === '0' && val.length > 1)) {
+                  register('price').onBlur(e);
+                  return
+                }
+                e.target.value = val ? formatCurrency(getValues('price')) : '';
+              }}
+            />
+            <Form.Text className="text-danger">
+              {errors.price && errors.price.message}
+            </Form.Text>
+          </Form.Group>
+        </Col>
 
-        <h6>Hình ảnh của biến thể</h6>
-        <MultiImageUpload
-          selector={variantsImgsSelector}
-          action={(images) => setImagesVariant({ variantIndex, images })}
-        />
-      </div>
-    </>
+        {/* Giá nhập */}
+        <Col md={3}>
+          <Form.Group className="mb-3">
+            <Form.Label htmlFor={`cost_price-${variantIndex}`}>Giá nhập</Form.Label>
+            <Form.Control
+              id={`cost_price-${variantIndex}`}
+              {...register('cost_price')}
+              isInvalid={!!errors.cost_price}
+              onFocus={(e) => { e.target.value = getValues('cost_price') }}
+              onBlur={(e) => {
+                const val = e.target.value;
+                if (/[^0-9.,]/.test(val) || (typeof val === 'string' && val[0] === '0' && val.length > 1)) {
+                  register('cost_price').onBlur(e);
+                  return;
+                }
+                e.target.value = val ? formatCurrency(getValues('cost_price')) : '';
+              }}
+            />
+            <Form.Text className="text-danger">
+              {errors.cost_price && errors.cost_price.message}
+            </Form.Text>
+          </Form.Group>
+        </Col>
+
+        <Col md={3}>
+          <Form.Group className="mb-3">
+            <Form.Label htmlFor={`is_active-${variantIndex}`}>Hiển thị</Form.Label>
+            <Form.Check
+              id={`is_active-${variantIndex}`}
+              type="switch"
+              {...register('is_active')}
+            />
+          </Form.Group>
+        </Col>
+      </Row>
+
+      {/* Thuộc tính của biến thể, thông số kỹ thuật */}
+      {shouldShowAttributes && (
+        <>
+          <h6>Thuộc tính hiển thị</h6>
+          <Row>
+            <Col md={12}>
+              <ReviewAttributesBlock {...{ selector: resolvedSelector, variantIndex, action, handleAttributesClick }} />
+            </Col>
+          </Row>
+        </>
+      )}
+
+      {shouldShowImages && (
+        <>
+          <h6>Hình ảnh của biến thể</h6>
+          <MultiImageUpload
+            selector={variantsImgsSelector}
+            action={(images) => setImagesVariant({ variantIndex, images })}
+          />
+        </>
+      )}
+
+      {onSubmit && (
+        <div className="d-flex justify-content-end gap-2 mt-3">
+          <Button variant="success" type="submit">
+            {submitLabel}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+
+  return onSubmit ? (
+    <Form onSubmit={handleSubmitForm} noValidate>
+      {content}
+    </Form>
+  ) : (
+    <>{content}</>
   )
 }
 
-const ReviewAtributesBlock = ({ selector, variantIndex, action }) => {
+const ReviewAttributesBlock = ({ selector, variantIndex, action, handleAttributesClick }) => {
   const dispatch = useDispatch();
-  const option = optionActions[action];
+  const option = OPTION_ACTIONS[action];
   const actionsRef = useRef(null);
   const setSelector = useSelectorStore((zs) => zs.setSelector);
   const getSelector = useSelectorStore((zs) => zs.getSelector);
@@ -162,6 +230,10 @@ const ReviewAtributesBlock = ({ selector, variantIndex, action }) => {
   const { html_text_attributes = '' } = useTpsSelector(selector, { includeProps: ['html_text_attributes'] });
 
   const handleShowModalForCreateAttribute = () => {
+    if (handleAttributesClick) {
+      handleAttributesClick();
+      return;
+    }
     const selectorKey = `attributesSelector-${variantIndex}`
     if (!getSelector(selectorKey)) setSelector(selectorKey, attributesSelector)
     dispatch(changeContent({

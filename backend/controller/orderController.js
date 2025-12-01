@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import transporter from "../mail.js";
 
 const TAX_RATE = 0.08; // thuong dung VAT 8% - co the thay doi neu can
+const ORDER_STATUSES = ["pending", "processing", "shipped", "delivered", "cancelled"];
 
 const buildError = (message, statusCode = 400) => {
 	const error = new Error(message);
@@ -207,21 +208,21 @@ export const createOrder = async (req, res) => {
 		}
 
 		// giai quyet ma giam gia
-	let appliedDiscountCode = null;
-	let discount = 0;
-	if (discount_code) {
-		appliedDiscountCode = await DiscountCode.findOne({ code: discount_code });
-		if (!appliedDiscountCode) {
-			throw buildError("Discount code not found", 404);
+		let appliedDiscountCode = null;
+		let discount = 0;
+		if (discount_code) {
+			appliedDiscountCode = await DiscountCode.findOne({ code: discount_code });
+			if (!appliedDiscountCode) {
+				throw buildError("Discount code not found", 404);
+			}
+			if (!appliedDiscountCode.canUse(subtotal)) {
+				throw buildError("Discount code is not applicable or has reached maximum usage");
+			}
+			discount = appliedDiscountCode.calculateDiscount(subtotal);
+			if (discount <= 0) {
+				throw buildError("Discount code is not applicable for this order amount");
+			}
 		}
-		if (!appliedDiscountCode.canUse(subtotal)) {
-			throw buildError("Discount code is not applicable or has reached maximum usage");
-		}
-		discount = appliedDiscountCode.calculateDiscount(subtotal);
-		if (discount <= 0) {
-			throw buildError("Discount code is not applicable for this order amount");
-		}
-	}
 
 		// diem tich luy
 		let pointsToUse = isLoggedIn ? Math.max(0, parseInt(points_used, 10) || 0) : 0;
@@ -508,21 +509,34 @@ export const getOrderById = async (req, res) => {
 
 // Admin functions
 export const getAllOrders = async (req, res) => {
+	const pageSize = parseInt(req.query.limit, 10) || 20;
+	const page = parseInt(req.query.page, 10) || 1;
+	const { start, end, date, q, status } = req.query;
+	const dateStart = start ? new Date(start) : null;
+	const dateEnd = end ? new Date(end) : null;
+	const searchText = typeof q === "string" ? q.trim() : "";
 	try {
-		const pageSize = 20;
-		const page = 1;
 
 		let query = {};
 		let createdAtFilter = {};
 
-		const { start, end, date } = req.query;
 		const today = new Date();
 
-		if (start && end) {
-			createdAtFilter.$gte = new Date(start);
-			createdAtFilter.$lte = new Date(end);
-		}
-		if (date === "today") {
+		const hasStart = dateStart && !Number.isNaN(dateStart.getTime());
+		const hasEnd = dateEnd && !Number.isNaN(dateEnd.getTime());
+
+		if (hasStart || hasEnd) {
+			if (hasStart) {
+				const startOfDay = new Date(dateStart);
+				startOfDay.setHours(0, 0, 0, 0);
+				createdAtFilter.$gte = startOfDay;
+			}
+			if (hasEnd) {
+				const endOfDay = new Date(dateEnd);
+				endOfDay.setHours(23, 59, 59, 999);
+				createdAtFilter.$lte = endOfDay;
+			}
+		} else if (date === "today") {
 			createdAtFilter.$gte = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 			createdAtFilter.$lt = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
 		} else if (date === "yesterday") {
@@ -539,6 +553,19 @@ export const getAllOrders = async (req, res) => {
 
 		if (Object.keys(createdAtFilter).length > 0) {
 			query.createdAt = createdAtFilter;
+		}
+
+		if (status && ORDER_STATUSES.includes(status)) {
+			query.order_status = status;
+		}
+
+		if (searchText) {
+			const safeRegex = searchText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+			const searchRegex = new RegExp(safeRegex, "i");
+			query.$or = [
+				{ $expr: { $regexMatch: { input: { $toString: "$_id" }, regex: safeRegex, options: "i" } } },
+				{ discount_code: searchRegex },
+			];
 		}
 
 		const [count, orders] = await Promise.all([
@@ -566,6 +593,95 @@ export const getAllOrders = async (req, res) => {
 	}
 };
 
+export const getOrdersOverview = async (req, res) => {
+	try {
+		const { start, end, days } = req.query;
+		const today = new Date();
+		const defaultDays = Math.max(parseInt(days, 10) || 3, 1);
+
+		let startDate = start ? new Date(start) : null;
+		let endDate = end ? new Date(end) : null;
+
+		if (!startDate || Number.isNaN(startDate.getTime())) {
+			startDate = new Date(today);
+			startDate.setDate(today.getDate() - (defaultDays - 1));
+		}
+		if (!endDate || Number.isNaN(endDate.getTime())) {
+			endDate = today;
+		}
+
+		if (startDate > endDate) {
+			const temp = startDate;
+			startDate = endDate;
+			endDate = temp;
+		}
+
+		startDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+		endDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59, 999);
+
+		const matchStage = {
+			createdAt: {
+				$gte: startDate,
+				$lte: endDate,
+			},
+		};
+
+		const overview = await Order.aggregate([
+			{ $match: matchStage },
+			{
+				$group: {
+					_id: {
+						status: "$order_status",
+						day: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+					},
+					count: { $sum: 1 },
+				},
+			},
+		]);
+
+		const labels = [];
+		const cursor = new Date(startDate);
+		while (cursor <= endDate) {
+			labels.push(cursor.toISOString().slice(0, 10));
+			cursor.setDate(cursor.getDate() + 1);
+		}
+
+		const statusSeries = {};
+		const totals = {};
+		ORDER_STATUSES.forEach((statusKey) => {
+			statusSeries[statusKey] = Array(labels.length).fill(0);
+			totals[statusKey] = 0;
+		});
+
+		overview.forEach((row) => {
+			const statusKey = row._id?.status;
+			const dayLabel = row._id?.day;
+			if (!statusSeries[statusKey]) return;
+			const dayIndex = labels.indexOf(dayLabel);
+			if (dayIndex === -1) return;
+			statusSeries[statusKey][dayIndex] += row.count;
+			totals[statusKey] += row.count;
+		});
+
+		const totalOrders = Object.values(totals).reduce((sum, value) => sum + value, 0);
+
+		res.status(200).json({
+			ec: 0,
+			em: "Orders overview retrieved successfully",
+			dt: {
+				labels,
+				statusSeries,
+				totals,
+				totalOrders,
+				start: startDate.toISOString(),
+				end: endDate.toISOString(),
+			},
+		});
+	} catch (error) {
+		res.status(500).json({ ec: 500, em: error.message });
+	}
+};
+
 const adjustDiscountUsage = async (discountCodeValue, direction = 1) => {
 	if (!discountCodeValue) return;
 	const codeDoc = await DiscountCode.findOne({ code: discountCodeValue });
@@ -580,8 +696,7 @@ export const updateOrderStatus = async (req, res) => {
 	try {
 		const order_id = req.params.order_id;
 		const newStatus = req.body.order_status;
-		const allowedStatuses = ["pending", "processing", "shipped", "delivered", "cancelled"];
-		if (!allowedStatuses.includes(newStatus)) {
+		if (!ORDER_STATUSES.includes(newStatus)) {
 			return res.status(400).json({ ec: 400, em: "Invalid order status" });
 		}
 
@@ -658,8 +773,7 @@ export const userCancelOrder = async (req, res) => {
 	try {
 		const order_id = req.params.order_id;
 		const newStatus = req.body.order_status;
-		const allowedStatuses = ["pending", "processing", "shipped", "delivered", "cancelled"];
-		if (!allowedStatuses.includes(newStatus)) {
+		if (!ORDER_STATUSES.includes(newStatus)) {
 			return res.status(400).json({ ec: 400, em: "Invalid order status" });
 		}
 		if (newStatus !== "cancelled") {

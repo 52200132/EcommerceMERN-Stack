@@ -16,7 +16,8 @@ import {
   addressRoutes,
   ratingRoutes,
   uploadRoutes,
-  dashboardRoutes
+  dashboardRoutes,
+  categoryRoutes
 } from "#tps-routes";
 import { setUpConsoleLogging, setUpWriteStream, uploadConfig } from "#utils";
 
@@ -75,6 +76,7 @@ app.use("/api/addresses", addressRoutes);
 app.use("/api/ratings", ratingRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/categories", categoryRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

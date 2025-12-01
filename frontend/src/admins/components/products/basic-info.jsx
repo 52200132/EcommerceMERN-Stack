@@ -15,6 +15,7 @@ import { z } from "zod";
 import { updateProduct } from 'redux-tps/features/index-features';
 import { useDebounceSubscribeValues, useRenderCount, useTpsGetState, useTpsSelector } from '#custom-hooks';
 import { db } from 'indexed-db';
+import { useGetCategoriesAdminQuery } from 'services/admin-services';
 
 const optionActions = {
   create: {
@@ -33,6 +34,7 @@ const optionActions = {
 const basicInfoSchema = z.object({
   product_name: z.string().min(1, 'Vui lòng nhập tên sản phẩm'),
   brand_id: z.string().min(1, 'Vui lòng chọn thương hiệu'),
+  category_id: z.string().min(1, 'Vui lòng chọn danh mục'),
   hashtag: z.string().optional(),
   short_description: z.string().min(1, 'Vui lòng nhập mô tả ngắn'),
   detail_description: z.string().optional(),
@@ -42,7 +44,7 @@ const basicInfoSchema = z.object({
 const BasicInfo = ({ selector, action = 'create' }) => {
   useRenderCount('basic-info', 'both');
   const dispatch = useDispatch();
-  const product = useTpsGetState(selector, { includeProps: ['product_name', 'brand_id', 'hashtag', 'short_description', 'detail_description', 'is_active', 'defaultBrandOption'] });
+  const product = useTpsGetState(selector, { includeProps: ['product_name', 'brand_id', 'category_id', 'hashtag', 'short_description', 'detail_description', 'is_active', 'defaultBrandOption'] });
   const brandsOptions = useLiveQuery(async () => {
     const [array, productBrand] = await Promise.all([
       db.brands.toArray().then(brands => brands.map(brand => ({ value: brand._id, label: brand.brand_name }))),
@@ -52,6 +54,8 @@ const BasicInfo = ({ selector, action = 'create' }) => {
     return { array: array, defaultOption: defaultOption };
   }, [], { array: [], defaultOption: {} });
   const hashtags = useLiveQuery(async () => await db.hashtags.toArray(), [], []);
+  const { data: categoriesData, isLoading: isLoadingCategories } = useGetCategoriesAdminQuery();
+  const categoryOptions = categoriesData?.dt || [];
   const { register, control, getValues, subscribe, formState: { errors } } = useForm({
     resolver: zodResolver(basicInfoSchema),
     mode: 'all',
@@ -92,7 +96,7 @@ const BasicInfo = ({ selector, action = 'create' }) => {
           </Col>
 
           {/* Thương hiệu */}
-          <Col md={6}>
+          <Col md={3}>
             <Form.Group className="mb-3">
               <Form.Label htmlFor='brand_id'>Thương hiệu</Form.Label>
               <Form.Control hidden id='brand_id' />
@@ -124,6 +128,27 @@ const BasicInfo = ({ selector, action = 'create' }) => {
               />
               <Form.Text className="text-danger">
                 {errors.brand_id && errors.brand_id.message}
+              </Form.Text>
+            </Form.Group>
+          </Col>
+
+          {/* Danh mục */}
+          <Col md={3}>
+            <Form.Group className="mb-3">
+              <Form.Label htmlFor='category_id'>Danh mục</Form.Label>
+              <Form.Select
+                id='category_id'
+                {...register("category_id")}
+                isInvalid={!!errors.category_id}
+                disabled={isLoadingCategories}
+              >
+                <option value="">Chọn danh mục</option>
+                {categoryOptions.map((cate) => (
+                  <option key={cate._id} value={cate._id}>{cate.category_name}</option>
+                ))}
+              </Form.Select>
+              <Form.Text className="text-danger">
+                {errors.category_id && errors.category_id.message}
               </Form.Text>
             </Form.Group>
           </Col>

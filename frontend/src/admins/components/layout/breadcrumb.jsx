@@ -4,12 +4,15 @@ import { Breadcrumb as BsBreadcrumb } from 'react-bootstrap';
 
 
 const linkMap = {
-  admin: { name: 'Trang quản trị', path: '/admin' },
+  admin: { name: 'Bảng điều khiển', path: '/admin' },
+  dashboard: { name: 'Bảng điều khiển', path: '/admin/dashboard' },
   'manage-products': { name: 'Quản lý sản phẩm', path: '/admin/manage-products' },
   'add-product': { name: 'Thêm sản phẩm', path: '/admin/manage-products/add-product' },
   'edit-product': { name: 'Chỉnh sửa sản phẩm', path: '/admin/manage-products/edit-product' },
-  'manage-users': { name: 'Quản lý người dùng', path: '/admin/manage-users' }
-}
+  'manage-orders': { name: 'Quản lý đơn hàng', path: '/admin/manage-orders' },
+  'manage-users': { name: 'Quản lý người dùng', path: '/admin/manage-users' },
+  'manage-discounts': { name: 'Quản lý mã giảm giá', path: '/admin/manage-discounts' },
+};
 
 
 const Breadcrumb = () => {

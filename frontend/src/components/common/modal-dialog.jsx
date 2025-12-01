@@ -8,47 +8,68 @@ const renderBodyComponent = (bodyComponent, bodyProps) => {
   } else if (bodyComponent) {
     const BodyComponent = bodyComponent;
     return cloneElement(BodyComponent, { ...bodyProps });
-  } else {
-    return bodyComponent;
   }
+  return bodyComponent;
 };
 
 const ModalDialog = () => {
-  const { show, setShow, bodyProps, bodyComponent, title, size } = userModalDialogStore(
-    useShallow(zs => ({
+  const {
+    show,
+    size,
+    title,
+    bodyComponent,
+    bodyProps,
+    stack,
+    pop,
+    reset,
+  } = userModalDialogStore(
+    useShallow((zs) => ({
       show: zs.show,
-      setShow: zs.setShow,
-      bodyProps: zs.bodyProps,
-      bodyComponent: zs.bodyComponent,
-      title: zs.title,
       size: zs.size,
+      title: zs.title,
+      bodyComponent: zs.bodyComponent,
+      bodyProps: zs.bodyProps,
+      stack: zs.stack,
+      pop: zs.pop,
+      reset: zs.reset,
     }))
   );
 
-  return (
-    <>
-      <Modal
-        show={show}
-        onHide={() => setShow(false)}
-        size={size}
-        aria-labelledby="contained-modal-title-vcenter"
-        centered
-        backdrop="static"
-      >
-        <Modal.Header closeButton>
-          <Modal.Title id="contained-modal-title-vcenter">
-            {title}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {renderBodyComponent(bodyComponent, bodyProps)}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={() => setShow(false)}>Đóng</Button>
-        </Modal.Footer>
-      </Modal>
-    </>
-  );
-}
+  const handleHide = () => {
+    if (stack.length > 1) {
+      pop();
+    } else {
+      reset();
+    }
+  };
 
-export default ModalDialog
+  return (
+    <Modal
+      show={show}
+      onHide={handleHide}
+      size={size}
+      aria-labelledby="contained-modal-title-vcenter"
+      centered
+      backdrop="static"
+    >
+      <Modal.Header closeButton>
+        <Modal.Title id="contained-modal-title-vcenter">
+          {title}
+        </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        {renderBodyComponent(bodyComponent, bodyProps)}
+      </Modal.Body>
+      <Modal.Footer>
+        {stack.length > 1 && (
+          <Button variant="outline-secondary" onClick={pop}>
+            Quay lại
+          </Button>
+        )}
+        <Button onClick={handleHide}>Đóng</Button>
+      </Modal.Footer>
+    </Modal>
+  );
+};
+
+export default ModalDialog;

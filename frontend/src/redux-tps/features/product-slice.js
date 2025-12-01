@@ -13,6 +13,7 @@ export const productInits = {
     return {
       sku: "",
       price: "",
+      cost_price: 0,
       stock: 0,
       // Images: [{ url: "tps-default.jpg", is_primary: true }],
       Images: [],
@@ -27,6 +28,7 @@ export const productInits = {
 export const initialState = {
   product_name: '',
   brand_id: '',
+  category_id: '',
   hashtag: '',
   quantity_sold: 0,
   price_min: 0,
@@ -39,6 +41,7 @@ export const initialState = {
   Variants: [{
     sku: '',
     price: '',
+    cost_price: 0,
     stock: 0,
     // Images: [{ url: 'tps-default.jpg', is_primary: true }],
     Images: [],

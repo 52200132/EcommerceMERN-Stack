@@ -89,6 +89,7 @@ export const useOffCanvasStore = create(
   }))
 );
 
+// có thêm cơ chế stack của các bodycomponents [{title, component, props}, {...}]
 export const userModalDialogStore = create(
   immer((set, get) => ({
     show: false,
@@ -96,27 +97,87 @@ export const userModalDialogStore = create(
     bodyComponent: null,
     bodyProps: {},
     formValues: {},
+    stack: [], // [{title, component, props}, {...}]
     size: 'lg',
     setShow: (value) => set((state) => {
       state.show = value;
+      if (!value) {
+        state.stack = [];
+        state.title = '';
+        state.bodyComponent = null;
+        state.bodyProps = {};
+        state.size = 'lg';
+      } else if (value && state.stack.length === 0 && state.bodyComponent) {
+        state.stack.push({
+          title: state.title,
+          bodyComponent: state.bodyComponent,
+          bodyProps: state.bodyProps,
+          size: state.size,
+        });
+      }
     }),
     setTitle: (title) => set((state) => {
       state.title = title;
+      if (state.stack.length > 0) {
+        state.stack[state.stack.length - 1].title = title;
+      }
     }),
     setBodyComponent: (component) => set((state) => {
       state.bodyComponent = component;
+      if (state.stack.length > 0) {
+        state.stack[state.stack.length - 1].bodyComponent = component;
+      }
     }),
     setBodyProps: (props) => set((state) => {
       state.bodyProps = props;
+      if (state.stack.length > 0) {
+        state.stack[state.stack.length - 1].bodyProps = props;
+      }
     }),
     setSize: (size) => set((state) => {
       state.size = size;
+      if (state.stack.length > 0) {
+        state.stack[state.stack.length - 1].size = size;
+      }
+    }),
+    push: ({ title, bodyComponent, bodyProps = {}, size }) => set((state) => {
+      const entry = {
+        title,
+        bodyComponent,
+        bodyProps,
+        size: size || state.size,
+      };
+      state.stack.push(entry);
+      state.title = entry.title;
+      state.bodyComponent = entry.bodyComponent;
+      state.bodyProps = entry.bodyProps;
+      state.size = entry.size;
+      state.show = true;
+    }),
+    pop: () => set((state) => {
+      state.stack.pop();
+      const current = state.stack[state.stack.length - 1];
+      if (current) {
+        state.title = current.title;
+        state.bodyComponent = current.bodyComponent;
+        state.bodyProps = current.bodyProps || {};
+        state.size = current.size || state.size;
+        state.show = true;
+      } else {
+        state.show = false;
+        state.title = '';
+        state.bodyComponent = null;
+        state.bodyProps = {};
+        state.size = 'lg';
+      }
     }),
     reset: () => set((state) => {
       state.show = false;
       state.title = '';
       state.bodyComponent = null;
       state.bodyProps = {};
+      state.stack = [];
+      state.size = 'lg';
     }),
   }))
 );

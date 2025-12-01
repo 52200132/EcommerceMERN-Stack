@@ -1,10 +1,10 @@
 import { useRef } from 'react';
 import { Form, Button, Container, Card } from 'react-bootstrap';
 
-import { clearProductState, setImages, triggerAction } from 'redux-tps/features/index-features';
+import { clearProductState, setImages } from 'redux-tps/features/index-features';
 import { BasicInfo, MultiImageUpload, Variants } from 'admins/components/products';
 import { store } from 'redux-tps/store';
-import { useCreateProductMutation, useUpdateProductMutation } from 'services/product-api';
+import { useCreateProductAdminMutation, useUpdateProductAdminMutation } from 'services/admin-services';
 
 import BackButton from 'admins/components/back-btn';
 import { useRenderCount, useUploadersRegistry } from '#custom-hooks';
@@ -37,8 +37,8 @@ const CRUProduct = ({ action = 'create' }) => {
   const dispatch = store.dispatch;
   const option = optionActions[action];
   const selector = (state) => state.product;
-  const [createProduct] = useCreateProductMutation();
-  const [updateProductM] = useUpdateProductMutation();
+  const [createProduct] = useCreateProductAdminMutation();
+  const [updateProductM] = useUpdateProductAdminMutation();
 
   const getUploaderFuncs = useUploadersRegistry(zs => zs.getUploaderFuncs);
 

@@ -17,7 +17,6 @@ import {
   IoChevronDown,
   IoChevronForward,
   IoAlertCircle,
-  IoImage,
 } from 'react-icons/io5';
 
 import slugify from 'slugify';
@@ -25,7 +24,7 @@ import slugify from 'slugify';
 import { formatDateTime, formatCurrency } from 'utils/format';
 import TableExpandVariants from './table-expand-variants';
 import { useDispatch } from 'react-redux';
-import { useDeleteProductMutation, useLazyGetProductByIdQuery, useUpdateProductMutation } from 'services/product-api';
+import { useDeleteProductAdminMutation, useLazyGetProductByIdAdminQuery } from 'services/admin-services';
 import { useNavigate } from 'react-router-dom';
 import { updateProduct } from 'redux-tps/features/index-features';
 import { confirmation } from 'utils/confirmation';
@@ -42,19 +41,13 @@ const getStockBadge = (stock) => {
   }
   return { variant: 'default', label: stock };
 };
-// Status map
-const statusMap = {
-  draft: { label: 'Nháp', color: 'secondary' },
-  published: { label: 'Đã xuất bản', color: 'success' },
-  archived: { label: 'Lưu trữ', color: 'muted' }
-};
 const columHelper = createColumnHelper();
 
 
-const TableProducts = ({ products, isLoading }) => {
+const TableProducts = ({ products, isLoading, onAddVariant, onEditVariant, onDeleteVariant }) => {
   const dispatch = useDispatch();
-  const [triggerGetProductById] = useLazyGetProductByIdQuery();
-  const [deleteProduct] = useDeleteProductMutation();
+  const [triggerGetProductById] = useLazyGetProductByIdAdminQuery();
+  const [deleteProduct] = useDeleteProductAdminMutation();
   const navigate = useNavigate()
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [expanded, setExpanded] = useState([]);
@@ -171,6 +164,11 @@ const TableProducts = ({ products, isLoading }) => {
     {
       accessorKey: 'is_active', header: 'Trạng thái',
       meta: { thClassName: 'sortable', thStyle: { width: '140px' } },
+      cell: ({ getValue }) => (
+        <span className={`badge bg-${getValue() ? 'success' : 'secondary'}`}>
+          {getValue() ? 'Đang bán' : 'Ngừng bán'}
+        </span>
+      )
     },
     // cập nhật updatedAt
     {
@@ -224,19 +222,19 @@ const TableProducts = ({ products, isLoading }) => {
     getCoreRowModel: getCoreRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
     onExpandedChange: setExpanded,
-    getRowCanExpand: (row) => row.original.Variants && row.original.Variants.length > 0,
+    getRowCanExpand: () => true,
   });
 
 
   // handle function
-  const handleEditProductClick = async(productId) => {
+  const handleEditProductClick = async (productId) => {
     console.log('Edit product', productId);
     triggerGetProductById(productId)
       .unwrap()
       .then(async (data) => {
         const defaultBrandOption = await db.brands.get(data.dt.brand_id);
         console.log('Fetched product data:', data.dt, 'with brand:', defaultBrandOption);
-        dispatch(updateProduct({...data.dt, defaultBrandOption: { value: defaultBrandOption?._id || '', label: defaultBrandOption?.brand_name || '' } }));
+        dispatch(updateProduct({ ...data.dt, defaultBrandOption: { value: defaultBrandOption?._id || '', label: defaultBrandOption?.brand_name || '' } }));
         navigate(`/admin/manage-products/edit-product/${productId}`);
       })
       .catch((error) => {
@@ -252,7 +250,11 @@ const TableProducts = ({ products, isLoading }) => {
       variant: 'danger',
     })
     if (confirmed) {
-      deleteProduct(productId);
+      try {
+        await deleteProduct(productId).unwrap();
+      } catch (error) {
+        console.error('Failed to delete product', error);
+      }
     }
   }
 
@@ -270,7 +272,7 @@ const TableProducts = ({ products, isLoading }) => {
             <IoAlertCircle size={48} />
             <h3>Chưa có sản phẩm</h3>
             <p>Tạo sản phẩm đầu tiên để bắt đầu bán hàng.</p>
-            <button className="btn btn-primary" onClick={() => console.log('Create product')}>
+            <button className="btn btn-primary" onClick={() => navigate('add-product')}>
               <IoAdd size={16} />
               Thêm sản phẩm
             </button>
@@ -310,6 +312,9 @@ const TableProducts = ({ products, isLoading }) => {
                         <TableExpandVariants
                           variants={row.original.Variants}
                           productId={row.original._id}
+                          onAddVariant={() => onAddVariant?.(row.original)}
+                          onEditVariant={(_, variant) => onEditVariant?.(row.original, variant)}
+                          onDeleteVariant={(_, variant) => onDeleteVariant?.(row.original, variant)}
                         />
                       </td>
                     </tr>

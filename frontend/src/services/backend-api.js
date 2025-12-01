@@ -8,6 +8,18 @@ export const backendApi = createApi({
   refetchOnFocus: false,  // Kh?ng refetch khi ??i tab
   refetchOnReconnect: true,
   refetchOnMountOrArgChange: false,
-  tagTypes: ['User', 'UserAddresses', 'Cart', 'Orders', 'DiscountCode', 'OrderDetail'],
+  tagTypes: [
+    'User',
+    'UserAddresses',
+    'Cart',
+    'Orders',
+    'DiscountCode',
+    'OrderDetail',
+    'Product',
+    'Variant',
+    'Warehouse',
+    'Category',
+    'Dashboard',
+  ],
   endpoints: () => ({}),
 })

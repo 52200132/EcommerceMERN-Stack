@@ -12,27 +12,30 @@ const scrollbarOptions = {
 };
 
 const NAV_ITEMS = [
+  { id: 'dashboard', label: 'Tổng quan', icon: 'bi-speedometer', to: '/admin/dashboard' },
+  // {
+  //   id: 'layout',
+  //   label: 'Layout Options',
+  //   icon: 'bi-clipboard',
+  //   badge: '6',
+  //   children: [
+  //     { id: 'default', label: 'Default Sidebar', to: '#' },
+  //     { id: 'fixed-sidebar', label: 'Fixed Sidebar', to: '#' },
+  //     { id: 'fixed-header', label: 'Fixed Header', to: '#' },
+  //     { id: 'fixed-footer', label: 'Fixed Footer', to: '#' },
+  //     { id: 'fixed-complete', label: 'Fixed Complete', to: '#' },
+  //     { id: 'layout-custom', label: 'Layout + Custom Area', to: '#' },
+  //   ],
+  // },
   {
-    id: 'dashboard',
-    label: 'Dashboard',
-    icon: 'bi-speedometer',
-    children: [{ id: 'overview', label: 'Tổng quan', to: '/admin' }],
-  },
-  {
-    id: 'layout',
-    label: 'Layout Options',
-    icon: 'bi-clipboard',
-    badge: '6',
+    id: 'manage-products', label: 'Quản lý sản phẩm', icon: 'bi-box',
     children: [
-      { id: 'default', label: 'Default Sidebar', to: '#' },
-      { id: 'fixed-sidebar', label: 'Fixed Sidebar', to: '#' },
-      { id: 'fixed-header', label: 'Fixed Header', to: '#' },
-      { id: 'fixed-footer', label: 'Fixed Footer', to: '#' },
-      { id: 'fixed-complete', label: 'Fixed Complete', to: '#' },
-      { id: 'layout-custom', label: 'Layout + Custom Area', to: '#' },
+      { id: 'all-products', label: 'Tất cả sản phẩm', to: '/admin/manage-products' },
+      { id: 'manage-products-warehouse', label: 'Kho hàng', to: '/admin/manage-products/warehouse' },
+      { id: 'manage-products-categories', label: 'Danh mục sản phẩm', to: '/admin/manage-products/categories' },
     ],
   },
-  { id: 'manage-products', label: 'Quản lý sản phẩm', to: '/admin/manage-products', icon: 'bi-box' },
+  { id: 'manage-orders', label: 'Quản lý đơn hàng', to: '/admin/manage-orders', icon: 'bi-bag-check' },
   { id: 'manage-users', label: 'Quản lý người dùng', to: '/admin/manage-users', icon: 'bi-people' },
   { id: 'manage-discounts', label: 'Quản lý mã giảm giá', to: '/admin/manage-discounts', icon: 'bi-ticket' },
 ];
@@ -99,7 +102,7 @@ const SidebarNav = ({ expanded, onToggle, collapsed }) => {
                       <NavLink
                         key={child.id}
                         to={child.to}
-                        end={child.to === '/admin'}
+                        end={child.to === '/admin' || child.to === '/admin/dashboard'}
                         className={({ isActive }) =>
                           `admin-sidebar__child ${isActive ? 'is-active' : ''}`
                         }

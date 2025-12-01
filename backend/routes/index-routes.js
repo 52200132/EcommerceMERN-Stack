@@ -9,3 +9,4 @@ export { default as addressRoutes } from "./addresses.js";
 export { default as ratingRoutes } from "./ratings.js";
 export { default as uploadRoutes } from "./upload.js";
 export { default as dashboardRoutes } from "./dashboard.js";
+export { default as categoryRoutes } from "./categories.js";

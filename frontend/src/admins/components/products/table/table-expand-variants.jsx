@@ -8,117 +8,119 @@ import { formatCurrency } from 'utils/format';
 const columnHelper = createColumnHelper();
 
 const variantStatusMap = {
-  true: { label: 'Active', color: 'success' },
-  false: { label: 'Inactive', color: 'secondary' }
+  true: { label: 'Đang bán', color: 'success' },
+  false: { label: 'Ngừng bán', color: 'secondary' }
 };
 
-const columns = [
-  // Ảnh
-  columnHelper.display({
-    id: 'thumbnail',
-    header: 'Ảnh',
-    meta: { thStyle: { width: '60px' } },
-    accessorFn: (row) => {
-      const Images = row.Images
-      if (isArray(Images)) {
-        const primaryImg = Images.find((img) => img?.is_primary)
-        if (primaryImg) {
-          return { url: primaryImg.url, alt: slugify(row?.product_name || 'tps-default') }
+const TableExpandVariants = ({ variants, productId, onAddVariant, onEditVariant, onDeleteVariant }) => {
+  const columns = [
+    // Ảnh
+    columnHelper.display({
+      id: 'thumbnail',
+      header: 'Ảnh',
+      meta: { thStyle: { width: '60px' } },
+      accessorFn: (row) => {
+        const Images = row.Images
+        if (isArray(Images)) {
+          const primaryImg = Images.find((img) => img?.is_primary)
+          if (primaryImg) {
+            return { url: primaryImg.url, alt: slugify(row?.product_name || 'tps-default') }
+          }
+        } else if (isObject(Images)) { // object chứa { url, alt }
+          return Images
         }
-      } else if (isObject(Images)) { // object chứa { url, alt }
-        return Images
-      }
-      return { url: '', alt: '' }
-    },
-    cell: ({ getValue }) => {
-      const { url, alt } = getValue();
-      return (
-        <img
-          src={url}
-          alt={alt}
-          className="img-thumbnail tps-thumbnail-customize"
-        />
-      )
-    },
-  }),
-  // Tên biến thể
-  // columnHelper.accessor('name', {
-  //   header: 'Tên biến thể',
-  //   cell: ({ row, getValue }) => (
-  //     <div>
-  //       <div className="fw-medium">{getValue()}</div>
-  //       <small className="text-muted">
-  //         {row.original.options?.Color && `${row.original.options.Color} `}
-  //         {row.original.options?.Size && row.original.options.Size}
-  //       </small>
-  //     </div>
-  //   ),
-  // }),
-  // SKU
-  columnHelper.accessor('sku', {
-    header: 'SKU',
-    meta: { thStyle: { width: '140px' } },
-    cell: ({ getValue }) => <code className="text-dark">{getValue()}</code>,
-  }),
+        return { url: '', alt: '' }
+      },
+      cell: ({ getValue }) => {
+        const { url, alt } = getValue();
+        return (
+          <img
+            src={url}
+            alt={alt}
+            className="img-thumbnail tps-thumbnail-customize"
+          />
+        )
+      },
+    }),
+    // Tên biến thể
+    // columnHelper.accessor('name', {
+    //   header: 'Tên biến thể',
+    //   cell: ({ row, getValue }) => (
+    //     <div>
+    //       <div className="fw-medium">{getValue()}</div>
+    //       <small className="text-muted">
+    //         {row.original.options?.Color && `${row.original.options.Color} `}
+    //         {row.original.options?.Size && row.original.options.Size}
+    //       </small>
+    //     </div>
+    //   ),
+    // }),
+    // SKU
+    columnHelper.accessor('sku', {
+      header: 'SKU',
+      meta: { thStyle: { width: '140px' } },
+      cell: ({ getValue }) => <code className="text-dark">{getValue()}</code>,
+    }),
 
-  // Giá
-  columnHelper.accessor('price', {
-    header: 'Giá',
-    meta: { thStyle: { width: '120px' } },
-    cell: ({ getValue }) => formatCurrency(getValue()),
-  }),
+    // Giá
+    columnHelper.accessor('price', {
+      header: 'Giá',
+      meta: { thStyle: { width: '120px' } },
+      cell: ({ getValue }) => formatCurrency(getValue()),
+    }),
 
-  // Tồn
-  columnHelper.accessor('stock', {
-    header: 'Tồn',
-    meta: { thStyle: { width: '80px' } },
-    cell: ({ getValue }) => <span className="text-center">{getValue()}</span>,
-  }),
+    // Giá nhập
+    columnHelper.accessor('cost_price', {
+      header: 'Giá nhập',
+      meta: { thStyle: { width: '120px' } },
+      cell: ({ getValue }) => formatCurrency(getValue()),
+    }),
 
-  // Trạng thái
-  columnHelper.accessor('is_active', {
-    header: 'Trạng thái',
-    meta: { thStyle: { width: '120px' } },
-    cell: ({ getValue }) => (
-      <span className={`badge bg-${variantStatusMap[getValue()]?.color === 'success' ? 'success' : 'secondary'}`}>
-        {variantStatusMap[getValue()]?.label}
-      </span>
-    ),
-  }),
+    // Tồn
+    columnHelper.accessor('stock', {
+      header: 'Tồn',
+      meta: { thStyle: { width: '80px' } },
+      cell: ({ getValue }) => <span className="text-center">{getValue()}</span>,
+    }),
 
-  // Actions
-  columnHelper.display({
-    id: 'actions',
-    header: '',
-    meta: { thStyle: { width: '80px' } },
-    cell: ({ row }) => (
-      <div className="d-flex gap-1 justify-content-center">
-        <Button
-          variant="tps-btn"
-          className="btn btn-sm btn-link text-muted p-0"
-          title="Sửa biến thể"
-          onClick={() => console.log('Edit variant', row.original._id)}
-        >
-          <IoPencil size={14} />
-        </Button>
-        <Button
-          variant="tps-btn"
-          className="btn btn-sm btn-link text-danger p-0"
-          title="Xóa biến thể"
-          onClick={() => {
-            if (window.confirm('Xóa biến thể này?')) {
-              console.log('Delete variant', row.original._id);
-            }
-          }}
-        >
-          <IoTrash size={14} />
-        </Button>
-      </div>
-    ),
-  }),
-];
+    // Trạng thái
+    columnHelper.accessor('is_active', {
+      header: 'Trạng thái',
+      meta: { thStyle: { width: '120px' } },
+      cell: ({ getValue }) => (
+        <span className={`badge bg-${variantStatusMap[getValue()]?.color === 'success' ? 'success' : 'secondary'}`}>
+          {variantStatusMap[getValue()]?.label}
+        </span>
+      ),
+    }),
 
-const TableExpandVariants = ({ variants, productId }) => {
+    // Actions
+    columnHelper.display({
+      id: 'actions',
+      header: '',
+      meta: { thStyle: { width: '80px' } },
+      cell: ({ row }) => (
+        <div className="d-flex gap-1 justify-content-center">
+          <Button
+            variant="tps-btn"
+            className="btn btn-sm btn-link text-muted p-0"
+            title="Sửa biến thể"
+            onClick={() => onEditVariant?.(productId, row.original)}
+          >
+            <IoPencil size={14} />
+          </Button>
+          <Button
+            variant="tps-btn"
+            className="btn btn-sm btn-link text-danger p-0"
+            title="Xóa biến thể"
+            onClick={() => onDeleteVariant?.(productId, row.original)}
+          >
+            <IoTrash size={14} />
+          </Button>
+        </div>
+      ),
+    }),
+  ];
 
   const table = useReactTable({
     data: variants || [],
@@ -134,7 +136,7 @@ const TableExpandVariants = ({ variants, productId }) => {
         <h5 className="mb-0">Biến thể</h5>
         <Button
           className="btn btn-sm btn-outline-primary text-white"
-          onClick={() => console.log('Add variant', productId)}
+          onClick={() => onAddVariant?.(productId)}
         >
           <IoAdd size={14} className="me-1" />
           Thêm biến thể
@@ -176,7 +178,7 @@ const TableExpandVariants = ({ variants, productId }) => {
           <p className="text-muted mb-3">Thêm biến thể để quản lý tồn kho và giá theo tùy chọn.</p>
           <Button
             className="btn btn-sm btn-outline-primary"
-            onClick={() => console.log('Add variant', productId)}
+            onClick={() => onAddVariant?.(productId)}
           >
             <IoAdd size={14} className="me-1" />
             Thêm biến thể

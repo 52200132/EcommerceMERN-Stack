@@ -1,7 +1,16 @@
 import express from 'express';
 import Order from '../models/Order.js';
 import { protect, admin } from '../middleware/auth.js';
-import { userCancelOrder, createOrder, getOrderByUserId, getStatusHistoryByOrderId, getOrderById, getAllOrders, updateOrderStatus } from '../controller/orderController.js';
+import {
+  userCancelOrder,
+  createOrder,
+  getOrderByUserId,
+  getStatusHistoryByOrderId,
+  getOrderById,
+  getAllOrders,
+  updateOrderStatus,
+  getOrdersOverview
+} from '../controller/orderController.js';
 
 const router = express.Router();
 
@@ -14,6 +23,11 @@ router.post('/', createOrder);
 // @route   GET /api/orders?start=<>&end=<>&date=<>
 // @access  Private - Admin
 router.get('/', protect, admin, getAllOrders);
+
+// @desc    Get overview of orders by status & day
+// @route   GET /api/orders/overview
+// @access  Private - Admin
+router.get('/overview', protect, admin, getOrdersOverview);
 
 // @desc    Get order by User_ID
 // @route   GET /api/orders/myorders

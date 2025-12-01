@@ -21,6 +21,8 @@ import PasswordChangePage from "pages/profile/password-change-page";
 import AddressPage from "pages/profile/address-page";
 import ManageUsersPage from "admins/pages/manage-users/manage-users-page";
 import ManageDiscountCodePage from "admins/pages/manage-discount-code/manage-discount-code";
+import ManageOrdersPage from "admins/pages/manage-orders/manage-orders-page";
+import DashboardPage from "admins/pages/dashboard/dashboard-page";
 
 // import NotFoundPage from "./pages/NotFoundPage"; // Optional: Create a 404 page component
 // import "./App.css";
@@ -46,11 +48,11 @@ const App = () => {
           <Route path="/san-pham" element={<ProductsFilterPage />} />
           <Route path="/san-pham/:categorySlug/:productNameSlug" element={<ProductDetails />} />
           <Route index element={<HomePage />} />
-          <Route path="user-info" element={<UserProfileLayout />} >
+          <Route path="thong-tin-nguoi-dung" element={<UserProfileLayout />} >
             <Route index element={<ProfilePage />} />
-            <Route path="profile" element={<ProfilePage />} />
-            <Route path="addresses" element={<AddressPage />} />
-            <Route path="password-change" element={<PasswordChangePage />} />
+            <Route path="ho-so" element={<ProfilePage />} />
+            <Route path="danh-sach-dia-chi" element={<AddressPage />} />
+            <Route path="doi-mat-khau" element={<PasswordChangePage />} />
           </Route>
           <Route path="cart" element={<CartPage />} />
           <Route path="checkout" element={<CheckoutPage />} />
@@ -76,13 +78,16 @@ const App = () => {
         </Route>
 
         <Route path="/admin/*" element={<AdminsLayout />}>
-          <Route index element={<div>admins Home</div>} />
+          <Route index element={<DashboardPage />} />
+          <Route path="dashboard" element={<DashboardPage />} />
           <Route path="manage-products" element={<ManageProductsLayout />}>
             <Route index element={<ManageProductsPage />} />
             <Route path="add-product" element={<CRUProduct action="create" />} />
             <Route path="edit-product/:productId" element={<CRUProduct action="update" />} />
+            <Route path="edit-product/:productId/description" element={<CRUDetailsDescription />} />
             <Route path="add-product/description" element={<CRUDetailsDescription />} />
           </Route>
+          <Route path="manage-orders" element={<ManageOrdersPage />} />
           <Route path="manage-users" element={<ManageUsersPage />} />
           <Route path="manage-discounts" element={<ManageDiscountCodePage />} />
         </Route>

@@ -1,7 +1,7 @@
-import express from 'express';
-import Product from '../models/Product.js';
-import { protect, admin } from '../middleware/auth.js';
-import { getNewProducts, getTopSellingProducts, createVariantByWarehouseId, updateWarehouseVariantBySku, deleteWarehouseVariantBySku, deleteWarehouseById, getProductsInfoForOrder, getArrangeAlphabet, getProductByCategory, getArrangePrice, createWarehouseByProductId, createVariantByProductId, updateWarehouseById, getAllWarehouseByProduct, getProductById, deleteProductById, createProduct, updateProduct, getAllProducts, deleteVariantBySku, updateVariantBySku, getProducts } from '../controller/productController.js';
+import express from "express";
+import Product from "../models/Product.js";
+import { protect, admin } from "../middleware/auth.js";
+import { getNewProducts, getTopSellingProducts, createVariantByWarehouseId, updateWarehouseVariantBySku, deleteWarehouseVariantBySku, deleteWarehouseById, getProductsInfoForOrder, getArrangeAlphabet, getProductByCategory, getArrangePrice, createWarehouseByProductId, createVariantByProductId, updateWarehouseById, getAllWarehouseByProduct, getProductById, deleteProductById, createProduct, updateProduct, getAllProducts, deleteVariantBySku, updateVariantBySku, getProducts } from "../controller/productController.js";
 
 const router = express.Router();
 
@@ -9,25 +9,25 @@ const router = express.Router();
 // @desc    Arrange all products A-Z, Z-A
 // @route   GET /api/products/order_alphabet
 // @access  Public
-router.get('/order_alphabet', getArrangeAlphabet);
+router.get("/order_alphabet", getArrangeAlphabet);
 
 // Sắp xếp sản phẩm theo giá thấp đến cao, cao đến thấp
 // @desc    Arrange all products Price Low to High, Price High to Low
 // @route   GET /api/products/order_price
 // @access  Public
-router.get('/order_price', getArrangePrice);
+router.get("/order_price", getArrangePrice);
 
 // @desc    Fetch all products
 // @route   GET /api/products/all
 // @access  Admin
-router.get('/all', protect, admin, getAllProducts);
+router.get("/all", protect, admin, getAllProducts);
 
 // @desc    Get top rated products
 // @route   GET /api/products/top?number=<number>
 // @access  Public
 // chưa xong đâu, còn rating để nó sắp xếp
 // TODO: có tính top rating à?
-router.get('/top', async (req, res) => {
+router.get("/top", async (req, res) => {
   try {
     const number = Number(req.query.number) || 10;
     const products = await Product.find({}).sort({ rating: -1 }).limit(number);
@@ -40,12 +40,12 @@ router.get('/top', async (req, res) => {
 // @desc    Get top selling products
 // @route   GET /api/products/top_selling
 // @access  Public
-router.get('/top_selling', getTopSellingProducts);
+router.get("/top_selling", getTopSellingProducts);
 
 // @desc    Get new products
 // @route   GET /api/products/new_products
 // @access  Public
-router.get('/new_products', getNewProducts);
+router.get("/new_products", getNewProducts);
 
 // @desc    Get new products
 // @route   GET /api/products/new_products
@@ -54,15 +54,14 @@ router.get('/new_products', getNewProducts);
 // @desc    Get product categories
 // @route   GET /api/products/category/:categoryId
 // @access  Public
-router.get('/category/:categoryId', getProductByCategory);
+router.get("/category/:categoryId", getProductByCategory);
 
-router.get('/filter', getProducts);
+router.get("/filter", getProducts);
 
 // @desc    Fetch all products
 // @route   GET /api/products
 // @access  Public
-router.get('', async (req, res) => {
-  console.log('GET /api/products ', req.query);
+router.get("", async (req, res) => {
   try {
     const pageSize = Number(req.query.pageSize) || 20;
     const page = Number(req.query.page) || 1;
@@ -70,7 +69,7 @@ router.get('', async (req, res) => {
       ? {
         product_name: {
           $regex: req.query.keyword,
-          $options: 'i',
+          $options: "i",
         },
       }
       : {};
@@ -79,12 +78,16 @@ router.get('', async (req, res) => {
       ? { hastag: req.query.hastag }
       : {};
 
-    const query = { ...keyword, ...hastag };
+    const categoryFilter = req.query.category_id
+      ? { category_id: req.query.category_id }
+      : {};
+
+    const query = { ...keyword, ...hastag, ...categoryFilter };
 
     const [count, products] = await Promise.all([
       Product.countDocuments(query),
       Product.find(query)
-        .select('-Warehouses -detail_description -createdAt -short_description') // Loại bỏ các trường không cần thiết
+        .select("-Warehouses -detail_description -createdAt -short_description") // Loại bỏ các trường không cần thiết
         .sort({ createdAt: -1 })
         // .lean() // Quan trọng: trả về plain objects thay vì Mongoose documents
         .limit(pageSize)
@@ -109,91 +112,79 @@ router.get('', async (req, res) => {
 // @desc    Create a product
 // @route   POST /api/products
 // @access  Private/Admin
-// router.post('/', protect, admin, createProduct);
-router.post('/', async (req, res, next) => {
-  console.log(`POST /api/products`);
-  next();
-}, createProduct);
+// router.post("/", protect, admin, createProduct);
+router.post("/", createProduct);
 
 // @desc    Fetch single product
 // @route   GET /api/products/:id
 // @access  Public
-router.get('/:id', async (req, res, next) => {
-  console.log(`GET /api/products/${req.params.id}`);
-  next();
-}, getProductById); // đã check ok
+router.get("/:id", getProductById); // đã check ok
 
 // @desc    Delete a product
 // @route   DELETE /api/products/:id
 // @access  Private/Admin
-router.delete('/:id', async (req, res, next) => {
-  console.log(`DELETE /api/products/${req.params.id}`);
-  next();
-}, deleteProductById);
+router.delete("/:id", deleteProductById);
 
 // @desc    Delete a variant by SKU
 // @route   DELETE /api/products/:id/variant?sku=<sku>
 // @access  Private/Admin
-router.delete('/:id/variant', protect, admin, deleteVariantBySku);
+router.delete("/:id/variant", protect, admin, deleteVariantBySku);
 
 // @desc    Update a product
 // @route   PUT /api/products/:id
 // @access  Private/Admin
-router.put('/:id', async (req, res, next) => {
-  console.log(`PUT /api/products/${req.params.id}`);
-  next()
-}, updateProduct);
+router.put("/:id", updateProduct);
 
 // @desc    Create A variant by product ID
 // @route   POST /api/products/:id/variant
 // @access  Private/Admin
-router.post('/:id/variant', protect, admin, createVariantByProductId);
+router.post("/:id/variant", protect, admin, createVariantByProductId);
 
 // @desc    Update A variant
 // @route   PUT /api/products/:id/variant?sku=<sku>
 // @access  Private/Admin
-router.put('/:id/variant', updateVariantBySku);
+router.put("/:id/variant", updateVariantBySku);
 
 // @desc    Get all warehouses by product
 // @route   GET /api/products/:id/warehouses
 // @access  Private/Admin
-router.get('/:id/warehouses', protect, admin, getAllWarehouseByProduct);
+router.get("/:id/warehouses", protect, admin, getAllWarehouseByProduct);
 
 // @desc    Create warehouse by product ID
 // @route   POST /api/products/:id/warehouses
 // @access  Private/Admin
-router.post('/:id/warehouses', protect, admin, createWarehouseByProductId);
+router.post("/:id/warehouses", protect, admin, createWarehouseByProductId);
 
 // @desc    Update warehouse by ID
 // @route   PUT /api/products/:id/warehouses/:warehouseId
 // @access  Private/Admin
-router.put('/:id/warehouses/:warehouseId', protect, admin, updateWarehouseById);
+router.put("/:id/warehouses/:warehouseId", protect, admin, updateWarehouseById);
 
 // @desc    Delete warehouse by ID
 // @route   DELETE /api/products/:id/warehouses/:warehouse_id
 // @access  Private/Admin
-router.delete('/:id/warehouses/:warehouse_id', protect, admin, deleteWarehouseById);
+router.delete("/:id/warehouses/:warehouse_id", protect, admin, deleteWarehouseById);
 
 // @desc    Create warehouse variant
 // @route   POST /api/products/:id/warehouses/:warehouse_id/variant
 // @access  Private/Admin
-router.post('/:id/warehouses/:warehouse_id/variant', protect, admin, createVariantByWarehouseId);
+router.post("/:id/warehouses/:warehouse_id/variant", protect, admin, createVariantByWarehouseId);
 
 // @desc    Update warehouse variant
 // @route   PUT /api/products/:id/warehouses/:warehouse_id/variant
 // @access  Private/Admin
-router.put('/:id/warehouses/:warehouse_id/variant', protect, admin, updateWarehouseVariantBySku);
+router.put("/:id/warehouses/:warehouse_id/variant", protect, admin, updateWarehouseVariantBySku);
 
 
 // @desc    Delete warehouse variant by SKU
 // @route   DELETE /api/products/:id/warehouses/:warehouse_id/variant?sku=<sku>
 // @access  Private/Admin
-router.delete('/:id/warehouses/:warehouse_id/variant', protect, admin, deleteWarehouseVariantBySku);
+router.delete("/:id/warehouses/:warehouse_id/variant", protect, admin, deleteWarehouseVariantBySku);
 
 // @desc    Create new review
 // @route   POST /api/products/:id/reviews
 // @access  Private
-router.post('/:id/reviews', protect, async (req, res) => {
+router.post("/:id/reviews", protect, async (req, res) => {
   try {
     const { rating, comment } = req.body;
 
@@ -205,7 +196,7 @@ router.post('/:id/reviews', protect, async (req, res) => {
       );
 
       if (alreadyReviewed) {
-        res.status(400).json({ message: 'Product already reviewed' });
+        res.status(400).json({ message: "Product already reviewed" });
         return;
       }
 
@@ -225,9 +216,9 @@ router.post('/:id/reviews', protect, async (req, res) => {
         product.reviews.length;
 
       await product.save();
-      res.status(201).json({ message: 'Review added' });
+      res.status(201).json({ message: "Review added" });
     } else {
-      res.status(404).json({ message: 'Product not found' });
+      res.status(404).json({ message: "Product not found" });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -237,6 +228,6 @@ router.post('/:id/reviews', protect, async (req, res) => {
 // @desc    Get product info for order
 // @route   Post /api/products/info_for_order/bulk
 // @access  Public
-router.post('/info_for_order/bulk', getProductsInfoForOrder);
+router.post("/info_for_order/bulk", getProductsInfoForOrder);
 
 export default router;

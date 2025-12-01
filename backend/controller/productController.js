@@ -299,7 +299,7 @@ const createProduct = async (req, res) => {
   }
 }
 
-const updateProduct = async (req, res) => {
+export const updateProduct = async (req, res) => {
   try {
     const {
       brand_id,
@@ -381,10 +381,17 @@ const deleteVariantBySku = async (req, res) => {
 const createVariantByProductId = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-    const { sku, price, html_text_attributes, Images, Attributes, is_active } = req.body;
+    const { sku, price, cost_price, stock, html_text_attributes, Images, Attributes, is_active } = req.body;
     if (product) {
       product.Variants.push({
-        sku, price, html_text_attributes, Images, Attributes, is_active
+        sku,
+        price,
+        cost_price: cost_price ?? 0,
+        stock: stock ?? 0,
+        html_text_attributes,
+        Images,
+        Attributes,
+        is_active
       });
       await product.save();
       res.json({ ec: 0, em: "Variant created", dt: product });
@@ -395,20 +402,25 @@ const createVariantByProductId = async (req, res) => {
 };
 
 const updateVariantBySku = async (req, res) => {
+  const productId = req.params.id;
+  const { sku } = req.query;
+
   try {
-    const { sku } = req.query;
-    const product = await Product.findById(req.params.id);
-    const { price, html_text_attributes, Images, Attributes, is_active } = req.body;
+    const product = await Product.findById(productId);
+    const { price, cost_price, stock, html_text_attributes, Images, Attributes, is_active } = req.body;
     if (product) {
       const variant = product.Variants.find(variant => variant.sku === sku);
+      console.log("Updating variant:", variant);
       if (variant) {
         variant.price = price || variant.price;
+        variant.cost_price = cost_price ?? variant.cost_price;
+        variant.stock = stock ?? variant.stock;
         variant.html_text_attributes = html_text_attributes || variant.html_text_attributes;
         variant.Images = Images || variant.Images;
         variant.Attributes = Attributes || variant.Attributes;
         variant.is_active = is_active !== undefined ? is_active : variant.is_active;
       }
-      variant = await product.save();
+      await product.save();
       res.json({ ec: 0, em: "Variant updated", dt: variant });
     } else {
       res.status(404).json({ ec: 404, em: "Product not found" });
@@ -602,4 +614,4 @@ export const getProductsInfoForOrder = async (req, res) => {
   }
 };
 
-export { getArrangeAlphabet, getProductByCategory, getArrangePrice, createWarehouseByProductId, createVariantByProductId, updateWarehouseById, getAllWarehouseByProduct, getProductById, deleteProductById, createProduct, updateProduct, getAllProducts, deleteVariantBySku, updateVariantBySku };
+export { getArrangeAlphabet, getProductByCategory, getArrangePrice, createWarehouseByProductId, createVariantByProductId, updateWarehouseById, getAllWarehouseByProduct, getProductById, deleteProductById, createProduct, getAllProducts, deleteVariantBySku, updateVariantBySku };

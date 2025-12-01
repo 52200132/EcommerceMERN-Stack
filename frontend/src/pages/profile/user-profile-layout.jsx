@@ -4,9 +4,18 @@ import { Offcanvas } from "react-bootstrap";
 import { useResponsiveOffcanvasPlacement } from "#component-hooks/use-user-profile-hooks";
 import ProfileSmUpSidebar from "#components/profile/profile-sm-up-sidebar";
 import './user-profile-layout.scss';
+import { useOffCanvasStore, useShallow } from "#custom-hooks";
 
 const UserProfileLayout = () => {
-  const { placement, show, setShow, canvasBody } = useResponsiveOffcanvasPlacement();
+  const { placement } = useResponsiveOffcanvasPlacement();
+  const { show, setShow, canvasBody } = useOffCanvasStore(
+    useShallow(zs => ({
+      show: zs.show,
+      setShow: zs.setShow,
+      canvasBody: zs.getActiveOffCanvasBody(),
+    }))
+  );
+
   return (
     <section className="profile-dashboard-wrap">
       <div className="profile-dashboard">
