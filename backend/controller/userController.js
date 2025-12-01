@@ -206,8 +206,11 @@ export const updatePassword = async (req, res) => {
 
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(new_password, salt);
+    if (user.resetPasswordFirstTime === false) {
+      user.resetPasswordFirstTime = true;
+    };
     await user.save();
-
+    clearCacheGroup('userProfile');
     res.json({ ec: 0, em: "Cập nhật mật khẩu thành công" });
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });

@@ -1,8 +1,7 @@
-import ProfileForm from '#components/profile/profile-form';
-import AddressForm from '#components/profile/address-form';
-import { create } from 'zustand';
-import { immer } from 'zustand/middleware/immer';
-export { useShallow } from 'zustand/shallow';
+import ProfileForm from "#components/profile/profile-form";
+import AddressForm from "#components/profile/address-form";
+import { create } from "zustand";
+import { immer } from "zustand/middleware/immer";
 
 export const useSelectorStore = create(
   immer((set, get) => ({
@@ -50,19 +49,19 @@ export const useUploadersRegistry = create(
 );
 
 export const OFF_CANVAS_BODY_KEYS = {
-  PROFILE_FORM: 'profileForm',
-  ADDRESS_FORM: 'addressForm',
+  PROFILE_FORM: "profileForm",
+  ADDRESS_FORM: "addressForm",
 };
 
 export const useOffCanvasStore = create(
   immer((set, get) => ({
     offCanvasBodies: {
-      [OFF_CANVAS_BODY_KEYS.PROFILE_FORM]: { title: 'Cập nhật hồ sơ', component: <ProfileForm /> },
-      [OFF_CANVAS_BODY_KEYS.ADDRESS_FORM]: { title: 'Địa chỉ', component: <AddressForm /> },
+      [OFF_CANVAS_BODY_KEYS.PROFILE_FORM]: { title: "Cập nhật hồ sơ", component: <ProfileForm /> },
+      [OFF_CANVAS_BODY_KEYS.ADDRESS_FORM]: { title: "Địa chỉ", component: <AddressForm /> },
     },
     defaultFormValues: {},
     offCanvasBodyProps: {},
-    activateOffCanvasBody: { title: '', component: null },
+    activateOffCanvasBody: { title: "", component: null },
     show: false,
     setShow: (value) => set((state) => {
       state.show = value;
@@ -82,7 +81,7 @@ export const useOffCanvasStore = create(
       delete state.offCanvasBodies[key];
     }),
     setActiveOffCanvasBody: (key) => set((state) => {
-      // console.log('Setting active offcanvas body to key:', key);
+      // console.log("Setting active offcanvas body to key:", key);
       state.activateOffCanvasBody = state.offCanvasBodies[key];
     }),
     getActiveOffCanvasBody: () => get().activateOffCanvasBody,
@@ -93,26 +92,40 @@ export const useOffCanvasStore = create(
 export const userModalDialogStore = create(
   immer((set, get) => ({
     show: false,
-    title: '',
+    title: "",
     bodyComponent: null,
     bodyProps: {},
     formValues: {},
     stack: [], // [{title, component, props}, {...}]
-    size: 'lg',
+    size: "lg",
+    timeOutId: null,
+    buttons: [],
     setShow: (value) => set((state) => {
       state.show = value;
+      if (state.timeOutId) {
+        clearTimeout(state.timeOutId);
+        state.timeOutId = null;
+      }
       if (!value) {
-        state.stack = [];
-        state.title = '';
-        state.bodyComponent = null;
-        state.bodyProps = {};
-        state.size = 'lg';
+        const timeoutId = setTimeout(() => {
+          set((draft) => {
+            draft.stack = [];
+            draft.title = "";
+            draft.bodyComponent = null;
+            draft.bodyProps = {};
+            draft.size = "lg";
+            draft.buttons = [];
+            draft.timeOutId = null;
+          });
+        }, 3000);
+        state.timeOutId = timeoutId;
       } else if (value && state.stack.length === 0 && state.bodyComponent) {
         state.stack.push({
           title: state.title,
           bodyComponent: state.bodyComponent,
           bodyProps: state.bodyProps,
           size: state.size,
+          buttons: state.buttons,
         });
       }
     }),
@@ -140,18 +153,26 @@ export const userModalDialogStore = create(
         state.stack[state.stack.length - 1].size = size;
       }
     }),
-    push: ({ title, bodyComponent, bodyProps = {}, size }) => set((state) => {
+    setButtons: (buttons) => set((state) => {
+      state.buttons = buttons;
+      if (state.stack.length > 0) {
+        state.stack[state.stack.length - 1].buttons = buttons;
+      }
+    }),
+    push: ({ title, bodyComponent, bodyProps = {}, size, buttons }) => set((state) => {
       const entry = {
         title,
         bodyComponent,
         bodyProps,
         size: size || state.size,
+        buttons: buttons || state.buttons,
       };
       state.stack.push(entry);
       state.title = entry.title;
       state.bodyComponent = entry.bodyComponent;
       state.bodyProps = entry.bodyProps;
       state.size = entry.size;
+      state.buttons = entry.buttons;
       state.show = true;
     }),
     pop: () => set((state) => {
@@ -162,22 +183,37 @@ export const userModalDialogStore = create(
         state.bodyComponent = current.bodyComponent;
         state.bodyProps = current.bodyProps || {};
         state.size = current.size || state.size;
+        state.buttons = current.buttons || state.buttons;
         state.show = true;
-      } else {
+      } else { // TODO: cần setTimeout để đóng mượt hơn
         state.show = false;
-        state.title = '';
+        state.title = "";
         state.bodyComponent = null;
         state.bodyProps = {};
-        state.size = 'lg';
+        state.size = "lg";
+        state.buttons = [];
       }
     }),
     reset: () => set((state) => {
       state.show = false;
-      state.title = '';
-      state.bodyComponent = null;
-      state.bodyProps = {};
-      state.stack = [];
-      state.size = 'lg';
+      if (state.timeOutId) {
+        clearTimeout(state.timeOutId);
+        state.timeOutId = null;
+      }
+      const timeoutId = setTimeout(() => {
+        set((draft) => {
+          draft.stack = [];
+          draft.title = "";
+          draft.bodyComponent = null;
+          draft.bodyProps = {};
+          draft.size = "lg";
+          draft.buttons = [];
+          draft.timeOutId = null;
+        });
+      }, 3000);
+      state.timeOutId = timeoutId;
     }),
   }))
 );
+
+export { useShallow } from "zustand/shallow";

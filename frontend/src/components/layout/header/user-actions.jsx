@@ -12,26 +12,26 @@ import { logout } from '#features/auth-slice';
 
 import unknownAvatar from '../../../assets/images/cat-avatar.jpg';
 
-const openWindowPopup = (url) => {
-  const width = 500;
-  const height = 600;
-  const left = (window.screen.width - width) / 2;
-  const top = (window.screen.height - height) / 2;
-  const popup = window.open(
-    url,
-    'googleAuth',
-    `width=${width},height=${height},top=${top},left=${left}`
-  );
-  const timer = setInterval(() => {
-    if (popup?.closed) {
-      clearInterval(timer);
-      closeOverlayPreloader();
-    }
-  }, 1500)
-  console.log('Opened popup window for Google linking:', popup);
-  popup.focus();
-  return popup;
-}
+// const openWindowPopup = (url) => {
+//   const width = 500;
+//   const height = 600;
+//   const left = (window.screen.width - width) / 2;
+//   const top = (window.screen.height - height) / 2;
+//   const popup = window.open(
+//     url,
+//     'googleAuth',
+//     `width=${width},height=${height},top=${top},left=${left}`
+//   );
+//   const timer = setInterval(() => {
+//     if (popup?.closed) {
+//       clearInterval(timer);
+//       closeOverlayPreloader();
+//     }
+//   }, 1500)
+//   console.log('Opened popup window for Google linking:', popup);
+//   popup.focus();
+//   return popup;
+// }
 
 const UserActions = () => {
   // useRenderCount('user-actions', 'ui');
@@ -41,22 +41,22 @@ const UserActions = () => {
   const user = useTpsSelector((state) => state.auth.user, { includeProps: ['token', 'username', 'image'] });
   const [linkGoogleAccount] = useLazyLinkGoogleAccountQuery();
 
-  const handleLinkGoogleAccount = () => {
-    axiosBaseQueryUtil.configBehaviors = {
-      showErrorToast: true,
-    };
-    axiosBaseQueryUtil.message = {
-      error: 'Không thể tạo liên kết tài khoản Google. Vui lòng thử lại sau!'
-    };
-    axiosBaseQueryUtil.callbackfn = (data) => {
-      // Chuyển hướng người dùng đến URL liên kết Google
-      overlayPreloader()
-      if (data?.dt?.urlRedirect) {
-        popupRef.current = openWindowPopup(data.dt.urlRedirect);
-      }
-    }
-    linkGoogleAccount({ origin: window.location.origin, feRedirectUri: '' });
-  };
+  // const handleLinkGoogleAccount = () => {
+  //   axiosBaseQueryUtil.configBehaviors = {
+  //     showErrorToast: true,
+  //   };
+  //   axiosBaseQueryUtil.message = {
+  //     error: 'Không thể tạo liên kết tài khoản Google. Vui lòng thử lại sau!'
+  //   };
+  //   axiosBaseQueryUtil.callbackfn = (data) => {
+  //     // Chuyển hướng người dùng đến URL liên kết Google
+  //     overlayPreloader()
+  //     if (data?.dt?.urlRedirect) {
+  //       popupRef.current = openWindowPopup(data.dt.urlRedirect);
+  //     }
+  //   }
+  //   linkGoogleAccount({ origin: window.location.origin, feRedirectUri: '' });
+  // };
 
   const handleLogout = () => {
     dispatch(logout());
@@ -91,21 +91,21 @@ const UserActions = () => {
       {!user?.token ?
         (<div className='tps-auth-buttons'>
           <ul>
-            <li><a href="/login">Đăng nhập</a></li>
-            <li><a href="/register">Đăng ký</a></li>
+            <li><Link to="/login">Đăng nhập</Link></li>
+            <li><Link to="/register">Đăng ký</Link></li>
           </ul>
         </div>)
         :
         (<OverlayTrigger
           trigger="click"
           placement="bottom-end"
-          rootClose
+          rootClose={true}
           overlay={
             <Popover className='no-style-popover'>
               <ul className="user-popover-menu">
-                <li className="popover-item"><Link to="/thong-tin-nguoi-dung/tich-diem">Điểm thành viên</Link></li>
-                <li className="popover-item"><Link to="/thong-tin-nguoi-dung/ho-so">Tài khoản của tôi</Link></li>
-                <li className="popover-item"><Link to="/thong-tin-nguoi-dung/lich-su-mua-hang">Đơn mua</Link></li>
+                <li className="popover-item"><Link to="/thong-tin-ca-nhan/ho-so">Tài khoản của tôi</Link></li>
+                <li className="popover-item"><Link to="/thong-tin-ca-nhan/tich-diem">Điểm thành viên</Link></li>
+                <li className="popover-item"><Link to="/thong-tin-ca-nhan/lich-su-mua-hang">Đơn mua</Link></li>
                 <li><hr /></li>
                 <li onClick={handleLogout} className="popover-item"><Link to='/'>Đăng xuất</Link></li>
               </ul>

@@ -27,7 +27,7 @@ const OrderHistoryPage = () => {
 
   const handleViewDetail = (orderId) => {
     if (!orderId) return;
-    navigate(`/thong-tin-nguoi-dung/theo-doi-don-hang?orderId=${orderId}`);
+    navigate(`/thong-tin-ca-nhan/theo-doi-don-hang?orderId=${orderId}`);
   };
 
   const renderOrderItems = (items = []) => {

@@ -8,7 +8,7 @@ import { useGetDistrictsQuery, useGetProvincesQuery, useGetWardsQuery } from '#s
 import { useRegisterUserMutation } from '#services/auth-api';
 import { axiosBaseQueryUtil } from '#services/axios-config';
 import { useNavigate } from 'react-router-dom';
-import { overlayPreloader } from '#utils/overlay-manager';
+import { overlayPreloader } from '#utils';
 
 /**
  * Custom hook để quản lý logic form đăng ký
@@ -16,7 +16,7 @@ import { overlayPreloader } from '#utils/overlay-manager';
  */
 export const useRegisterForm = () => {
   const navigate = useNavigate();
-  const [registerUser] = useRegisterUserMutation();
+  const [registerUser, { data, isLoading, isSuccess, isError, error }] = useRegisterUserMutation();
   const formMethods = useForm({
     resolver: zodResolver(registerSchema),
     mode: 'all',
@@ -43,11 +43,8 @@ export const useRegisterForm = () => {
    */
   const onSubmit = async (data) => {
     try {
-      axiosBaseQueryUtil.toggleAllBehaviors(true);
+      axiosBaseQueryUtil.configBehaviors = { showOverlay: true };
       axiosBaseQueryUtil.overlay = overlayPreloader;
-      axiosBaseQueryUtil.callbackfn = (data) => {
-        navigate('/');
-      };
       axiosBaseQueryUtil.flowMessages = [
         { delay: 0, message: 'Đang xử lý...' },
         { delay: 2000, message: 'Vui lòng chờ...' }
@@ -59,6 +56,7 @@ export const useRegisterForm = () => {
   };
 
   return {
+    isLoading, isSuccess, isError, error, data,
     ...formMethods,
     onSubmit: formMethods.handleSubmit(onSubmit),
   };
@@ -67,11 +65,11 @@ export const useRegisterForm = () => {
 export const useProvincesOptions = () => {
   const { data, error, isLoading } = useGetProvincesQuery();
 
-  const provincesOptions = [{ value: '', label: 'Chọn tỉnh/thành phố' }, ...data?.dt?.map((p) => ({
+  const provincesOptions = [{ value: '', label: 'Chọn tỉnh/thành phố' }, ...(data?.dt?.map((p) => ({
     label: `${p.type} ${p.name}`,
     value: `${p.type} ${p.name}`,
     provinceCode: p.code,
-  })) || []];
+  })) || [])];
 
   useEffect(() => {
     if (error) {
@@ -85,11 +83,11 @@ export const useProvincesOptions = () => {
 export const useDistrictsOptions = (provinceCode) => {
   const { data, isLoading } = useGetDistrictsQuery(provinceCode, { skip: !provinceCode });
 
-  const districtsOptions = [{ value: '', label: 'Chọn quận/huyện' }, ...data?.dt?.map((d) => ({
+  const districtsOptions = [{ value: '', label: 'Chọn quận/huyện' }, ...(data?.dt?.map((d) => ({
     label: `${d.type} ${d.name}`,
     value: `${d.type} ${d.name}`,
     districtCode: d.code,
-  })) || []];
+  })) || [])];
 
   return { districtsOptions, isLoading };
 }
@@ -97,11 +95,11 @@ export const useDistrictsOptions = (provinceCode) => {
 export const useWardsOptions = (districtCode) => {
   const { data, isLoading } = useGetWardsQuery(districtCode, { skip: !districtCode });
 
-  const wardsOptions = [{ value: '', label: 'Chọn phường/xã' }, ...data?.dt?.map((w) => ({
+  const wardsOptions = [{ value: '', label: 'Chọn phường/xã' }, ...(data?.dt?.map((w) => ({
     label: `${w.type} ${w.name}`,
     value: `${w.type} ${w.name}`,
     wardCode: w.code,
-  })) || []];
+  })) || [])];
 
   return { wardsOptions, isLoading };
 }

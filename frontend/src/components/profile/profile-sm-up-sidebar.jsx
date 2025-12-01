@@ -26,25 +26,25 @@ const defaultProfile = {
 };
 
 const NAV_ITEMS = [
-  { id: "notifications", label: "Thông Báo", icon: <BsBell />, link: "/thong-tin-nguoi-dung/thong-bao" },
+  { id: "notifications", label: "Thông Báo", icon: <BsBell />, link: "/thong-tin-ca-nhan/thong-bao" },
   {
     id: "account",
     label: "Tài Khoản Của Tôi",
     icon: <BsPersonCircle />,
     children: [
-      { id: "account-profile", label: "Hồ Sơ", icon: <BsPerson />, link: "/thong-tin-nguoi-dung/ho-so" },
-      { id: "account-addresses", label: "Địa Chỉ", icon: <BsGeoAlt />, link: "/thong-tin-nguoi-dung/danh-sach-dia-chi" },
-      { id: "account-password", label: "Đổi Mật Khẩu", icon: <BsShieldLock />, link: "/thong-tin-nguoi-dung/doi-mat-khau" },
+      { id: "account-profile", label: "Hồ Sơ", icon: <BsPerson />, link: "/thong-tin-ca-nhan/ho-so" },
+      { id: "account-addresses", label: "Địa Chỉ", icon: <BsGeoAlt />, link: "/thong-tin-ca-nhan/danh-sach-dia-chi" },
+      { id: "account-password", label: "Đổi Mật Khẩu", icon: <BsShieldLock />, link: "/thong-tin-ca-nhan/doi-mat-khau" },
     ],
   },
   {
     id: "orders", label: "Đơn Hàng", icon: <BsBagCheck />,
     children: [
-      { id: "orders-histories", label: "Lịch Sử Mua Hàng", link: "/thong-tin-nguoi-dung/lich-su-mua-hang" },
-      { id: "orders-tracking", label: "Theo Dõi Đơn Hàng", link: "/thong-tin-nguoi-dung/theo-doi-don-hang" },
+      { id: "orders-histories", label: "Lịch Sử Mua Hàng", link: "/thong-tin-ca-nhan/lich-su-mua-hang" },
+      { id: "orders-tracking", label: "Theo Dõi Đơn Hàng", link: "/thong-tin-ca-nhan/theo-doi-don-hang" },
     ],
   },
-  { id: "points", label: "Tích điểm", icon: <BsTicketPerforated />, link: "/thong-tin-nguoi-dung/tich-diem" },
+  { id: "points", label: "Tích điểm", icon: <BsTicketPerforated />, link: "/thong-tin-ca-nhan/tich-diem" },
 ];
 
 const ProfileSmUpSidebar = () => {

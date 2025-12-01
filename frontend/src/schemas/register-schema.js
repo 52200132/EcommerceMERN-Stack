@@ -9,11 +9,6 @@ const registerSchema = z.object({
     .string()
     .min(1, 'Vui lòng nhập email')
     .email('Email không hợp lệ'),
-  password: z
-    .string()
-    .min(1, 'Vui lòng nhập mật khẩu'),
-  confirmPassword: z
-    .string(),
   Addresses: z.object({
     receiver: z.string().min(1, 'Vui lòng nhập tên người nhận'),
     phone: z.string().regex(/^[0-9]{10}$/, 'Số điện thoại không hợp lệ'),
@@ -25,14 +20,6 @@ const registerSchema = z.object({
     postalCode: z.string().min(1, 'Vui lòng nhập mã bưu chính'),
     isDefault: z.boolean().default(true),
   })
-}).superRefine(({ password, confirmPassword }, ctx) => {
-  if ((confirmPassword !== '') && (password !== confirmPassword)) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["confirmPassword"],
-      message: "Mật khẩu không khớp",
-    });
-  }
 });
 
 export default registerSchema;

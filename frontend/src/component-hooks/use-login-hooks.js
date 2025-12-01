@@ -37,7 +37,7 @@ const openWindowPopup = (url) => {
 
 export const useLoginForm = () => {
   const navigate = useNavigate();
-  const [loginUser] = useLoginUserMutation();
+  const [loginUser, { isSuccess }] = useLoginUserMutation();
   const dispatch = useDispatch();
   const formMethods = useForm({
     resolver: zodResolver(loginSchema),

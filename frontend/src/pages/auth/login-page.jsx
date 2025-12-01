@@ -3,11 +3,12 @@ import { MdOutlineReportGmailerrorred } from 'react-icons/md';
 import { Button, Col, Form, Row } from 'react-bootstrap';
 import { useLoginForm, useLoginHandlers } from '#component-hooks/use-login-hooks';
 
-import { useRenderCount } from '#custom-hooks';
+import { useRenderCount, useScrollTo } from '#custom-hooks';
 
 import './auth.scss'
 
 const LoginPage = () => {
+  useScrollTo(0, 'instant');
   useRenderCount('login-page', 'both');
   const { register, onSubmit, formState: { errors } } = useLoginForm();
   const { handleGoogleLogin, handleFacebookLogin, handleTwitterLogin } = useLoginHandlers();

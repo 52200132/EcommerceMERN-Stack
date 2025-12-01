@@ -10,6 +10,7 @@ export const authInitialState = {
     image: '',
     gender: '',
     isLoggedIn: false,
+    resetPasswordFirstTime: false, // cho biết người dùng đã đặt lại mật khẩu lần đầu chưa 
   }
 }
 
@@ -19,6 +20,7 @@ const authSlice = createSlice({
   reducers: {
     updateCredentials: (state, action) => {
       Object.assign(state.user, action.payload);
+      state.user.isLoggedIn = true;
       sessionStorage.setItem('user', JSON.stringify(state.user));
     },
     logout: (state) => {
