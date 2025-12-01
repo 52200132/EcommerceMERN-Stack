@@ -11,6 +11,7 @@ export const protect = async (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       req.user = await User.findById(decoded._id).select('-password');
       req.user.token = token;
+      console.log("Handled by instance:", process.env.HOSTNAME);
       next();
     } else {
       res.status(401).json({ ec: 401, em: 'Not authorized, no token' });
