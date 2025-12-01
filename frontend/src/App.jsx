@@ -23,6 +23,9 @@ import ManageUsersPage from "admins/pages/manage-users/manage-users-page";
 import ManageDiscountCodePage from "admins/pages/manage-discount-code/manage-discount-code";
 import ManageOrdersPage from "admins/pages/manage-orders/manage-orders-page";
 import DashboardPage from "admins/pages/dashboard/dashboard-page";
+import OrderHistoryPage from "pages/profile/order-history-page";
+import OrderTrackingPage from "pages/profile/order-tracking";
+import PointsPage from "pages/profile/points-page";
 
 // import NotFoundPage from "./pages/NotFoundPage"; // Optional: Create a 404 page component
 // import "./App.css";
@@ -53,6 +56,9 @@ const App = () => {
             <Route path="ho-so" element={<ProfilePage />} />
             <Route path="danh-sach-dia-chi" element={<AddressPage />} />
             <Route path="doi-mat-khau" element={<PasswordChangePage />} />
+            <Route path="lich-su-mua-hang" element={<OrderHistoryPage />} />
+            <Route path="theo-doi-don-hang" element={<OrderTrackingPage />} />
+            <Route path="tich-diem" element={<PointsPage />} />
           </Route>
           <Route path="cart" element={<CartPage />} />
           <Route path="checkout" element={<CheckoutPage />} />

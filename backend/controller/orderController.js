@@ -4,7 +4,9 @@ import DiscountCode from "../models/DiscountCode.js";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import transporter from "../mail.js";
+import { get } from "mongoose";
 
+const getStatusData = () => [200, 0, "Success", {}];
 const TAX_RATE = 0.08; // thuong dung VAT 8% - co the thay doi neu can
 const ORDER_STATUSES = ["pending", "processing", "shipped", "delivered", "cancelled"];
 
@@ -457,9 +459,40 @@ export const getOrderByUserId = async (req, res) => {
 	}
 };
 
-export const getStatusHistoryByOrderId = async (req, res) => {
+// hàm phụ trợ tìm kiếm khi order_id ngắn và theo user_id
+export const getStatusHistoryByOrderIdAndUserId = async (req, res) => {
+	const order_id = req.params.order_id;
+	const user_id = req.user._id;
+	let [statusCode, ec, em, dt] = getStatusData();
+	const safeRegex = order_id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	const query = {
+		user_id,
+		$expr: { $regexMatch: { input: { $toString: "$_id" }, regex: safeRegex, options: "i" } },
+	};
 	try {
-		const order_id = req.params.order_id;
+		const order = await Order.findOne(query)
+			.select("StatusHistory user_id")
+			.populate("StatusHistory.change_by", "username isManager");
+
+		if (!order) {
+			statusCode = ec = 404;
+			em = "Order not found";
+		}
+
+		const history = [...(order.StatusHistory || [])].sort(
+			(a, b) => new Date(b.change_at) - new Date(a.change_at)
+		);
+		dt = history;
+		res.status(statusCode).json({ ec, em, dt });
+	} catch (error) {
+		res.status(500).json({ ec: 500, em: error.message });
+	}
+};
+
+export const getStatusHistoryByOrderId = async (req, res) => {
+	const order_id = req.params.order_id;
+	if (typeof order_id === "string" && order_id.length < 24) return getStatusHistoryByOrderIdAndUserId(req, res);
+	try {
 		const order = await Order.findById(order_id)
 			.select("StatusHistory user_id")
 			.populate("StatusHistory.change_by", "username isManager");
@@ -482,10 +515,40 @@ export const getStatusHistoryByOrderId = async (req, res) => {
 	}
 };
 
+// Helper for short order_id search by user
+const getOrderByIdAndUserId = async (req, res) => {
+	const order_id = req.params.order_id;
+	const user_id = req.user._id;
+
+	const safeRegex = order_id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	// const searchRegex = new RegExp(safeRegex, "i");
+	const query = {
+		user_id,
+		$expr: { $regexMatch: { input: { $toString: "$_id" }, regex: safeRegex, options: "i" } },
+	};
+	try {
+		const order = await Order.findOne(query)
+			.populate("StatusHistory.change_by", "username isManager")
+			.populate("user_id", "username email");
+
+		if (!order) {
+			return res.status(404).json({ ec: 404, em: "Order not found" });
+		}
+
+		order.StatusHistory = [...(order.StatusHistory || [])].sort(
+			(a, b) => new Date(b.change_at) - new Date(a.change_at)
+		);
+		res.status(200).json({ ec: 0, em: "Order retrieved successfully", dt: order });
+	} catch (error) {
+		res.status(500).json({ ec: 500, em: error.message });
+	}
+}
+
 // Common function
 export const getOrderById = async (req, res) => {
+	const order_id = req.params.order_id;
+	if (typeof order_id === "string" && order_id.length < 24) return getOrderByIdAndUserId(req, res);
 	try {
-		const order_id = req.params.order_id;
 		const order = await Order.findById(order_id)
 			.populate("StatusHistory.change_by", "username isManager")
 			.populate("user_id", "username email");

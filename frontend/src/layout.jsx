@@ -3,6 +3,7 @@ import { Flip, ToastContainer } from "react-toastify";
 import { createPortal } from "react-dom";
 
 import { Header, Footer } from "#components/layout";
+import ModalDialog from "#components/common/modal-dialog";
 
 const Layout = () => {
   return (
@@ -27,6 +28,8 @@ const Layout = () => {
         theme="light"
         transition={Flip}
       />, document.body)}
+
+      <ModalDialog />
     </>
   );
 }

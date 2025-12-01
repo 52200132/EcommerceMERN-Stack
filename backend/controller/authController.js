@@ -133,14 +133,15 @@ const handleRegister = async (req, res) => {
       return res.status(400).json({ ec: 400, em: "Email đã được sử dụng" });
     }
 
-    if (!password){
+    if (!password) {
       // Create user temp (no set password)
       const user = await User.create({
         username,
         email,
         Addresses
       });
-      return res.status(201).json({ ec: 0, em: 'Đăng ký user thành công (no set password)',
+      return res.status(201).json({
+        ec: 0, em: 'Đăng ký user thành công (no set password)',
         dt: {
           _id: user._id,
           username: user.username,
@@ -150,7 +151,7 @@ const handleRegister = async (req, res) => {
         }
       });
     }
-    
+
     // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -163,15 +164,16 @@ const handleRegister = async (req, res) => {
       Addresses
     });
 
-    return res.status(201).json({ ec: 0, em: 'Đăng ký user thành công (set password)',
+    return res.status(201).json({
+      ec: 0, em: 'Đăng ký user thành công (set password)',
       dt: {
         _id: user._id,
-          username: user.username,
-          email: user.email,
-          isManager: user.isManager,
-          token: generateToken(user._id), // trả về token khi đăng ký thành công
-        }
-      });
+        username: user.username,
+        email: user.email,
+        isManager: user.isManager,
+        token: generateToken(user._id), // trả về token khi đăng ký thành công
+      }
+    });
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
   }
@@ -207,8 +209,8 @@ const handleLogin = async (req, res) => {
 export const getBasicProfile = async (req, res) => {
   try {
     if (req.user) {
-      const { username, email, isManager, _id, token } = req.user;
-      const basicInfo = { username, email, isManager, _id, token };
+      const { username, email, isManager, _id, token, image } = req.user;
+      const basicInfo = { username, email, isManager, _id, token, image };
       res.status(200).json({
         ec: 0,
         em: 'Lấy thông tin thành công',

@@ -1,15 +1,12 @@
 import express from 'express';
 import { protect, admin } from '../middleware/auth.js';
 import {
-  getProfile,
-  updateProfile,
-  updatePassword,
+  getProfile, updateProfile, updatePassword,
   createUserTemp,
-  getAllCarts,
-  getAllAddresses,
-  addAddress,
-  getAllUsers, getUserById, addProductToCart, deleteCartItem, updateCartItem, deleteAddress, updateAddress,
-  updateUserById
+  getAllAddresses, deleteAddress, updateAddress, addAddress,
+  getAllUsers, getUserById, updateUserById,
+  getAllCarts, addProductToCart, deleteCartItem, updateCartItem,
+  getGeneralOfUserPoints, getPointsHistory
 } from '../controller/userController.js'
 
 const router = express.Router();
@@ -88,5 +85,19 @@ router.get('/:user_id', protect, admin, getUserById); // đã check ok
 // @route   PUT /api/users/:user_id
 // @access  Private/Admin
 router.put('/:user_id', protect, admin, updateUserById);
+
+/**
+ * Get general of user point
+ * GET /api/users/me/general-of-points
+ * Private/User
+ */
+router.get("/me/general-of-points", protect, getGeneralOfUserPoints);
+
+/**
+ * Get points history of user
+ * GET /api/users/me/points-history
+ * Private/User
+ */
+router.get("/me/points-history", protect, getPointsHistory);
 
 export default router;

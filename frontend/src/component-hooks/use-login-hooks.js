@@ -9,7 +9,7 @@ import { loginSchema } from '#schemas';
 import { axiosBaseQueryUtil } from '#services/axios-config';
 import { useLoginUserMutation } from '#services/auth-api';
 import { overlayPreloader } from '#utils/overlay-manager';
-import { setCredentials } from '#features/auth-slice';
+import { updateCredentials } from '#features/auth-slice';
 import { useLoginGoogleUserMutation } from '#services';
 import { closeOverlayPreloader } from '#utils';
 import { BASE_URL } from '#services/axios-config.js';
@@ -55,7 +55,7 @@ export const useLoginForm = () => {
       axiosBaseQueryUtil.callbackfn = (data, hasError) => {
         if (hasError) return;
         navigate('/');
-        dispatch(setCredentials(data?.dt));
+        dispatch(updateCredentials(data?.dt));
       };
       axiosBaseQueryUtil.flowMessages = [
         { delay: 0, message: 'Đang xử lý...' },
@@ -121,7 +121,7 @@ export const useLoginHandlers = () => {
       if (data?.ec === 0) {
         if (data?.em) toast.success('Đăng nhập thành công');
         sessionStorage.setItem('user', data?.dt);
-        dispatch(setCredentials(data?.dt));
+        dispatch(updateCredentials(data?.dt));
         navigate('/');
       } else {
         console.error('Lỗi', data?.em);

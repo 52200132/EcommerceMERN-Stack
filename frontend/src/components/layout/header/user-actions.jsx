@@ -38,7 +38,7 @@ const UserActions = () => {
   const dispatch = useDispatch();
   const popupRef = useRef(null);
   const navigate = useNavigate();
-  const user = useTpsSelector((state) => state.auth.user, { includeProps: ['token', 'username'] });
+  const user = useTpsSelector((state) => state.auth.user, { includeProps: ['token', 'username', 'image'] });
   const [linkGoogleAccount] = useLazyLinkGoogleAccountQuery();
 
   const handleLinkGoogleAccount = () => {
@@ -63,7 +63,6 @@ const UserActions = () => {
   };
 
   useEffect(() => {
-
     const handleMessage = (event) => {
       // Kiểm tra origin backend
       if (event.origin !== BASE_URL.replace('/api', '')) return;
@@ -104,9 +103,9 @@ const UserActions = () => {
           overlay={
             <Popover className='no-style-popover'>
               <ul className="user-popover-menu">
-                <li className="popover-item"><Link to="#">Tài khoản của tôi</Link></li>
-                <li className="popover-item"><Link to="#">Đơn mua</Link></li>
-                <li onClick={handleLinkGoogleAccount} className="popover-item"><Link >Liên kết tài khoản google</Link></li>
+                <li className="popover-item"><Link to="/thong-tin-nguoi-dung/tich-diem">Điểm thành viên</Link></li>
+                <li className="popover-item"><Link to="/thong-tin-nguoi-dung/ho-so">Tài khoản của tôi</Link></li>
+                <li className="popover-item"><Link to="/thong-tin-nguoi-dung/lich-su-mua-hang">Đơn mua</Link></li>
                 <li><hr /></li>
                 <li onClick={handleLogout} className="popover-item"><Link to='/'>Đăng xuất</Link></li>
               </ul>

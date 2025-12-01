@@ -3,6 +3,7 @@ import User from "../models/User.js";
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import bcrypt from "bcryptjs";
+import mongoose from "mongoose";
 
 const CART_TAX_RATE = 0.08;
 const SHIPPING_OPTIONS = [
@@ -79,7 +80,7 @@ const buildCartResponse = async (cartItems = []) => {
 export const getProfile = async (req, res) => {
   try {
     const user_id = req.user._id;
-    const profile = await User.findById(user_id).select('-password -Carts -Addresses -Linked_accounts -updatedAt -__v');
+    const profile = await User.findById(user_id).select('-password -Carts -Addresses -updatedAt -__v');
     res.json({ ec: 200, em: "Lấy thông tin profile thành công", dt: profile });
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
@@ -98,10 +99,91 @@ export const updateProfile = async (req, res) => {
       req.user._id,
       updateData,
       { new: true }
-    ).select('-password -points -Carts -Addresses -Linked_accounts -updatedAt -__v');
+    ).select('-password -points -Carts -Addresses -updatedAt -__v');
     clearCacheGroup('userProfile');
     res.json({ ec: 0, em: "Cập nhật thông tin thành công", dt: updatedUser });
 
+  } catch (error) {
+    res.status(500).json({ ec: 500, em: error.message });
+  }
+};
+
+// users/me/general-of-points
+/** 
+ * - điểm khả dụng 
+ * - điểm chờ xét 
+ * - điểm đã sử dụng
+ */
+export const getGeneralOfUserPoints = async (req, res) => {
+  const uerId = req.user._id;
+  const ec = 0;
+  const statusCode = 200;
+  const em = "Lấy thông tin điểm thành viên thành công";
+  const dt = {};
+
+  try {
+    dt.points_available = req.user.points || 0;
+    const result = await Order.aggregate([
+      {
+        $match: {
+          user_id: uerId,
+          payment_status: { $in: ['paid', 'pending'] }
+        }
+      },
+      {
+        $group: {
+          _id: "$payment_status",
+          points_used: { $sum: "$points_used" },
+          loyalty_points_earned: {
+            $sum: {
+              $cond: {
+                if: { $eq: ["$payment_status", "paid"] }, // Điều kiện: Nếu status = 'paid'
+                then: "$loyalty_points_earned",           // THÌ: cộng giá trị của trường amount
+                else: 0                                   // NGƯỢC LẠI: cộng 0
+              }
+            }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          user_id: 1,
+          payment_status: "$_id",
+          points_used: 1,
+          loyalty_points_earned: 1,
+          count: 1
+        }
+      }
+    ]);
+
+    result.forEach(item => {
+      dt.points_used = Math.max(dt.points_used || 0, item.points_used || 0);
+      if (item.payment_status === 'paid') {
+        dt.loyalty_points_earned = item.loyalty_points_earned || 0;
+      } if (item.payment_status === 'pending') {
+        dt.points_pending = item.loyalty_points_earned || 0;
+      }
+    })
+    res.status(statusCode).json({ ec, em, dt });
+  } catch (error) {
+    res.status(500).json({ ec: 500, em: error.message });
+  }
+};
+
+// users/me/points-history
+export const getPointsHistory = async (req, res) => {
+  const userId = req.user._id;
+  const statusCode = 200;
+  const ec = 0;
+  const em = "Lấy lịch sử điểm thành viên thành công";
+  const dt = {};
+  try {
+    const pointsHistory = await Order.find({ user_id: userId })
+      .select('points_used loyalty_points_earned payment_status createdAt')
+      .sort({ createdAt: -1 });
+    dt.points_history = pointsHistory;
+    res.status(statusCode).json({ ec, em, dt });
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
   }

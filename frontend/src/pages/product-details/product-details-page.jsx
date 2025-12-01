@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { Row, Col, Container, Form } from "react-bootstrap";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import parse from "html-react-parser";
 
 import "./product-details-page.scss";
@@ -33,12 +33,11 @@ const ProductDetails = () => {
   useRenderCount("ProductDetails", "ui");
   const userToken = useTpsGetState(state => state?.auth?.user?.token, false);
   const userId = useTpsGetState(state => state?.auth?.user?._id, false);
-  const { productNameSlug } = useParams();
-  console.log(productNameSlug);
+  const { state: { productId } } = useLocation();
   const dispatch = useDispatch();
   const [addToCart, { isLoading: isAddingCart }] = useAddToCartMutation();
-  const { data } = useGetProductByIdQuery(productNameSlug)
-  const { data: ratingData } = useGetRatingsByProductQuery({ productId: productNameSlug, userId });
+  const { data } = useGetProductByIdQuery(productId)
+  const { data: ratingData } = useGetRatingsByProductQuery({ productId: productId, userId });
   useEffect(() => {
     console.log(data, userId);
     if (!data?.dt) return;
@@ -114,6 +113,10 @@ const ProductDetails = () => {
       </table>
     );
   };
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   return (
     <>
@@ -207,7 +210,7 @@ const ProductDetails = () => {
       </section>
       {/* <!-- End Item Details --> */}
       <Ratings />
-      <Comments />
+      <Comments productId={productId} />
     </>
   )
 }

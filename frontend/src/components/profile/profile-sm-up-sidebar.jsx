@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { Collapse } from "react-bootstrap";
 import {
   BsBagCheck,
@@ -12,7 +12,8 @@ import {
   BsShieldLock,
   BsTicketPerforated,
 } from "react-icons/bs";
-import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { NavLink, useNavigate } from "react-router-dom";
 
 const defaultProfile = {
   username: "phngtnphc003",
@@ -24,16 +25,16 @@ const defaultProfile = {
   avatarUrl: "",
 };
 
-const navSchema = [
-  { id: "notifications", label: "Thông Báo", icon: <BsBell />, editable: false },
+const NAV_ITEMS = [
+  { id: "notifications", label: "Thông Báo", icon: <BsBell />, link: "/thong-tin-nguoi-dung/thong-bao" },
   {
     id: "account",
     label: "Tài Khoản Của Tôi",
     icon: <BsPersonCircle />,
     children: [
-      { id: "profile", label: "Hồ Sơ", icon: <BsPerson />, link: "/thong-tin-nguoi-dung/ho-so" },
-      { id: "addresses", label: "Địa Chỉ", icon: <BsGeoAlt />, link: "/thong-tin-nguoi-dung/danh-sach-dia-chi" },
-      { id: "password", label: "Đổi Mật Khẩu", icon: <BsShieldLock />, link: "/thong-tin-nguoi-dung/doi-mat-khau" },
+      { id: "account-profile", label: "Hồ Sơ", icon: <BsPerson />, link: "/thong-tin-nguoi-dung/ho-so" },
+      { id: "account-addresses", label: "Địa Chỉ", icon: <BsGeoAlt />, link: "/thong-tin-nguoi-dung/danh-sach-dia-chi" },
+      { id: "account-password", label: "Đổi Mật Khẩu", icon: <BsShieldLock />, link: "/thong-tin-nguoi-dung/doi-mat-khau" },
     ],
   },
   {
@@ -43,38 +44,26 @@ const navSchema = [
       { id: "orders-tracking", label: "Theo Dõi Đơn Hàng", link: "/thong-tin-nguoi-dung/theo-doi-don-hang" },
     ],
   },
-  { id: "vouchers", label: "Kho Voucher", icon: <BsTicketPerforated />, editable: false },
+  { id: "points", label: "Tích điểm", icon: <BsTicketPerforated />, link: "/thong-tin-nguoi-dung/tich-diem" },
 ];
 
-const ProfileSmUpSidebar = ({
-  user,
-  addresses,
-}) => {
+const ProfileSmUpSidebar = () => {
   const navigate = useNavigate();
-  const profile = useMemo(() => ({ ...defaultProfile, ...user }), [user]);
-  const resolvedAddresses = addresses?.length ? addresses : [];
+  const profile = useSelector((state) => state.auth.user);
+  const [activeSection, setActiveSection] = useState("account-profile");
 
-  const [activeSection, setActiveSection] = useState("profile");
-  const [defaultAddressId, setDefaultAddressId] = useState(() => {
-    const defaultAddr = resolvedAddresses.find((addr) => addr.isDefault);
-    return defaultAddr ? defaultAddr.id : resolvedAddresses[0]?.id || null;
-  });
-  const [expandedNavs, setExpandedNavs] = useState(() =>
-    navSchema.reduce((acc, item) => {
+  const [expandedSections, setExpandedSections] = useState(() => {
+    const openExpandedSectionsInit = new Set(["account"])
+    return NAV_ITEMS.reduce((acc, item) => {
       if (item.children?.length) {
-        acc[item.id] = true;
+        acc[item.id] = openExpandedSectionsInit.has(item.id);
       }
       return acc;
-    }, {})
-  );
+    }, {});
+  });
 
-  useEffect(() => {
-    const defaultAddr = resolvedAddresses.find((addr) => addr.isDefault);
-    setDefaultAddressId(defaultAddr ? defaultAddr.id : resolvedAddresses[0]?.id || null);
-  }, [resolvedAddresses]);
-
-  const toggleNavGroup = (groupId) => {
-    setExpandedNavs((prev) => ({ ...prev, [groupId]: !prev[groupId] }));
+  const toggleSectionExpansion = (sectionId) => {
+    setExpandedSections((prev) => ({ ...prev, [sectionId]: !prev[sectionId] }));
   };
 
   const openEditor = (type, payload) => {
@@ -91,12 +80,12 @@ const ProfileSmUpSidebar = ({
       .toUpperCase()
     : profile.username?.charAt(0)?.toUpperCase() || "U";
 
-  const handleChildNavClick = (navItem) => {
-    setActiveSection(navItem.id);
-    if (navItem.link) {
-      navigate(navItem.link);
-    }
-  };
+  // const handleChildNavClick = (navItem) => {
+  //   setActiveSection(navItem.id);
+  //   if (navItem.link) {
+  //     navigate(navItem.link);
+  //   }
+  // };
 
   return (
     // <section className="profile-dashboard-wrap">
@@ -115,56 +104,37 @@ const ProfileSmUpSidebar = ({
         </div>
       </div>
       <nav className="profile-nav">
-        {navSchema.map((section) => (
-          <div key={section.id} className="profile-nav__group">
+        {NAV_ITEMS.map((section) => section.children ?
+          (<div key={section.id} className="profile-nav__group">
             <button
               type="button"
-              className={`profile-nav__item ${activeSection === section.id ? "is-active" : ""} ${section.children ? "has-children" : ""
-                }`}
-              onClick={() => {
-                if (!section.children) {
-                  setActiveSection(section.id);
-                } else {
-                  toggleNavGroup(section.id)
-                }
-              }}
+              className={`profile-nav__item ${expandedSections[section.id] ? "is-active" : ""} has-children`}
+              onClick={() => toggleSectionExpansion(section.id)}
             >
               <span className="profile-nav__icon">{section.icon}</span>
               <span className="profile-nav__label">{section.label}</span>
-              {section.children && (!expandedNavs[section.id] ? <BsChevronRight className="profile-nav__chevron" /> : <BsChevronDown className="profile-nav__chevron" />)}
+              {!expandedSections[section.id] ? <BsChevronRight className="profile-nav__chevron" /> : <BsChevronDown className="profile-nav__chevron" />}
             </button>
-            {section.children && (
-              <Collapse in={expandedNavs[section.id]}>
-                <div className="profile-nav__children">
-                  {section.children.map((child) => (
-                    <button
-                      type="button"
-                      key={child.id}
-                      className={`profile-nav__child ${activeSection === child.id ? "is-active" : ""}`}
-                      onClick={() => handleChildNavClick(child)}
-                    >
-                      <span className="profile-nav__icon">{child.icon}</span>
-                      <span>{child.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </Collapse>
-              // <div className="profile-nav__children">
-              //   {section.children.map((child) => (
-              //     <button
-              //       type="button"
-              //       key={child.id}
-              //       className={`profile-nav__child ${activeSection === child.id ? "is-active" : ""}`}
-              //       onClick={() => setActiveSection(child.id)}
-              //     >
-              //       <span className="profile-nav__icon">{child.icon}</span>
-              //       <span>{child.label}</span>
-              //     </button>
-              //   ))}
-              // </div>
-            )}
-          </div>
-        ))}
+            <Collapse in={expandedSections[section.id]}>
+              <div className="profile-nav__children">
+                {section.children.map((child) => (
+                  <NavLink key={child.id} to={child.link}
+                    className={({ isActive }) => `profile-nav__child ${isActive ? 'is-active' : ''}`}
+                  >
+                    <span className="profile-nav__icon">{child.icon}</span>
+                    <span>{child.label}</span>
+                  </NavLink>
+                ))}
+              </div>
+            </Collapse>
+          </div>) :
+          (<NavLink key={section.id} to={section.link}
+            className={({ isActive }) => `profile-nav__item ${isActive ? 'is-active' : ''}`}
+          >
+            <span className="profile-nav__icon">{section.icon}</span>
+            <span className="profile-nav__label">{section.label}</span>
+          </NavLink>)
+        )}
       </nav>
     </aside>
     // {/* <div className="profile-dashboard__content">{renderSection()}</div> */}

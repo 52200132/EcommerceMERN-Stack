@@ -9,6 +9,7 @@ import {
 import { IoEye, IoBagOutline } from "react-icons/io5";
 
 import { formatCurrency, formatDateTime } from "utils/format";
+import { PAYMENT_STATUS_META } from "#utils";
 
 const columnHelper = createColumnHelper();
 
@@ -20,15 +21,8 @@ export const STATUS_META = {
   cancelled: { label: "Đã hủy", variant: "secondary" },
 };
 
-export const PAYMENT_META = {
-  pending: { label: "Chờ thanh toán", variant: "warning" },
-  paid: { label: "Đã thanh toán", variant: "success" },
-  failed: { label: "Thanh toán lỗi", variant: "danger" },
-  refunded: { label: "Hoàn tiền", variant: "secondary" },
-};
-
 export const getStatusBadge = (status) => STATUS_META[status] || { label: status || "Không rõ", variant: "light" };
-export const getPaymentBadge = (status) => PAYMENT_META[status] || { label: status || "Không rõ", variant: "light" };
+export const getPaymentBadge = (status) => PAYMENT_STATUS_META[status] || { label: status || "Không rõ", variant: "light" };
 
 const renderUserCell = (user) => {
   if (!user) return <div className="text-muted">Khách vãng lai</div>;

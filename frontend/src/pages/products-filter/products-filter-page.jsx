@@ -1,5 +1,5 @@
-import { use, useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Badge, Button, Container, Form, Spinner } from "react-bootstrap";
 import slugify from "slugify";
 import {
@@ -15,6 +15,7 @@ import {
 import { formatCurrency } from "#utils";
 import { useGetProductFilterQuery } from "#services/product-services";
 import { axiosInstance } from "services/axios-config";
+import { filterOptions, LABTOP_SLUG } from "./filter";
 
 import "./products-filter-page.scss";
 
@@ -34,7 +35,83 @@ const ratingOptions = [
   { value: 3, label: "Từ 3 ★" },
 ];
 
+const FilterSection = ({ title, categorySlug }) => {
+  // console.log(filterOptions[categorySlug]);
+  const [activeSubsection, setActiveSubsection] = useState([]);
+  const [filterState, setFilterState] = useState(() => {
+    const tmep2 = Array.isArray(filterOptions[categorySlug]?.filterFields) ?
+      filterOptions[categorySlug]?.filterFields.reduce((temp3, field) => {
+        temp3[field.attribute] = {
+          active: false,
+          selectedValues: new Set(),
+          getOrigin: () => field,
+        };
+        return temp3;
+      }, {}) : {};
+    // for test
+    tmep2["screen_size"].active = true;
+    tmep2["screen_size"].selectedValues.add("15.6 inch");
+    tmep2["screen_size"].selectedValues.add("15.6 asdfa sd");
+    console.log('tmep2', tmep2);
+    return tmep2;
+  });
+
+  const handleDeleteFilterActive = (attribute) => {
+    setActiveSubsection(prev => [...prev.filter(attr => attr !== attribute)]);
+    setFilterState(prev => ({ ...prev, [attribute]: { ...prev[attribute], active: false, selectedValues: new Set() } }));
+  }
+
+  const handleDeleteAllFilterActive = () => {
+    setActiveSubsection([]);
+    setFilterState(prev => {
+      const next = prev;
+      activeSubsection.forEach(attr => {
+        next[attr].active = false;
+        next[attr].selectedValues = new Set();
+      });
+      return next;
+    });
+  }
+
+  useEffect(() => {
+    console.log('filterState changed', filterState);
+  }, [filterState]);
+
+  return (
+    <>
+      <div className="filter-section mb-3">
+        {filterOptions[categorySlug]?.filterFields.map((field) => {
+          return (
+            <div key={field.attribute} className={`filter-subsection ${filterState[field.attribute]?.active ? "active" : ""}`}>
+              <div className="section-title">{field.label}
+                {/* {field.values?.map((value => (<div>{value} </div>)))} */}
+              </div>
+              {/* Render filter controls based on field.type */}
+            </div>
+          )
+        })}
+      </div>
+      <div className=" mb-3">
+        {activeSubsection.map((subsec) => {
+          const activeField = filterState[subsec];
+          const fieldLabel = activeField?.getOrigin().label || "";
+          return (
+            <div key={subsec} className="filter-subsection active">
+              <div className="section-title">
+                {fieldLabel + ": "}
+                {[...activeField.selectedValues].join(" | ")}
+              </div>
+              <span onClick={() => handleDeleteFilterActive(subsec)}>x</span>
+            </div>
+          )
+        })}
+      </div>
+    </>
+  );
+};
+
 const ProductsFilterPage = () => {
+  const { categorySlug = LABTOP_SLUG } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Math.max(parseInt(searchParams.get("page") || "1", 10), 1);
   const qParam = searchParams.get("q") || "";
@@ -235,8 +312,9 @@ const ProductsFilterPage = () => {
 
   return (
     <div className="tps-product-filter-page">
+      <FilterSection categorySlug={categorySlug} />
       <Container>
-        <div className="page-hero-card">
+        <div className="page-hero-card mb-3">
           <div>
             <p className="eyebrow"><IoFilterSharp /> Bộ lọc & sắp xếp</p>
             <h1>Danh sách sản phẩm</h1>
@@ -255,195 +333,193 @@ const ProductsFilterPage = () => {
           </div>
         </div>
 
-        <div className="filter-layout">
-          <aside className="filter-sidebar">
-            <div className="filter-header">
-              <div>
-                <p className="eyebrow">Bộ lọc</p>
-                <h3>Thu hẹp lựa chọn</h3>
-              </div>
-              <Button variant="link" className="reset-btn" onClick={handleResetFilters}>Xóa tất cả</Button>
+        <div className="filter-sidebar mb-3">
+          <div className="filter-header">
+            <div>
+              <p className="eyebrow">Bộ lọc</p>
+              <h3>Thu hẹp lựa chọn</h3>
             </div>
+            <Button variant="link" className="reset-btn" onClick={handleResetFilters}>Xóa tất cả</Button>
+          </div>
 
-            <div className="filter-section">
-              <div className="section-title">Danh mục</div>
-              <div className="pill-list">
+          <div className="filter-section">
+            <div className="section-title">Danh mục</div>
+            <div className="pill-list">
+              <button
+                className={`pill ${categoryParam === "all" ? "active" : ""}`}
+                onClick={() => updateParams({ category: null })}
+                type="button"
+              >
+                Tất cả
+              </button>
+              {categoryOptions.map((category) => (
                 <button
-                  className={`pill ${categoryParam === "all" ? "active" : ""}`}
-                  onClick={() => updateParams({ category: null })}
+                  key={category}
+                  className={`pill ${categoryParam === category ? "active" : ""}`}
+                  onClick={() => updateParams({ category })}
                   type="button"
                 >
-                  Tất cả
+                  {category}
                 </button>
-                {categoryOptions.map((category) => (
-                  <button
-                    key={category}
-                    className={`pill ${categoryParam === category ? "active" : ""}`}
-                    onClick={() => updateParams({ category })}
-                    type="button"
-                  >
-                    {category}
-                  </button>
-                ))}
-              </div>
+              ))}
             </div>
+          </div>
 
-            <div className="filter-section">
-              <div className="section-title">Thương hiệu</div>
-              <div className="checkbox-list">
-                {brandOptions.map((brand) => (
-                  <label key={brand} className="checkbox-item">
-                    <input
-                      type="checkbox"
-                      checked={selectedBrands.includes(brand)}
-                      onChange={() => handleBrandToggle(brand)}
-                    />
-                    <span>{brand}</span>
-                  </label>
-                ))}
-                {brandOptions.length === 0 && (
-                  <p className="muted">Chưa có dữ liệu thương hiệu.</p>
-                )}
-              </div>
-            </div>
-
-            <div className="filter-section">
-              <div className="section-title">Khoảng giá</div>
-              <div className="price-range">
-                <div className="input-group">
-                  <span>Từ</span>
-                  <Form.Control
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    value={priceDraft.min}
-                    onChange={(e) => setPriceDraft((prev) => ({ ...prev, min: e.target.value }))}
+          <div className="filter-section">
+            <div className="section-title">Thương hiệu</div>
+            <div className="checkbox-list">
+              {brandOptions.map((brand) => (
+                <label key={brand} className="checkbox-item">
+                  <input
+                    type="checkbox"
+                    checked={selectedBrands.includes(brand)}
+                    onChange={() => handleBrandToggle(brand)}
                   />
-                </div>
-                <div className="input-group">
-                  <span>Đến</span>
-                  <Form.Control
-                    type="number"
-                    min="0"
-                    placeholder="10.000.000"
-                    value={priceDraft.max}
-                    onChange={(e) => setPriceDraft((prev) => ({ ...prev, max: e.target.value }))}
-                  />
-                </div>
-                <Button size="sm" variant="primary" onClick={handlePriceApply}>
-                  <IoPricetagOutline /> Áp dụng
-                </Button>
-              </div>
-            </div>
-
-            <div className="filter-section">
-              <div className="section-title">Đánh giá</div>
-              <div className="pill-list">
-                <button
-                  type="button"
-                  className={`pill ${minRating === 0 ? "active" : ""}`}
-                  onClick={() => updateParams({ rating: null })}
-                >
-                  Tất cả
-                </button>
-                {ratingOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className={`pill ${minRating === option.value ? "active" : ""}`}
-                    onClick={() => updateParams({ rating: option.value })}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </aside>
-
-          <section className="catalog-wrapper">
-            <div className="toolbar">
-              <form className="search-control" onSubmit={handleSearch}>
-                <IoSearch />
-                <input
-                  type="text"
-                  placeholder="Tìm theo tên, hashtag..."
-                  value={searchValue}
-                  onChange={(e) => setSearchValue(e.target.value)}
-                />
-                <Button type="submit" size="sm" variant="primary">Tìm kiếm</Button>
-              </form>
-
-              <div className="sort-control">
-                <span>Sắp xếp</span>
-                <Form.Select
-                  size="sm"
-                  value={activeSort?.value}
-                  onChange={(e) => updateParams({ sort: e.target.value })}
-                >
-                  {sortOptions.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </Form.Select>
-              </div>
-
-              <div className="summary">
-                <IoFlash /> Đang hiển thị {displayProducts.length}/{totalFromApi} sản phẩm
-              </div>
-            </div>
-
-            {appliedFilters.length > 0 && (
-              <div className="active-filters">
-                {appliedFilters.map((pill) => (
-                  <button key={pill.key} type="button" className="filter-pill" onClick={pill.onClear}>
-                    {pill.label} <span>×</span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {error && (
-              <div className="error-state">
-                <p>Không tải được danh sách sản phẩm. Vui lòng thử lại.</p>
-                <Button size="sm" onClick={() => refetch()}>Thử lại</Button>
-              </div>
-            )}
-
-            {isInitialLoading ? (
-              <div className="skeleton-grid">
-                {Array.from({ length: 10 }).map((_, idx) => (
-                  <div key={idx} className="skeleton-card" />
-                ))}
-              </div>
-            ) : (
-              <>
-                {displayProducts.length === 0 ? (
-                  <div className="empty-state">
-                    <p>Không có sản phẩm phù hợp với bộ lọc hiện tại.</p>
-                    <Button variant="outline-primary" onClick={handleResetFilters}>Xóa bộ lọc</Button>
-                  </div>
-                ) : (
-                  <div className="product-grid">
-                    {displayProducts.map((product) => (
-                      <ProductCard key={product._id} product={product} />
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-
-            <div className="load-more">
-              {hasMore && (
-                <Button
-                  variant="outline-primary"
-                  onClick={handleLoadMore}
-                  disabled={isLoadMore}
-                >
-                  {isLoadMore ? <Spinner size="sm" animation="border" /> : <IoArrowDownCircleOutline />}
-                  <span>Xem thêm 15 sản phẩm</span>
-                </Button>
+                  <span>{brand}</span>
+                </label>
+              ))}
+              {brandOptions.length === 0 && (
+                <p className="muted">Chưa có dữ liệu thương hiệu.</p>
               )}
             </div>
-          </section>
+          </div>
+
+          <div className="filter-section">
+            <div className="section-title">Khoảng giá</div>
+            <div className="price-range">
+              <div className="input-group">
+                <span>Từ</span>
+                <Form.Control
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={priceDraft.min}
+                  onChange={(e) => setPriceDraft((prev) => ({ ...prev, min: e.target.value }))}
+                />
+              </div>
+              <div className="input-group">
+                <span>Đến</span>
+                <Form.Control
+                  type="number"
+                  min="0"
+                  placeholder="10.000.000"
+                  value={priceDraft.max}
+                  onChange={(e) => setPriceDraft((prev) => ({ ...prev, max: e.target.value }))}
+                />
+              </div>
+              <Button size="sm" variant="primary" onClick={handlePriceApply}>
+                <IoPricetagOutline /> Áp dụng
+              </Button>
+            </div>
+          </div>
+
+          <div className="filter-section">
+            <div className="section-title">Đánh giá</div>
+            <div className="pill-list">
+              <button
+                type="button"
+                className={`pill ${minRating === 0 ? "active" : ""}`}
+                onClick={() => updateParams({ rating: null })}
+              >
+                Tất cả
+              </button>
+              {ratingOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`pill ${minRating === option.value ? "active" : ""}`}
+                  onClick={() => updateParams({ rating: option.value })}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="catalog-wrapper">
+          <div className="toolbar">
+            <form className="search-control" onSubmit={handleSearch}>
+              <IoSearch />
+              <input
+                type="text"
+                placeholder="Tìm theo tên, hashtag..."
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+              />
+              <Button type="submit" size="sm" variant="primary">Tìm kiếm</Button>
+            </form>
+
+            <div className="sort-control">
+              <span>Sắp xếp</span>
+              <Form.Select
+                size="sm"
+                value={activeSort?.value}
+                onChange={(e) => updateParams({ sort: e.target.value })}
+              >
+                {sortOptions.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </Form.Select>
+            </div>
+
+            <div className="summary">
+              <IoFlash /> Đang hiển thị {displayProducts.length}/{totalFromApi} sản phẩm
+            </div>
+          </div>
+
+          {appliedFilters.length > 0 && (
+            <div className="active-filters">
+              {appliedFilters.map((pill) => (
+                <button key={pill.key} type="button" className="filter-pill" onClick={pill.onClear}>
+                  {pill.label} <span>×</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {error && (
+            <div className="error-state">
+              <p>Không tải được danh sách sản phẩm. Vui lòng thử lại.</p>
+              <Button size="sm" onClick={() => refetch()}>Thử lại</Button>
+            </div>
+          )}
+
+          {isInitialLoading ? (
+            <div className="skeleton-grid">
+              {Array.from({ length: 10 }).map((_, idx) => (
+                <div key={idx} className="skeleton-card" />
+              ))}
+            </div>
+          ) : (
+            <>
+              {displayProducts.length === 0 ? (
+                <div className="empty-state">
+                  <p>Không có sản phẩm phù hợp với bộ lọc hiện tại.</p>
+                  <Button variant="outline-primary" onClick={handleResetFilters}>Xóa bộ lọc</Button>
+                </div>
+              ) : (
+                <div className="product-grid">
+                  {displayProducts.map((product) => (
+                    <ProductCard key={product._id} product={product} />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          <div className="load-more">
+            {hasMore && (
+              <Button
+                variant="outline-primary"
+                onClick={handleLoadMore}
+                disabled={isLoadMore}
+              >
+                {isLoadMore ? <Spinner size="sm" animation="border" /> : <IoArrowDownCircleOutline />}
+                <span>Xem thêm 15 sản phẩm</span>
+              </Button>
+            )}
+          </div>
         </div>
       </Container>
     </div>
@@ -452,10 +528,16 @@ const ProductsFilterPage = () => {
 
 const ProductCard = ({ product }) => {
   const categorySlug = slugify(product?.category_name || "san-pham", { lower: true, locale: "vi", trim: true });
-  const detailPath = `/san-pham/${categorySlug}/${product?._id}`;
+  const productNameSlug = slugify(product?.product_name || "product", { lower: true, locale: "vi", trim: true });
+  const detailPath = `/san-pham/${categorySlug}/${productNameSlug}`;
 
   return (
-    <Link className="product-card" to={detailPath}>
+    <Link
+      className="product-card" to={detailPath}
+      state={{
+        productId: product?._id,
+      }}
+    >
       <div className="thumb">
         {product?.image
           ? <img src={product.image} alt={product?.product_name} />

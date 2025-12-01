@@ -1,8 +1,8 @@
-const LABTOP_SLUG = "laptop";
-const TAI_NGHE_CHUP_TAI_SLUG = "tai-nghe-chup-tai";
-const BAN_PHIM_SLUG = "ban-phim";
+export const LABTOP_SLUG = "laptop";
+export const TAI_NGHE_CHUP_TAI_SLUG = "tai-nghe-chup-tai";
+export const BAN_PHIM_SLUG = "ban-phim";
 
-const filterSchema = {
+export const filterOptions = {
   [LABTOP_SLUG]: {
     category_name: "Laptop",
     filterFields: [
@@ -146,4 +146,4 @@ const filterSchema = {
   // }
 };
 
-export default filterSchema;
+export default filterOptions;

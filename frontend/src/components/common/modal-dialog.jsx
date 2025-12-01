@@ -1,6 +1,7 @@
 import { Button, Modal } from 'react-bootstrap';
 import { cloneElement, createElement } from 'react';
 import { userModalDialogStore, useShallow } from '#custom-hooks';
+import { setShow } from '#features/modal-slice';
 
 const renderBodyComponent = (bodyComponent, bodyProps) => {
   if (typeof bodyComponent === 'function') {
@@ -15,6 +16,7 @@ const renderBodyComponent = (bodyComponent, bodyProps) => {
 const ModalDialog = () => {
   const {
     show,
+    setShow,
     size,
     title,
     bodyComponent,
@@ -25,6 +27,7 @@ const ModalDialog = () => {
   } = userModalDialogStore(
     useShallow((zs) => ({
       show: zs.show,
+      setShow: zs.setShow,
       size: zs.size,
       title: zs.title,
       bodyComponent: zs.bodyComponent,
@@ -36,11 +39,13 @@ const ModalDialog = () => {
   );
 
   const handleHide = () => {
-    if (stack.length > 1) {
-      pop();
-    } else {
-      reset();
-    }
+    setShow(false);
+    setTimeout(() => reset(), 300);
+    // if (stack.length > 1) {
+    //   pop();
+    // } else {
+    //   reset();
+    // }
   };
 
   return (

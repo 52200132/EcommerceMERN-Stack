@@ -8,7 +8,8 @@ export const authInitialState = {
     isManager: false,
     token: '',
     image: '',
-    gender: ''
+    gender: '',
+    isLoggedIn: false,
   }
 }
 
@@ -16,7 +17,7 @@ const authSlice = createSlice({
   name: 'auth',
   initialState: authInitialState,
   reducers: {
-    setCredentials: (state, action) => {
+    updateCredentials: (state, action) => {
       Object.assign(state.user, action.payload);
       sessionStorage.setItem('user', JSON.stringify(state.user));
     },
@@ -27,5 +28,5 @@ const authSlice = createSlice({
   },
 })
 
-export const { setCredentials, logout } = authSlice.actions
+export const { updateCredentials, logout } = authSlice.actions
 export default authSlice.reducer

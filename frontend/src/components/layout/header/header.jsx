@@ -41,6 +41,7 @@ const Header = () => {
       };
     }
   }, [isLoggedIn]);
+
   useEffect(() => {
     let lastScrollY = window.scrollY;
     const navbar = headerMiddleRef.current;

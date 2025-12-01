@@ -6,6 +6,7 @@ import { useTpsSelector } from '#custom-hooks';
 import { useFilterRatings } from '#component-hooks/use-product-details-hooks';
 import { formatDateTime } from '#utils';
 
+import unknownAvatar from "assets/images/cat-avatar.jpg";
 import RatingModal from './rating-modal';
 
 const Ratings = () => {
@@ -27,10 +28,10 @@ const Ratings = () => {
     return [...RatingOfMe, ...rawRatings].map(item => ({
       id: item?._id?.$oid || item?._id || item?.id,
       username: item?.user_id?.username || 'Ẩn danh',
-      avatar: item?.user_id?.image || (item?.user_id?.username || '?').charAt(0),
+      avatar: item?.user_id?.image,
       rating: item?.rating || 0,
       comment: item?.comment || '',
-      date: formatDateTime(item?.created_at),
+      date: formatDateTime(item?.createdAt),
       // hasImage: Array.isArray(item?.images) && item.images.length > 0,
       hasBought: Boolean(item?.hasBought || item?.isPurchased)
     }));
@@ -156,7 +157,7 @@ const Ratings = () => {
             {filteredRatings.map(rating => (
               <div key={rating.id} className="tps-rating-item">
                 <div className="tps-rating-avatar">
-                  <span>{rating.avatar}</span>
+                  <img src={rating.avatar || unknownAvatar} alt={rating.username.charAt(0)} />
                 </div>
                 <div className="tps-rating-content">
                   <div className="tps-rating-info">

@@ -1,6 +1,10 @@
 import express from "express";
 import { protect } from "../middleware/auth.js";
-import { createComment, getAllCommentsByProductId, updateUserComment, deleteUserComment } from "../controller/commentController.js";
+import {
+  createComment, getAllCommentsByProductId, updateUserComment, deleteUserComment,
+  updateComment,
+  deleteComment
+} from "../controller/commentController.js";
 
 const router = express.Router();
 
@@ -13,6 +17,9 @@ router.post("/product/:product_id", createComment); //đã check ok
 // @route   GET /api/comments/product/:product_id
 // @access  Public/System
 router.get("/product/:product_id", getAllCommentsByProductId); //đã check ok
+
+router.put("/:comment_id", updateComment);
+router.delete("/:comment_id", deleteComment);
 
 // @desc Update User's comment
 // @route PUT /api/comments/product/:product_id
