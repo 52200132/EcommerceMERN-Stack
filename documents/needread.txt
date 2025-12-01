@@ -1,0 +1,27 @@
+Quy trình tạo đơn - thanh toán:
+- nhập địa chỉ
+- chọn phương thức gia0/giá ship
+- nhập mã giảm giá
+- chọn dùng điểm Khách hàng thân thiết (nhập điểm cần dùng)
+- ghi chú
+- chọn phương thức thanh toán (COD / online)
+- xác nhận
+- đặt hàng
+- thanh toán (nếu online) - tự động thành công (để phát triển sau)
+Giao diện (đã đăng nhập) bao gồm: 
+- Hiển thị nhập địa chỉ mặc định của người dùng, cho người dùng có thể chọn từ danh sách địa chỉ. Nếu người dùng chọn nhập địa chỉ khác thì hiện các ô input cho nhập địa chỉ, và hỏi có muốn lưu vào danh sách địa chỉ không
+- Hiển thị phương thức vận chuyển (nhanh: 30k/hỏa tốc: 60k)
+- Hiển thị  khung dùng mã giảm (xem được thông tin mã giảm khi nhập vào nếu được)
+- Hiển thị khung dùng điểm (chỉ được chọn điểm thấp hơn đang có trong user bằng cách giảm từ points hiện có - nếu chưa đăng nhập ko hiện)
+- Hiển thị khung ghi chú
+- phương thức thanh toán (COD / online)
+- Hiển thị thông tin xác nhận 
+(
+ . 1  gọi ra mã giảm lấy tiền giảm 
+ . 2 quy đổi điểm thưởng 
+ . Hiển thị giao diện tính toán: tổng tiền = tổng tiền hàng - tiền mã giảm - điểm thưởng*1000đ
+)
+
+Giao diện chưa đăng nhập:
+- yêu cầu nhập thêm tên , email, địa chỉ 
+- phần còn lại tương tự 

@@ -1,0 +1,61 @@
+- Đọc kỹ /docutments/Discount_Management_Description.docx
+- Giúp tôi thực hiện "Discount management: The administrator should have the ability to view a list of discount codes along with relevant details, including the creation time, discount value, the number of times the code has been used out of the maximum allowed usage, and a list of orders where the coupon has been applied. Additionally, the administrator should be able to create new discount codes"
+- Bạn đã làm kha khá rôi
+- với bảng thì dùng useReactTable, dùng modal-dialog được quản lý bởi userModalDialogStore (hiển thị chi tiết, tạo mới, ...). Và có sử dụng phân trang dùng PaginationControl
+- Phần xem chi tiết thì cái các đơn đã dùng mã discount đó, admin có thể chủ động xem VD: khi nhấn nút nào đó thì mới fetch Api á
+- Bộ lộc đơn giản: tìm mã giảm giá theo mã đơn hàng,...
+- Text trên UI thì tiếng Việt (utf-8) ***
+- viết lại manage-discount-code-page.jsx tham thảo file manage-user-page.jsx và manage-product-page.jsx layout đồng bộ với 2 trang đó, sử dụng tiếng việt để hiện thị UI (tránh lỗi utf-8)
+- với phần tạo mã mới thì dùng useForm và viết schema lưu vào thư mục schemas
+
+##################
+Product ở trang người dùng
+- đọc documents/Product_Management_Description.docx
+- đừng chỉnh sửa các models của tôi, thay đổi chỉ khi thật sự cần thiết
+- hiển thị danh sách sản phẩm theo dạng grid, mỗi hàng 5 sản phẩm và responsive, không phân trang dùng số mà có nút xem thêm 15 sản phẩm ở cuối danh sách sản phẩm được tải
+- Giúp tôi thực hiện trang product-filter-page.jsx, với các yêu cầu trong word là 1. Product Catalog (Trang danh sách sản phẩm), 3. Product Ordering (Sắp xếp danh sách sản phẩm), 4. Product Search and Filtering (Tìm kiếm và lọc sản phẩm)
+- sử dựng tiếng việt có dấu cho UI (tránh lỗi unicode)
+- viết scss theo chủ đề trang web của tôi
+
+#########################
+Quản lý đơn hàng ở admin
+- đọc documents/Order_Management_Description.docx
+- sử dựng tiếng việt có dấu cho UI (tránh lỗi unicode)
+- đừng chỉnh sửa các models của tôi, thay đổi chỉ khi thật sự cần thiết
+- viết scss theo chủ đề trang web của tôi
+- Quản lý đơn hàng: có phần tổng quan (tổng số đơn chờ xác nhận, đang xử lý, đã ship, đã giao, đã hủy theo các ngày gần đây, cho chọn và có thể nhập, mặc đinh 3 ngày gần đây)
+- Có filter: theo thời gian, tìm bằng mã đơn,...
+- sử dụng useReactTable cho bảng, xem chi tiết và cập nhật dùng modal dialog được quản lý bởi userModalDialogStore, có phân trang dùng userModalDialogStore
+- dựa vào layout của manage-user 
+
+###########################
+Xem lại quản lý quản phẩm của tôi manage-products-page.jsx
+- Dọc documents/Admin_Product_Management_Description.docx
+- sử dựng tiếng việt có dấu cho UI (tránh lỗi unicode)
+- đừng chỉnh sửa các models của tôi, thay đổi chỉ khi thật sự cần thiết
+- viết scss theo chủ đề trang web của tôi
+- Luôn hiện filter. Khi tạo mới: product cho nhập thêm trường loại (category). Tạo variant thì có thêm trường cost_price (giá nhập)
+- Quản lý sản phẩm có 3 mục con gồm: Tất cả sản phẩn, Kho hàng, Danh mục sản phẩm. có filter
+- Chuyển các api trong product-api.js vào admin-service.js rồi xóa product-api.js
+- sử dụng useReactTable cho bảng, xem chi tiết và cập nhật dùng modal dialog được quản lý bởi userModalDialogStore (cái nào dữ liệu đơn giản hả dùng), có phân trang dùng PaginationControl
+- modal dialog của userModalDialogStore viết thêm cơ chế stack
+- Triển khai chức năng tạo và xóa variant trong trang tất cả sản phẩm, hiện tại tôi đã có table các sản phẩm khi nhất vào row nó expanse các variant của sản phẩm đó, mỗi dòng có thể edit, xóa. Khi tạo mới variant ở đây thì áp dụng cơ chế stack của modal dialog, tân dụng "variant.jsx"
+- Triển khai quản lý kho hàng, và quản lsy danh mục sản phẩm category
+- Tham khảo layout của manage-users-page.jsx
+
+##################################
+Giúp tôi triển khai dashboard (tổng quan)
+- đọc documents/Dashboards_Description.docx
+- Triền khai dashboard nâng cao, vẽ biểu đồ dùng thư viện chart.js 3
+- sử dựng tiếng việt có dấu cho UI (tránh lỗi unicode)
+- đừng chỉnh sửa các models của tôi, thay đổi chỉ khi thật sự cần thiết
+- viết scss theo chủ đề trang web của tôi
+- admin/page/dashboard lưu trang, admin/components/dashboard lưu các components
+
+#################################
+- đọc documents/Order_Tracking_and_History_Description.docx
+- Giúp tôi thực hiện Order_Tracking, Order_History và phần tài khoản liên kết. Với phần lịch sử tích điểm nữa
+- Phần tài khoản liên kết thì để trong trang thong-tin-nguoi-dung/ho-so luôn nhưng một phần riêng, ở trang đó luôn thêm chức năng cho người dùng tải lên ảnh đại điện dùng ImageUploading
+- sử dựng tiếng việt có dấu cho UI (tránh lỗi unicode)
+- đừng chỉnh sửa các models của tôi, thay đổi chỉ khi thật sự cần thiết
+- sửa file scss theo cấu trúc scss, nếu có viết thêm thì style theo chủ đề trang web của tôi
