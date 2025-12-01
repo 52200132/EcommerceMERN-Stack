@@ -312,7 +312,7 @@ export const createOrder = async (req, res) => {
 			const emailTarget = orderUser.email;
 			if (emailTarget) {
 				await transporter.sendMail({
-					from: `"Your App" <${process.env.EMAIL_USER}>`,
+					from: `${process.env.APP_NAME} <${process.env.EMAIL_USER}>`,
 					to: emailTarget,
 					subject: "Xác nhận đơn hàng",
 					text: `
@@ -445,6 +445,249 @@ export const createOrder = async (req, res) => {
 		const statusCode = error?.statusCode || 500;
 		res.status(statusCode).json({ ec: statusCode, em: error.message });
 	}
+        // Đơn hàng cho khách không đăng nhập
+        else {
+	// Kiểm tra nếu email đã được tạo tài khoản
+	const userExists = await User.findOne({ email });
+	if (userExists) {
+		await transporter.sendMail({
+			from: `${process.env.APP_NAME} <${process.env.EMAIL_USER}>`,
+			to: email,
+			subject: "Email đã tạo tài khoản",
+			text: `Xin chào ${userExists.email},
+
+                    Hệ thống ghi nhận rằng email của bạn đã được sử dụng để tạo tài khoản nhằm hỗ trợ lưu trữ và quản lý đơn hàng.
+
+                    Dưới đây là thông tin tài khoản của bạn:
+
+                    - Username: ${userExists.username}
+                    - Email: ${userExists.email}
+                    - Password mặc định: ${process.env.USER_PASSWORD_DEFAULT}
+
+                    Vui lòng đăng nhập và đổi mật khẩu ngay sau khi truy cập để đảm bảo an toàn bảo mật.
+
+                    Nếu bạn không phải là người thực hiện hành động này, vui lòng liên hệ ngay với đội ngũ hỗ trợ để được kiểm tra và xử lý.
+
+                    Trân trọng,
+                    ${process.env.APP_NAME} Team
+                    `,
+			html: `<div style="width:100%; background:#f5f5f5; padding:20px 0; font-family:Arial, sans-serif;">
+                    <div style="max-width:600px; background:#ffffff; margin:auto; padding:25px; border-radius:8px; box-shadow:0 0 8px rgba(0,0,0,0.05);">
+
+                        <h2 style="text-align:center; color:#333; margin-bottom:5px;">Thông báo tạo tài khoản tự động</h2>
+                        <p style="text-align:center; margin:0; color:#666;">Email của bạn đã được sử dụng để tạo tài khoản.</p>
+
+                        <p style="margin-top:25px;">
+                        Xin chào <strong>${userExists.username || userExists.email}</strong>,
+                        </p>
+
+                        <p>
+                        Hệ thống đã tự động tạo tài khoản cho bạn nhằm lưu trữ thông tin đơn hàng và hỗ trợ quá trình mua sắm.
+                        Dưới đây là thông tin tài khoản:
+                        </p>
+
+                        <h3 style="margin-top:25px; color:#333;">👤 Thông tin tài khoản</h3>
+
+                        <table width="100%" style="border-collapse:collapse; margin-top:10px;">
+                        <tr>
+                            <td style="padding:8px 0; color:#555;">Email:</td>
+                            <td style="padding:8px 0; text-align:right; font-weight:bold;">${userExists.email}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:8px 0; color:#555;">Mật khẩu mặc định:</td>
+                            <td style="padding:8px 0; text-align:right; font-weight:bold; color:#d9534f;">
+                            ${process.env.USER_PASSWORD_DEFAULT}
+                            </td>
+                        </tr>
+                        </table>
+
+                        <p style="margin-top:20px;">
+                        Vui lòng đăng nhập và <strong>đổi mật khẩu ngay</strong> để đảm bảo an toàn thông tin.
+                        </p>
+
+                        <p style="margin-top:15px;">
+                        Nếu bạn không phải là người thực hiện hành động này, vui lòng liên hệ với đội ngũ hỗ trợ của chúng tôi để được kiểm tra và xử lý ngay.
+                        </p>
+
+                        <p style="margin-top:30px; text-align:center;">
+                        <b>Trân trọng,<br>${process.env.APP_NAME} Team</b>
+                        </p>
+
+                    </div>
+                    </div>
+                    `,
+		});
+		return res.status(400).json({ ec: 400, em: "Email đã tạo tài khoản, xin hãy đăng nhập. Hoặc nếu bạn chưa tạo, hãy check email của chúng tôi." });
+	}
+
+	// Kiểm tra số lượng đặt hàng với stock/ nếu ok thì cập nhật waiting_for_delivery
+	for (const item of Items) {
+		const product = await Product.findById(item.product_id);
+		if (!product.checkQuantity(item.quantity, item.variant.sku)) {
+			return res.status(400).json({ ec: 400, em: `Sản phẩm ${item.product_name} không đủ số lượng đặt hàng` });
+		}
+		const list_warehouses = product.updateStockAfterOrder(item.quantity, item.variant.sku);
+		await product.save();
+	}
+
+	// Tạo user tạm để gán đơn hàng
+	const user = await User.create({
+		username,
+		email,
+		Addresses
+	});
+
+	// tính tổng tiền hàng
+	const total_amount = Items.reduce((sum, item) => {
+		return sum + item.variant.price * item.quantity;
+	}, 0);
+
+	// tính giảm giá từ mã giảm giá nếu có
+	const Dcode = await DiscountCode.findOne({ code: discount_code });
+	const discount = Dcode ? Dcode.discount : 0;
+
+	// tính grand_total
+	const grand_total = Math.max(0, total_amount + shipment.fee - discount);
+
+	const newOrder = await new Order({
+		user_id: user._id,
+		Items,
+		discount_code,
+		points_used: 0, // khách ko đăng nhập ko dùng điểm
+		shipping_address: user.Addresses[0], // lấy địa chỉ đầu tiên
+		total_amount,
+		discount,
+		grand_total,
+		shipment,
+		payment_method,
+		notes
+	});
+	await newOrder.save();
+
+	// Gửi email xác nhận đơn hàng
+	await transporter.sendMail({
+		from: `${process.env.APP_NAME} <${process.env.EMAIL_USER}>`,
+		to: user.email,
+		subject: "Xác nhận đơn hàng",
+		text: `
+                        Cảm ơn bạn đã đặt hàng tại cửa hàng của chúng tôi!
+
+                        Mã đơn hàng: ${newOrder._id}
+                        Trạng thái: ${newOrder.order_status}
+
+                        Sản phẩm:
+                            ${newOrder.Items.map(i =>
+			`- ${i.product_name} | SKU: ${i.variant.sku} | SL: ${i.quantity} | Giá: ${i.variant.price.toLocaleString()} VND`
+		).join('\n')
+			}
+
+                        Tổng tiền sản phẩm: ${newOrder.total_amount.toLocaleString()} VND
+                        Phí vận chuyển: ${newOrder.shipment.fee.toLocaleString()} VND
+                        Mã giảm giá: ${newOrder.discount_code || "Không có"}
+                        Giảm giá: -${newOrder.discount.toLocaleString()} VND
+                        Sử dụng điểm KHTT: -${(newOrder.points_used * 1000).toLocaleString()} VND
+                        Tổng thanh toán: ${newOrder.grand_total.toLocaleString()} VND
+
+                        Phương thức thanh toán: ${newOrder.payment_method}
+                        Địa chỉ nhận hàng: ${newOrder.shipping_address.receiver}, ${newOrder.shipping_address.street}, ${newOrder.shipping_address.ward}, ${newOrder.shipping_address.district}, ${newOrder.shipping_address.province}
+
+                        Ghi chú: ${newOrder.notes || "Không có"}
+
+                        Chúng tôi sẽ tiếp tục cập nhật khi đơn hàng được xử lý.
+                        `,
+		html: `
+                    <div style="width:100%; background:#f5f5f5; padding:20px 0; font-family:Arial, sans-serif;">
+                    <div style="max-width:600px; background:white; margin:auto; padding:20px; border-radius:8px;">
+
+                        <h2 style="text-align:center; color:#333;">Cảm ơn bạn đã đặt hàng!</h2>
+
+                        <p>Xin chào <b>${newOrder.shipping_address.receiver}</b>,</p>
+                        <p>Cảm ơn bạn đã mua sắm tại cửa hàng của chúng tôi. Dưới đây là thông tin đơn hàng của bạn:</p>
+
+                        <!-- Order Info -->
+                        <table width="100%" style="border-collapse:collapse; margin-top:15px;">
+                        <tr>
+                            <td style="padding:8px 0;"><b>Mã đơn hàng:</b></td>
+                            <td style="padding:8px 0;">${newOrder._id}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:8px 0;"><b>Trạng thái:</b></td>
+                            <td style="padding:8px 0;">${newOrder.order_status}</td>
+                        </tr>
+                        </table>
+
+                    <h3 style="margin-top:25px;">🛒 Sản phẩm đã mua</h3>
+                    <table width="100%" style="border-collapse:collapse;">
+                    ${newOrder.Items.map((i) => `
+                        <tr style="border-bottom:1px solid #ddd;">
+                        <td style="padding:10px 0;">
+                            <b>${i.product_name}</b><br>
+                            <small>SKU: ${i.variant.sku}</small><br>
+                            <small>Số lượng: ${i.quantity}</small><br>
+                            <small>Giá: ${i.variant.price.toLocaleString()} VND</small>
+                        </td>
+                        </tr>
+                    `).join('')}
+                    </table>
+
+                    <h3 style="margin-top:25px;">💰 Chi tiết thanh toán</h3>
+                    <table width="100%" style="border-collapse:collapse;">
+                    <tr>
+                        <td style="padding:5px 0;">Tổng tiền sản phẩm:</td>
+                        <td style="padding:5px 0; text-align:right;">${newOrder.total_amount.toLocaleString()} VND</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:5px 0;">Phí vận chuyển:</td>
+                        <td style="padding:5px 0; text-align:right;">${newOrder.shipment.fee.toLocaleString()} VND</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:5px 0;">Mã giảm giá:</td>
+                        <td style="padding:5px 0; text-align:right;">${newOrder.discount_code || "Không có"}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:5px 0;">Giảm giá:</td>
+                        <td style="padding:5px 0; text-align:right;">-${newOrder.discount.toLocaleString()} VND</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:5px 0;">Điểm đã sử dụng:</td>
+                        <td style="padding:5px 0; text-align:right;">-${(newOrder.points_used * 1000).toLocaleString()} VND</td>
+                    </tr>
+                    <tr style="border-top:1px solid #ddd;">
+                        <td style="padding:10px 0; font-size:16px;"><b>Tổng thanh toán:</b></td>
+                        <td style="padding:10px 0; text-align:right; font-size:16px; color:#d9534f;">
+                        <b>${newOrder.grand_total.toLocaleString()} VND</b>
+                        </td>
+                    </tr>
+                    </table>
+
+                    <h3 style="margin-top:25px;">📍 Địa chỉ giao hàng</h3>
+                    <p style="line-height:1.6;">
+                    ${newOrder.shipping_address.receiver}<br/>
+                    ${newOrder.shipping_address.street}, ${newOrder.shipping_address.ward}<br/>
+                    ${newOrder.shipping_address.district}, ${newOrder.shipping_address.province}<br/>
+                    SĐT: ${newOrder.shipping_address.phone}
+                    </p>
+
+                    <h3 style="margin-top:25px;">📝 Ghi chú</h3>
+                    <p>${newOrder.notes || "Không có"}</p>
+
+                    <p style="margin-top:30px;">
+                    Chúng tôi sẽ thông báo cho bạn khi đơn hàng được xử lý.<br>
+                    <b>Cảm ơn bạn đã mua sắm tại cửa hàng!</b>
+                    </p>
+
+                </div>
+                </div>
+                `,
+	});
+
+	res.status(201).json({ ec: 0, em: "Order created successfully", dt: newOrder });
+}
+    } catch (error) {
+	res.status(500).json({ ec: 500, em: error.message });
+}
+
+    // TODO: Sau khi tạo đơn hàng (nếu thanh toán online) gọi phương thức thanh toán tích hợp
 };
 
 export const getOrderByUserId = async (req, res) => {
@@ -764,7 +1007,7 @@ export const updateOrderStatus = async (req, res) => {
 		}
 
 		const order = await Order.findById(order_id).select(
-			"_id user_id Items order_status StatusHistory points_used total_amount discount_code grand_total loyalty_points_earned"
+			"_id user_id Items order_status payment_method payment_status StatusHistory points_used total_amount discount_code grand_total loyalty_points_earned"
 		);
 		if (!order) {
 			return res.status(404).json({ ec: 404, em: "Order not found" });
@@ -775,55 +1018,72 @@ export const updateOrderStatus = async (req, res) => {
 			return res.status(400).json({ ec: 400, em: "Order status is the same as the current status" });
 		}
 
+		// Không cho đổi trạng thái trừ khi đang ở trạng thái pending
 		if (oldStatus === "delivered" || oldStatus === "cancelled") {
 			return res.status(400).json({ ec: 400, em: "Status order cannot be changed once delivered or cancelled" });
 		}
 		order.order_status = newStatus;
+		// Cập nhật lịch sử thay đổi trạng thái
 		order.StatusHistory.push({
 			status: newStatus,
 			change_at: new Date(),
-			change_by: req.user._id,
+			change_by: req.user._id
 		});
 		await order.save();
 
-		const user = await User.findById(order.user_id).select("points");
+		// Xử lý điểm khách hàng thân thiết
+		// Lấy user
+		const user = await User.findById(order.user_id).select('points');
 		if (!user) {
 			return res.status(404).json({ ec: 404, em: "User not found" });
-		}
+		};
 
-		if (order.order_status === "delivered") {
-			const pointsEarned =
-				order.loyalty_points_earned || Math.floor((order.grand_total || 0) / 10000);
-			user.points += pointsEarned;
+		// Nếu đơn được giao (delivered) thì cộng điểm
+		if (order.order_status === 'delivered') {
+			// console.log('Points used before adding for user:', user.points);
+			user.points += parseInt((order.total_amount * 0.1) / 1000);
+			// console.log(parseInt((order.total_amount * 0.1) / 1000))
+			// console.log('User points after delivery:', user.points);
 			await user.save();
 
+			// Xử lý cập nhật stock và số lượng đã bán
 			for (const item of order.Items) {
 				const product = await Product.findById(item.product_id);
 				if (product) {
-					product.exportStockAfterShipping(item.quantity, item.variant.sku);
-					const variant = product.Variants.find((v) => v.sku === item.variant.sku);
+					// Cập nhật stock
+					const list_warehouses = product.exportStockAfterShipping(item.quantity, item.variant.sku);
+					// Cập nhật số lượng đã bán cho variant
+					const variant = product.Variants.find(v => v.sku === item.variant.sku);
 					if (variant) {
 						variant.sold = (variant.sold || 0) + item.quantity;
 					}
+					// Cập nhật tổng số lượng đã bán của sản phẩm
 					product.quantity_sold = product.Variants.reduce((sum, v) => sum + (v.sold || 0), 0);
 					await product.save();
 				}
 			}
-		} else if (order.order_status === "cancelled") {
-			user.points += parseInt(order.points_used, 10) || 0;
-			if (user.points < 0) user.points = 0;
+		}
+
+		// Nếu đơn bị hủy sau khi đã giao thì trừ điểm
+		else if (order.order_status === 'cancelled') {
+			// console.log('Points used before refunding for user:', user.points);
+			user.points += parseInt(order.points_used); // hoàn trả điểm đã dùng
+			if (user.points < 0) user.points = 0; // tránh âm
+			// console.log('Points used:', parseInt(order.points_used));
+			// console.log('User points after cancellation:', user.points);
 			await user.save();
 
+			// Xử lý hoàn trả số lượng đặt hàng về kho khi hủy đơn
 			for (const item of order.Items) {
 				const product = await Product.findById(item.product_id);
 				if (product) {
-					product.revertStockAfterCancel(item.quantity, item.variant.sku);
+					// Giảm waiting_for_delivery và tăng quantity trong kho
+					const list_warehouses = product.revertStockAfterCancel(item.quantity, item.variant.sku);
 					await product.save();
 				}
 			}
-			await adjustDiscountUsage(order.discount_code, -1);
 		}
-		await order.populate("StatusHistory.change_by", "username isManager");
+		await order.populate('StatusHistory.change_by', 'username isManager');
 
 		res.status(200).json({ ec: 0, em: "Order status updated successfully", dt: order });
 	} catch (error) {

@@ -155,20 +155,27 @@ export const getDashboardAdvanced = async (req, res) => {
             { $project: { category_name: "$_id", total_quantity: 1, _id: 0 } }
           ],
           timeline: [
-            { $unwind: "$Items" },
             {
               $group: {
                 _id: getTimelineGrouping({ annual, quarterly, monthly, weekly, startDate, endDate })._id,
                 total_revenue: { $sum: "$grand_total" },
                 total_profit: {
                   $sum: {
-                    $multiply: [
-                      { $subtract: ["$Items.variant.price", { $ifNull: ["$Items.variant.cost_price", 0] }] },
-                      "$Items.quantity"
-                    ]
+                    $sum: {
+                      $map: {
+                        input: "$Items",
+                        as: "i",
+                        in: {
+                          $multiply: [
+                            { $subtract: ["$$i.variant.price", { $ifNull: ["$$i.variant.cost_price", 0] }] },
+                            "$$i.quantity"
+                          ]
+                        }
+                      }
+                    }
                   }
                 },
-                total_products_sold: { $sum: "$Items.quantity" }
+                total_products_sold: { $sum: { $sum: "$Items.quantity" } }
               }
             },
             {
