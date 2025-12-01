@@ -1,13 +1,12 @@
-import { create } from "lodash";
 import { backendApi } from "./backend-api";
 
 export const commentApi = backendApi.injectEndpoints({
   endpoints: (builder) => ({
     createComment: builder.mutation({
-      query: ({ productId, content, parentCommentId, displayName }) => ({
+      query: ({ productId, content, parentCommentId, displayName, guestId }) => ({
         url: `comments/product/${productId}`,
         method: "POST",
-        body: { content, parentCommentId, displayName, guest_id },
+        body: { content, parent_comment_id: parentCommentId, user_displayed_name: displayName, guest_id: guestId },
       }),
     }),
     getCommentsByProduct: builder.query({

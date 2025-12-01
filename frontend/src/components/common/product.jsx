@@ -43,7 +43,9 @@ const Product = ({ product }) => {
 	console.log('Category Slug:', categorySlug);
 
 	return (
-		<div className="col-lg-2 col-md-4 col-sm-6 col-12" onClick={() => navigate(`san-pham/${categorySlug}/${_id}`)}>
+		<div className="col-lg-2 col-md-4 col-sm-6 col-12"
+			onClick={() => navigate(`san-pham/${categorySlug}/${_id}`, { state: { productId: _id } })}
+		>
 			{/* Start Single Product */}
 			<div className="single-product">
 				<div className="product-image">

@@ -1,14 +1,14 @@
-import { Button, Modal } from 'react-bootstrap';
-import { cloneElement, createElement } from 'react';
-import { userModalDialogStore, useShallow } from '#custom-hooks';
-import { setShow } from '#features/modal-slice';
+import { Button, Modal } from "react-bootstrap";
+import { cloneElement, createElement } from "react";
+import { userModalDialogStore, useShallow } from "#custom-hooks";
+import { uuid } from "zod";
 
-const renderBodyComponent = (bodyComponent, bodyProps) => {
-  if (typeof bodyComponent === 'function') {
-    return createElement(bodyComponent, { ...bodyProps });
+const renderComponent = (bodyComponent, bodyProps) => {
+  if (typeof bodyComponent === "function") {
+    return createElement(bodyComponent, { ...bodyProps, key: uuid() });
   } else if (bodyComponent) {
     const BodyComponent = bodyComponent;
-    return cloneElement(BodyComponent, { ...bodyProps });
+    return cloneElement(BodyComponent, { ...bodyProps, key: uuid() });
   }
   return bodyComponent;
 };
@@ -24,6 +24,7 @@ const ModalDialog = () => {
     stack,
     pop,
     reset,
+    buttons,
   } = userModalDialogStore(
     useShallow((zs) => ({
       show: zs.show,
@@ -35,17 +36,16 @@ const ModalDialog = () => {
       stack: zs.stack,
       pop: zs.pop,
       reset: zs.reset,
+      buttons: zs.buttons,
     }))
   );
 
   const handleHide = () => {
-    setShow(false);
-    setTimeout(() => reset(), 300);
-    // if (stack.length > 1) {
-    //   pop();
-    // } else {
-    //   reset();
-    // }
+    if (stack.length > 1) {
+      pop();
+    } else {
+      reset();
+    }
   };
 
   return (
@@ -57,21 +57,22 @@ const ModalDialog = () => {
       centered
       backdrop="static"
     >
-      <Modal.Header closeButton>
+      <Modal.Header closeButton className="text-black">
         <Modal.Title id="contained-modal-title-vcenter">
           {title}
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        {renderBodyComponent(bodyComponent, bodyProps)}
+        {renderComponent(bodyComponent, bodyProps)}
       </Modal.Body>
       <Modal.Footer>
+        {buttons && buttons.map((btnComponent) => renderComponent(btnComponent))}
         {stack.length > 1 && (
           <Button variant="outline-secondary" onClick={pop}>
             Quay lại
           </Button>
         )}
-        <Button onClick={handleHide}>Đóng</Button>
+        <Button variant="secondary" onClick={handleHide}>Đóng</Button>
       </Modal.Footer>
     </Modal>
   );

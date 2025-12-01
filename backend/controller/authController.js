@@ -136,9 +136,7 @@ const handleRegister = async (req, res) => {
         to: email,
         subject: "Email đã tạo tài khoản",
         text: `Xin chào ${userExists.email},
-
           Hệ thống ghi nhận rằng email của bạn đã được sử dụng để tạo tài khoản nhằm hỗ trợ lưu trữ và quản lý đơn hàng.
-
           Dưới đây là thông tin tài khoản của bạn:
 
           - Username: ${userExists.username}
@@ -221,17 +219,12 @@ const handleRegister = async (req, res) => {
         to: email,
         subject: "Đăng ký tài khoản thành công",
         text: `Xin chào ${user.username},
-
           Chúc mừng bạn đã đăng ký tài khoản thành công tại hệ thống của chúng tôi!
-
           Thông tin tài khoản:
           - Email: ${user.email}
           - Mật khẩu tạm thời: ${randomPassword}
-
           Vui lòng đăng nhập và đổi mật khẩu ngay để đảm bảo an toàn bảo mật.
-
           Nếu bạn không thực hiện đăng ký này, vui lòng liên hệ ngay với chúng tôi để được hỗ trợ.
-
           Trân trọng,
           ${process.env.APP_NAME} Team
           `,
@@ -279,7 +272,8 @@ const handleRegister = async (req, res) => {
         `,
       });
       return res.status(201).json({
-        ec: 0, em: 'Đăng ký user thành công (no set password)',
+        ec: 0,
+        em: 'Đăng ký user thành công (no set password)',
         dt: {
           _id: user._id,
           username: user.username,
@@ -289,29 +283,6 @@ const handleRegister = async (req, res) => {
         }
       });
     }
-
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Create user
-    const user = await User.create({
-      username,
-      email,
-      password: hashedPassword,
-      Addresses
-    });
-
-    return res.status(201).json({
-      ec: 0, em: 'Đăng ký user thành công (set password)',
-      dt: {
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        isManager: user.isManager,
-        token: generateToken(user._id), // trả về token khi đăng ký thành công
-      }
-    });
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
   }
@@ -334,6 +305,7 @@ const handleLogin = async (req, res) => {
           email: user.email,
           isManager: user.isManager,
           token: generateToken(user._id), // trả về token khi đăng nhập thành công
+          resetPasswordFirstTime: user.resetPasswordFirstTime,
         }
       });
     } else {
@@ -347,7 +319,7 @@ const handleLogin = async (req, res) => {
 export const getBasicProfile = async (req, res) => {
   try {
     if (req.user) {
-      const { username, email, isManager, _id, token, image } = req.user;
+      const { username, email, isManager, _id, token, image, resetPasswordFirstTime } = req.user;
       const basicInfo = { username, email, isManager, _id, token, image };
       res.status(200).json({
         ec: 0,
