@@ -6,6 +6,8 @@ import {
   PointElement,
   LineElement,
   BarElement,
+  LineController,
+  BarController,
   Tooltip,
   Legend,
   Filler,
@@ -13,7 +15,18 @@ import {
 import { Chart } from "react-chartjs-2";
 import { formatCurrency } from "utils/format";
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend, Filler);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  LineController,
+  BarController,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 const TimelineChart = ({ timeline = [], mode }) => {
   const { labels, datasets } = useMemo(() => {

@@ -1,8 +1,8 @@
 import React, { useMemo } from "react";
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
+import { Chart as ChartJS, ArcElement, DoughnutController, Tooltip, Legend } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+ChartJS.register(ArcElement, DoughnutController, Tooltip, Legend);
 
 const palette = ["#0d6efd", "#22c55e", "#f59e0b", "#7c3aed", "#06b6d4", "#ec4899", "#94a3b8"];
 
