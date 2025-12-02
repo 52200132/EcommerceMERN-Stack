@@ -80,6 +80,9 @@ export const getProducts = async (req, res) => {
       case "rating_desc":
         sortQuery["rating"] = -1;
         break;
+      case "created_at_desc":
+        sortQuery["createdAt"] = -1;
+        break;
       default:
         break;
     }
