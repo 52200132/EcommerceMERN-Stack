@@ -289,8 +289,8 @@ const ReviewAttributesBlock = ({ selector, variantIndex, action, handleAttribute
           <div className="dropdown-menu" ref={actionsRef} style={{
             transform: "translate(0, -70%)",
           }}>
-            <Dropdown.Item className="attribute-action-item"><CiViewList size={15} /> Xem tất cả</Dropdown.Item>
-            <Dropdown.Item className="attribute-action-item"><CiViewTable size={15} /> Xem thuộc tính hiển thị</Dropdown.Item>
+            {/* <Dropdown.Item className="attribute-action-item"><CiViewList size={15} /> Xem tất cả</Dropdown.Item> */}
+            {/* <Dropdown.Item className="attribute-action-item"><CiViewTable size={15} /> Xem thuộc tính hiển thị</Dropdown.Item> */}
             {action !== 'read' &&
               (<Dropdown.Item className="attribute-action-item"
                 onClick={handleShowModalForCreateAttribute}

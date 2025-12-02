@@ -1,15 +1,15 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Button, Card, Form, Spinner } from "react-bootstrap";
+import { Button, Card, Form, Spinner, Alert } from "react-bootstrap";
 import { useDispatch } from "react-redux";
-import { toast } from "react-toastify";
 
 import { loginSchema } from "#schemas";
 import { useLoginUserMutation } from "#services/auth-api";
 import { updateCredentials } from "#features/auth-slice";
 
 import "./admin-auth.scss";
+import { useState } from "react";
 
 const AdminLoginPage = () => {
   const dispatch = useDispatch();
@@ -17,6 +17,8 @@ const AdminLoginPage = () => {
   const location = useLocation();
   const redirectPath = location.state?.from?.pathname || "/admin/dashboard";
   const [loginUser, { isLoading }] = useLoginUserMutation();
+  const [errorMessage, setErrorMessage] = useState("");
+
 
   const {
     register,
@@ -32,14 +34,13 @@ const AdminLoginPage = () => {
       const response = await loginUser(values).unwrap();
       const user = response?.dt;
       if (!user?.isManager) {
-        toast.error("Tài khoản của bạn không có quyền truy cập trang quản trị.");
+        setErrorMessage("Tài khoản không có quyền truy cập quản trị.");
         return;
       }
       dispatch(updateCredentials(user));
-      toast.success("Đăng nhập quản trị thành công");
       navigate(redirectPath, { replace: true });
     } catch (error) {
-      toast.error(error?.em || "Không thể đăng nhập, vui lòng kiểm tra lại thông tin.");
+      setErrorMessage(error?.data?.em || "Không thể đăng nhập, vui lòng kiểm tra lại thông tin.");
     }
   };
 
@@ -146,6 +147,12 @@ const AdminLoginPage = () => {
                 </p>
               </Card.Body>
             </Card>
+
+            {errorMessage && (
+              <Alert variant="danger" className="mt-3">
+                {errorMessage}
+              </Alert>
+            )}
           </div>
         </div>
       </div>

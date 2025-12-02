@@ -21,8 +21,8 @@ const Header = ({ onToggleSidebar }) => {
                 <i className="bi bi-list"></i>
               </button>
             </li>
-            <li className="nav-item d-none d-md-block"><Link to="#" className="nav-link">Home</Link></li>
-            <li className="nav-item d-none d-md-block"><Link to="#" className="nav-link">Contact</Link></li>
+            {/* <li className="nav-item d-none d-md-block"><Link to="#" className="nav-link">Home</Link></li> */}
+            {/* <li className="nav-item d-none d-md-block"><Link to="#" className="nav-link">Contact</Link></li> */}
           </ul>
           {/* <!--end::Start Navbar Links--> */}
           {/* <!--begin::End Navbar Links--> */}

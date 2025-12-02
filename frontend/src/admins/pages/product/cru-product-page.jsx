@@ -8,6 +8,8 @@ import { useCreateProductAdminMutation, useUpdateProductAdminMutation } from 'se
 
 import BackButton from 'admins/components/back-btn';
 import { useRenderCount, useUploadersRegistry } from '#custom-hooks';
+import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 
 const optionActions = {
   'create': {
@@ -15,6 +17,7 @@ const optionActions = {
       hidden: true,
       text: 'Lưu sản phẩm',
     },
+    title: 'Thêm sản phẩm mới',
   },
   'update': {
     bottomBtn: {
@@ -36,43 +39,51 @@ const CRUProduct = ({ action = 'create' }) => {
   const backBtnRef = useRef(null);
   const dispatch = store.dispatch;
   const option = optionActions[action];
+  const navigate = useNavigate();
   const selector = (state) => state.product;
   const [createProduct] = useCreateProductAdminMutation();
   const [updateProductM] = useUpdateProductAdminMutation();
 
   const getUploaderFuncs = useUploadersRegistry(zs => zs.getUploaderFuncs);
+  const handleBack = () => {
+    dispatch(clearProductState());
+  };
 
   const handleSave = async () => {
-    await Promise.all(getUploaderFuncs().map(uploadFunc => {
-      if (typeof uploadFunc === 'function') {
-        return uploadFunc();
-      }
-      return Promise.resolve();
-    }));
-    const product = store.getState().product;
-    if (action === 'create') {
-      const result = await createProduct(product).unwrap();
-      console.log('createData', result);
+    try {
+      await Promise.all(getUploaderFuncs().map(uploadFunc => {
+        if (typeof uploadFunc === 'function') {
+          return uploadFunc();
+        }
+        return Promise.resolve();
+      }));
 
-      if (result.ec === 0) {
-        dispatch(clearProductState());
-        backBtnRef.current && backBtnRef.current.click();
+      const product = store.getState().product;
+      if (action === 'create') {
+        const result = await createProduct(product).unwrap();
+        if (result?.ec !== 0) throw result;
+        toast.success('Tạo sản phẩm thành công');
+      } else if (action === 'update') {
+        const result = await updateProductM(product).unwrap();
+        if (result?.ec !== 0) throw result;
+        toast.success('Cập nhật sản phẩm thành công');
       }
-    } else if (action === 'update') {
-      const result = await updateProductM(product).unwrap();
-      if (result.ec === 0) {
-        dispatch(clearProductState());
-        backBtnRef.current && backBtnRef.current.click();
-      }
+
+      dispatch(clearProductState());
+      navigate('/admin/manage-products');
+    } catch (error) {
+      console.error('Failed to save product', error);
+      const message = error?.em || error?.data?.em || 'Không thể lưu sản phẩm';
+      toast.error(message);
     }
   }
 
   return (
     <>
       {/* <Button onClick={handTestUpload}>Test upload</Button> */}
-      <BackButton ref={backBtnRef} />
+      <BackButton ref={backBtnRef} onBack={handleBack} />
       <Container className='tps-cru-product-page'>
-        <h2 className="mb-4">Thêm sản phẩm mới</h2>
+        <h2 className="mb-4">{option?.title || 'Thêm sản phẩm mới'}</h2>
         <Form>
 
           <BasicInfo {...{ option, selector }} />

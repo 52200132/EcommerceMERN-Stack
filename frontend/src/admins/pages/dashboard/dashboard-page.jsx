@@ -108,7 +108,7 @@ const DashboardPage = () => {
       hint: "Bao gồm tất cả trạng thái",
     },
     {
-      title: "Doanh thu lũy kế",
+      title: "Doanh thu",
       value: loadingGeneral ? "..." : formatCurrency(generalData?.dt?.total_revenue || 0),
       icon: "bi-cash-stack",
       tone: "primary",

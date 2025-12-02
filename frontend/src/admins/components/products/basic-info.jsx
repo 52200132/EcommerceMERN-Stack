@@ -1,10 +1,10 @@
 import { Card, Form, Col, Row } from "react-bootstrap";
-import { useEffect } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useLiveQuery } from 'dexie-react-hooks'
 import { useForm, Controller } from 'react-hook-form';
 import { useDispatch } from "react-redux";
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useLiveQuery } from 'dexie-react-hooks';
 
 import Select from 'react-select';
 import CreatableSelect from 'react-select/creatable';
@@ -14,8 +14,8 @@ import { z } from "zod";
 
 import { updateProduct } from 'redux-tps/features/index-features';
 import { useDebounceSubscribeValues, useRenderCount, useTpsGetState, useTpsSelector } from '#custom-hooks';
+import { useGetBrandsAdminQuery, useGetCategoriesAdminQuery } from 'services/admin-services';
 import { db } from 'indexed-db';
-import { useGetCategoriesAdminQuery } from 'services/admin-services';
 
 const optionActions = {
   create: {
@@ -44,15 +44,12 @@ const basicInfoSchema = z.object({
 const BasicInfo = ({ selector, action = 'create' }) => {
   useRenderCount('basic-info', 'both');
   const dispatch = useDispatch();
-  const product = useTpsGetState(selector, { includeProps: ['product_name', 'brand_id', 'category_id', 'hashtag', 'short_description', 'detail_description', 'is_active', 'defaultBrandOption'] });
-  const brandsOptions = useLiveQuery(async () => {
-    const [array, productBrand] = await Promise.all([
-      db.brands.toArray().then(brands => brands.map(brand => ({ value: brand._id, label: brand.brand_name }))),
-      product?.brand_id ? db.brands.get(product.brand_id) : null
-    ]);
-    const defaultOption = productBrand ? { value: productBrand._id, label: productBrand.brand_name } : null;
-    return { array: array, defaultOption: defaultOption };
-  }, [], { array: [], defaultOption: {} });
+  const product = useTpsGetState(selector, { includeProps: ['product_name', 'brand_id', 'category_id', 'hashtag', 'short_description', 'detail_description', 'is_active'] });
+  const { data: brandsData, isLoading: isLoadingBrands } = useGetBrandsAdminQuery();
+  const brandsOptions = useMemo(
+    () => (brandsData?.dt || []).map((brand) => ({ value: brand._id, label: brand.brand_name })),
+    [brandsData]
+  );
   const hashtags = useLiveQuery(async () => await db.hashtags.toArray(), [], []);
   const { data: categoriesData, isLoading: isLoadingCategories } = useGetCategoriesAdminQuery();
   const categoryOptions = categoriesData?.dt || [];
@@ -104,27 +101,31 @@ const BasicInfo = ({ selector, action = 'create' }) => {
                 id='brand_id'
                 name='brand_id'
                 control={control}
-                render={({ field: { onChange, onBlur, ref } }) => (
-                  <Select
-                    classNamePrefix='tps'
-                    inputRef={ref}
-                    options={brandsOptions.array}
-                    defaultValue={product?.defaultBrandOption || null}
-                    styles={{
-                      control: (base) => ({
-                        ...base,
-                        boxShadow: "var(--bs-box-shadow-inset)",
-                        borderColor: errors.brand_id ? 'var(--bs-form-invalid-border-color)' : 'var(--bs-border-color)',
-                        cursor: 'text',
-                        '&:hover': { borderColor: errors.brand_id ? 'var(--bs-danger)' : 'var(--bs-border-color)' },
-                      })
-                    }}
-                    placeholder="Chọn thương hiệu..."
-                    isClearable={true}
-                    onBlur={(option) => onBlur(option?.value)}
-                    onChange={(option) => onChange(option?.value || '')}
-                  />
-                )}
+                render={({ field: { onChange, onBlur, ref, value } }) => {
+                  const selectedOption = brandsOptions.find((opt) => opt.value === value) || null;
+                  return (
+                    <Select
+                      classNamePrefix='tps'
+                      inputRef={ref}
+                      options={brandsOptions}
+                      value={selectedOption}
+                      styles={{
+                        control: (base) => ({
+                          ...base,
+                          boxShadow: "var(--bs-box-shadow-inset)",
+                          borderColor: errors.brand_id ? 'var(--bs-form-invalid-border-color)' : 'var(--bs-border-color)',
+                          cursor: 'text',
+                          '&:hover': { borderColor: errors.brand_id ? 'var(--bs-danger)' : 'var(--bs-border-color)' },
+                        })
+                      }}
+                      placeholder="Chọn thương hiệu..."
+                      isClearable={true}
+                      isDisabled={isLoadingBrands}
+                      onBlur={() => onBlur(value)}
+                      onChange={(option) => onChange(option?.value || '')}
+                    />
+                  );
+                }}
               />
               <Form.Text className="text-danger">
                 {errors.brand_id && errors.brand_id.message}

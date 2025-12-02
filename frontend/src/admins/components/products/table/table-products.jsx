@@ -29,7 +29,6 @@ import { useDispatch } from 'react-redux';
 import { useDeleteProductAdminMutation, useLazyGetProductByIdAdminQuery } from 'services/admin-services';
 import { useNavigate } from 'react-router-dom';
 import { updateProduct } from 'redux-tps/features/index-features';
-import { db } from 'indexed-db';
 import ConfirmDialog from 'admins/components/common/confirm-dialog';
 import { userModalDialogStore, useShallow } from '#custom-hooks';
 
@@ -179,7 +178,9 @@ const TableProducts = ({ products, isLoading, onAddVariant, onEditVariant, onDel
     },
     // cập nhật updatedAt
     {
-      accessorKey: 'updated_at', header: 'Cập nhật',
+      id: 'updatedAt',
+      accessorFn: (row) => row.updatedAt || row.updated_at,
+      header: 'Cập nhật',
       meta: { thClassName: 'sortable', thStyle: { width: '160px' } },
       cell: ({ getValue }) => formatDateTime(getValue())
     },
@@ -243,9 +244,7 @@ const TableProducts = ({ products, isLoading, onAddVariant, onEditVariant, onDel
     triggerGetProductById(productId)
       .unwrap()
       .then(async (data) => {
-        const defaultBrandOption = await db.brands.get(data.dt.brand_id);
-        console.log('Fetched product data:', data.dt, 'with brand:', defaultBrandOption);
-        dispatch(updateProduct({ ...data.dt, defaultBrandOption: { value: defaultBrandOption?._id || '', label: defaultBrandOption?.brand_name || '' } }));
+        dispatch(updateProduct({ ...data.dt }));
         navigate(`/admin/manage-products/edit-product/${productId}`);
       })
       .catch((error) => {

@@ -97,10 +97,10 @@ const ProfileSmUpSidebar = () => {
         </div>
         <div>
           <h3>{profile.username}</h3>
-          <button type="button" className="profile-card__edit" onClick={() => openEditor("profile")}>
+          {/* <button type="button" className="profile-card__edit" onClick={() => openEditor("profile")}>
             <BsPencil className="me-2" />
             Sửa Hồ Sơ
-          </button>
+          </button> */}
         </div>
       </div>
       <nav className="profile-nav">

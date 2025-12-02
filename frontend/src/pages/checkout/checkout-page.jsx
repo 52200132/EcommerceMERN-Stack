@@ -194,7 +194,7 @@ const CheckoutPage = () => {
   const validateAddressForm = async () => {
     const isValid = await triggerAddressForm();
     if (!isValid) {
-      setStepError("Vui long kiem tra dia chi giao hang");
+      setStepError("Vui lòng kiểm tra địa chỉ giao hàng");
       return null;
     }
     return { country: DEFAULT_COUNTRY, ...getAddressValues() };
@@ -204,7 +204,7 @@ const CheckoutPage = () => {
     try {
       if (isLoggedIn) {
         if (!useNewAddress && !selectedAddressId) {
-          setStepError("Vui long chon dia chi nhan hang");
+          setStepError("Vui lòng chọn địa chỉ nhận hàng");
           return;
         }
         if (useNewAddress) {
@@ -220,14 +220,14 @@ const CheckoutPage = () => {
         const addressPayload = await validateAddressForm();
         if (!addressPayload) return;
         if (!guestInfo.username || !guestInfo.email) {
-          setStepError("Vui long nhap ho ten va email");
+          setStepError("Vui lòng nhập họ tên và email");
           return;
         }
       }
       setStepError("");
       setCurrentStep(2);
     } catch (error) {
-      setStepError(error?.em || "Khong the luu dia chi");
+      setStepError(error?.em || "Không thể lưu địa chỉ");
     }
   };
 
@@ -453,19 +453,19 @@ const CheckoutPage = () => {
     return (
       <Card className="mb-3">
         <Card.Body>
-          <Card.Title>Kiem tra thong tin</Card.Title>
+          <Card.Title>Kiểm tra thông tin</Card.Title>
           <div className="mb-2">
-            <strong>Nguoi nhan: </strong>
+            <strong>Người nhận: </strong>
             {isLoggedIn
-              ? addressesData?.dt?.find((a) => a._id === selectedAddressId)?.receiver || "Chua chon"
+              ? addressesData?.dt?.find((a) => a._id === selectedAddressId)?.receiver || "Chưa chọn"
               : guestInfo.username}
           </div>
-          <div className="mb-2"><strong>Dia chi:</strong> {isLoggedIn
+          <div className="mb-2"><strong>Địa chỉ:</strong> {isLoggedIn
             ? addressesData?.dt?.find((a) => a._id === selectedAddressId)?.street
             : `${guestAddress.street}, ${guestAddress.ward}, ${guestAddress.district}`}</div>
-          <div className="mb-2"><strong>Thanh toan:</strong> {paymentMethod}</div>
-          <div className="mb-2"><strong>Van chuyen:</strong> {shippingMethod?.method} ({formatCurrency(shippingMethod?.fee || 0)})</div>
-          {notes && <div className="text-muted">Ghi chu: {notes}</div>}
+          <div className="mb-2"><strong>Thanh toán:</strong> {paymentMethod}</div>
+          <div className="mb-2"><strong>Vận chuyển:</strong> {shippingMethod?.method} ({formatCurrency(shippingMethod?.fee || 0)})</div>
+          {notes && <div className="text-muted">Ghi chú: {notes}</div>}
         </Card.Body>
       </Card>
     );
@@ -597,7 +597,7 @@ const CheckoutAddressForm = ({ form }) => {
     <Row className="g-3 mt-1">
       <Col md={6}>
         <Form.Group>
-          <Form.Label>Nguoi nhan</Form.Label>
+          <Form.Label>Người nhận</Form.Label>
           <Form.Control isInvalid={!!errors.receiver} {...register("receiver")} />
           <Form.Control.Feedback type="invalid" className="d-block">
             {errors.receiver && errors.receiver.message}
@@ -606,7 +606,7 @@ const CheckoutAddressForm = ({ form }) => {
       </Col>
       <Col md={6}>
         <Form.Group>
-          <Form.Label>So dien thoai</Form.Label>
+          <Form.Label>Số điện thoại</Form.Label>
           <Form.Control isInvalid={!!errors.phone} {...register("phone")} />
           <Form.Control.Feedback type="invalid" className="d-block">
             {errors.phone && errors.phone.message}
@@ -615,14 +615,14 @@ const CheckoutAddressForm = ({ form }) => {
       </Col>
       <Col md={6}>
         <Form.Group>
-          <Form.Label>Tinh/Thanh pho</Form.Label>
+          <Form.Label>Tỉnh/Thành phố</Form.Label>
           <Controller
             control={control}
             name="province"
             render={({ field: { value, onChange, ref } }) => (
               <Select
                 classNamePrefix="tps"
-                placeholder="Chon tinh/thanh pho"
+                placeholder="Chọn tỉnh/thành phố"
                 isLoading={provincesLoading}
                 options={provincesOptions}
                 value={provincesOptions.find((option) => option.value === value) || null}
@@ -640,14 +640,14 @@ const CheckoutAddressForm = ({ form }) => {
       </Col>
       <Col md={6}>
         <Form.Group>
-          <Form.Label>Quan/Huyen</Form.Label>
+          <Form.Label>Quận/Huyện</Form.Label>
           <Controller
             control={control}
             name="district"
             render={({ field: { value, onChange, ref } }) => (
               <Select
                 classNamePrefix="tps"
-                placeholder="Chon quan/huyen"
+                placeholder="Chọn quận/huyện"
                 isLoading={districtsLoading}
                 options={districtsOptions}
                 value={districtsOptions.find((option) => option.value === value) || null}
@@ -666,14 +666,14 @@ const CheckoutAddressForm = ({ form }) => {
       </Col>
       <Col md={6}>
         <Form.Group>
-          <Form.Label>Phuong/Xa</Form.Label>
+          <Form.Label>Phường/Xã</Form.Label>
           <Controller
             control={control}
             name="ward"
             render={({ field: { value, onChange, ref } }) => (
               <Select
                 classNamePrefix="tps"
-                placeholder="Chon phuong/xa"
+                placeholder="Chọn phường/xã"
                 isLoading={wardsLoading}
                 options={wardsOptions}
                 value={wardsOptions.find((option) => option.value === value) || null}
@@ -692,7 +692,7 @@ const CheckoutAddressForm = ({ form }) => {
       </Col>
       <Col md={6}>
         <Form.Group>
-          <Form.Label>Duong</Form.Label>
+          <Form.Label>Đường</Form.Label>
           <Form.Control isInvalid={!!errors.street} {...register("street")} />
           <Form.Control.Feedback type="invalid" className="d-block">
             {errors.street && errors.street.message}
@@ -701,7 +701,7 @@ const CheckoutAddressForm = ({ form }) => {
       </Col>
       <Col md={6}>
         <Form.Group>
-          <Form.Label>Ma buu chinh</Form.Label>
+          <Form.Label>Mã bưu chính</Form.Label>
           <Form.Control isInvalid={!!errors.postalCode} {...register("postalCode")} />
           <Form.Control.Feedback type="invalid" className="d-block">
             {errors.postalCode && errors.postalCode.message}
@@ -712,7 +712,7 @@ const CheckoutAddressForm = ({ form }) => {
         <Form.Check
           type="switch"
           id="checkoutAddressDefault"
-          label="Dat lam dia chi mac dinh"
+          label="Đặt làm địa chỉ mặc định"
           {...register("isDefault")}
           checked={!!isDefault}
           onChange={(event) => setValue("isDefault", event.target.checked)}

@@ -368,6 +368,20 @@ export const adminApi = backendApi.injectEndpoints({
         ];
       }
     }),
+    /** Brands */
+    getBrandsAdmin: builder.query({
+      query: () => ({
+        url: "/brands",
+        method: "GET",
+      }),
+      providesTags: (result) => {
+        const brands = result?.dt || [];
+        return [
+          ...brands.map(({ _id }) => ({ type: "Brand", id: _id })),
+          { type: "Brand", id: "LIST" },
+        ];
+      }
+    }),
     createCategoryAdmin: builder.mutation({
       query: (payload) => ({
         url: "/categories",
@@ -471,6 +485,8 @@ export const {
   useCreateCategoryAdminMutation,
   useUpdateCategoryAdminMutation,
   useDeleteCategoryAdminMutation,
+  // # manage brands
+  useGetBrandsAdminQuery,
 
   // dashboard endpoints
   useGetDashboardGeneralQuery,
