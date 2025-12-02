@@ -7,7 +7,6 @@ import transporter from "../mail.js";
 import { get } from "mongoose";
 
 const getStatusData = () => [200, 0, "Success", {}];
-const TAX_RATE = 0.08; // thuong dung VAT 8% - co the thay doi neu can
 const ORDER_STATUSES = ["pending", "processing", "shipped", "delivered", "cancelled"];
 
 const buildError = (message, statusCode = 400) => {
@@ -172,7 +171,6 @@ export const createOrder = async (req, res) => {
 			shipment,
 			payment_method,
 			notes,
-			tax_fee,
 			username,
 			email,
 			Addresses = [],
@@ -199,14 +197,14 @@ export const createOrder = async (req, res) => {
 		if (Number.isNaN(shippingPayload.fee)) {
 			shippingPayload.fee = 0;
 		}
-		const taxAmount =
-			typeof tax_fee === "number" && tax_fee >= 0
-				? tax_fee
-				: Math.round(subtotal * TAX_RATE);
 
 		const allowedPaymentMethods = ["COD", "banking", "credit_card"];
 		if (!payment_method || !allowedPaymentMethods.includes(payment_method)) {
 			throw buildError("Invalid payment method");
+		}
+		let payment_status = "pending";
+		if (["banking", "credit_card"].includes(payment_method)) {
+			payment_status = "paid";
 		}
 
 		// giai quyet ma giam gia
@@ -235,7 +233,7 @@ export const createOrder = async (req, res) => {
 
 		const grand_total = Math.max(
 			0,
-			subtotal + shippingPayload.fee + taxAmount - discount - pointsDiscount
+			subtotal + shippingPayload.fee - discount - pointsDiscount
 		);
 		const loyalty_points_earned = Math.floor(grand_total / 10000);
 
@@ -260,76 +258,11 @@ export const createOrder = async (req, res) => {
 					username,
 					email,
 					Addresses: normalizedAddresses,
+					isActive: false,
+					resetPasswordFirstTime: false,
 				});
-			} else {
-				await transporter.sendMail({
-					from: `${process.env.APP_NAME} <${process.env.EMAIL_USER}>`,
-					to: email,
-					subject: "Email đã tạo tài khoản",
-					text: `Xin chào ${userExists.email},
-
-                    Hệ thống ghi nhận rằng email của bạn đã được sử dụng để tạo tài khoản nhằm hỗ trợ lưu trữ và quản lý đơn hàng.
-
-                    Dưới đây là thông tin tài khoản của bạn:
-
-                    - Username: ${userExists.username}
-                    - Email: ${userExists.email}
-                    - Password mặc định: ${process.env.USER_PASSWORD_DEFAULT}
-
-                    Vui lòng đăng nhập và đổi mật khẩu ngay sau khi truy cập để đảm bảo an toàn bảo mật.
-
-                    Nếu bạn không phải là người thực hiện hành động này, vui lòng liên hệ ngay với đội ngũ hỗ trợ để được kiểm tra và xử lý.
-
-                    Trân trọng,
-                    ${process.env.APP_NAME} Team
-                    `,
-					html: `<div style="width:100%; background:#f5f5f5; padding:20px 0; font-family:Arial, sans-serif;">
-                    <div style="max-width:600px; background:#ffffff; margin:auto; padding:25px; border-radius:8px; box-shadow:0 0 8px rgba(0,0,0,0.05);">
-
-                        <h2 style="text-align:center; color:#333; margin-bottom:5px;">Thông báo tạo tài khoản tự động</h2>
-                        <p style="text-align:center; margin:0; color:#666;">Email của bạn đã được sử dụng để tạo tài khoản.</p>
-
-                        <p style="margin-top:25px;">
-                        Xin chào <strong>${userExists.username || userExists.email}</strong>,
-                        </p>
-
-                        <p>
-                        Hệ thống đã tự động tạo tài khoản cho bạn nhằm lưu trữ thông tin đơn hàng và hỗ trợ quá trình mua sắm.
-                        Dưới đây là thông tin tài khoản:
-                        </p>
-
-                        <h3 style="margin-top:25px; color:#333;">👤 Thông tin tài khoản</h3>
-
-                        <table width="100%" style="border-collapse:collapse; margin-top:10px;">
-                        <tr>
-                            <td style="padding:8px 0; color:#555;">Email:</td>
-                            <td style="padding:8px 0; text-align:right; font-weight:bold;">${userExists.email}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding:8px 0; color:#555;">Mật khẩu mặc định:</td>
-                            <td style="padding:8px 0; text-align:right; font-weight:bold; color:#d9534f;">
-                            ${process.env.USER_PASSWORD_DEFAULT}
-                            </td>
-                        </tr>
-                        </table>
-
-                        <p style="margin-top:20px;">
-                        Vui lòng đăng nhập và <strong>đổi mật khẩu ngay</strong> để đảm bảo an toàn thông tin.
-                        </p>
-
-                        <p style="margin-top:15px;">
-                        Nếu bạn không phải là người thực hiện hành động này, vui lòng liên hệ với đội ngũ hỗ trợ của chúng tôi để được kiểm tra và xử lý ngay.
-                        </p>
-
-                        <p style="margin-top:30px; text-align:center;">
-                        <b>Trân trọng,<br>${process.env.APP_NAME} Team</b>
-                        </p>
-
-                    </div>
-                    </div>
-                    `,
-				});
-				throw buildError("Email đã tạo tài khoản, xin hãy đăng nhập. Hoặc nếu bạn chưa tạo, hãy check email của chúng tôi.");
+			} else if (orderUser.isActive === true) {
+				throw buildError("Email đã tồn tại. Vui lòng đăng nhập để tiếp tục.", 400);
 			}
 			// guest khong duoc dung diem
 			pointsToUse = 0;
@@ -359,16 +292,28 @@ export const createOrder = async (req, res) => {
 				shipping_address: normalizedShippingAddress,
 				total_amount: subtotal,
 				discount,
-				tax_fee: taxAmount,
 				grand_total,
 				loyalty_points_earned,
 				shipment: shippingPayload,
 				payment_method,
+				payment_status,
 				notes,
 			});
 
+
 			if (isLoggedIn) {
 				orderUser.points = Math.max(0, (orderUser.points || 0) - pointsToUse);
+				const userCartItems = orderUser.Carts || [];
+				const newCartItems = userCartItems.filter((cartItem) => {
+					const productIdStr = cartItem.product_id.toString();
+					const variantSku = cartItem.variant?.sku;
+					return !Items.some((orderItem) => {
+						const orderProductIdStr = orderItem.product_id;
+						const orderVariantSku = orderItem.variant?.sku;
+						return orderProductIdStr === productIdStr && orderVariantSku === variantSku;
+					});
+				});
+				orderUser.Carts = newCartItems;
 				await orderUser.save();
 				pointsDeducted = true;
 			}
@@ -393,7 +338,7 @@ export const createOrder = async (req, res) => {
                         Sản phẩm:
                             ${newOrder.Items.map(i =>
 						`- ${i.product_name} | SKU: ${i.variant.sku} | SL: ${i.quantity} | Giá: ${i.variant.price.toLocaleString()} VND`
-					).join('\n')
+					).join("\n")
 						}
 
                         Tổng tiền sản phẩm: ${newOrder.total_amount.toLocaleString()} VND
@@ -443,7 +388,7 @@ export const createOrder = async (req, res) => {
                                 <small>Giá: ${i.variant.price.toLocaleString()} VND</small>
                             </td>
                             </tr>
-                        `).join('')}
+                        `).join("")}
                         </table>
 
                         <h3 style="margin-top:25px;">💰 Chi tiết thanh toán</h3>
@@ -858,17 +803,18 @@ export const updateOrderStatus = async (req, res) => {
 
 		// Xử lý điểm khách hàng thân thiết
 		// Lấy user
-		const user = await User.findById(order.user_id).select('points');
+		const user = await User.findById(order.user_id).select("points");
 		if (!user) {
 			return res.status(404).json({ ec: 404, em: "User not found" });
 		};
 
 		// Nếu đơn được giao (delivered) thì cộng điểm
-		if (order.order_status === 'delivered') {
-			// console.log('Points used before adding for user:', user.points);
+		if (order.order_status === "delivered") {
+			// console.log("Points used before adding for user:", user.points);
 			user.points += parseInt((order.total_amount * 0.1) / 1000);
+			order.payment_status = "paid"; // đảm bảo đơn đã thanh toán
 			// console.log(parseInt((order.total_amount * 0.1) / 1000))
-			// console.log('User points after delivery:', user.points);
+			// console.log("User points after delivery:", user.points);
 			await user.save();
 
 			// Xử lý cập nhật stock và số lượng đã bán
@@ -890,12 +836,15 @@ export const updateOrderStatus = async (req, res) => {
 		}
 
 		// Nếu đơn bị hủy sau khi đã giao thì trừ điểm
-		else if (order.order_status === 'cancelled') {
-			// console.log('Points used before refunding for user:', user.points);
+		else if (order.order_status === "cancelled") {
+			// console.log("Points used before refunding for user:", user.points);
 			user.points += parseInt(order.points_used); // hoàn trả điểm đã dùng
+			if (["banking", "credit_card"].includes(order.payment_method)) {
+				order.payment_status = "refunded";
+			}
 			if (user.points < 0) user.points = 0; // tránh âm
-			// console.log('Points used:', parseInt(order.points_used));
-			// console.log('User points after cancellation:', user.points);
+			// console.log("Points used:", parseInt(order.points_used));
+			// console.log("User points after cancellation:", user.points);
 			await user.save();
 
 			// Xử lý hoàn trả số lượng đặt hàng về kho khi hủy đơn
@@ -908,7 +857,7 @@ export const updateOrderStatus = async (req, res) => {
 				}
 			}
 		}
-		await order.populate('StatusHistory.change_by', 'username isManager');
+		await order.populate("StatusHistory.change_by", "username isManager");
 
 		res.status(200).json({ ec: 0, em: "Order status updated successfully", dt: order });
 	} catch (error) {
@@ -945,6 +894,9 @@ export const userCancelOrder = async (req, res) => {
 
 		if (oldStatus !== "pending") {
 			return res.status(400).json({ ec: 400, em: "Only pending orders can change status" });
+		}
+		if (["banking", "credit_card"].includes(order.payment_method)) {
+			order.payment_status = "refunded";
 		}
 		order.order_status = newStatus;
 		order.StatusHistory.push({

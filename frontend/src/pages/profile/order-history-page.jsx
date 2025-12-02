@@ -122,7 +122,7 @@ const OrderHistoryPage = () => {
                     ) : null}
                     {order.loyalty_points_earned ? (
                       <span className="badge bg-light text-primary fw-semibold border border-primary">
-                        Nhận {order.loyalty_points_earned} điểm thưởng
+                        Dự kiến nhận {order.loyalty_points_earned} điểm thưởng
                       </span>
                     ) : null}
                   </div>

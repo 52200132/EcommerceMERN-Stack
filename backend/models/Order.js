@@ -88,7 +88,6 @@ const orderSchema = new Schema({
   total_amount: { type: Number, min: 0 },
   discount: { type: Number, min: 0, default: 0 },
   shipment: { type: shipmentSchema, required: true },
-  tax_fee: { type: Number, min: 0, default: 0 },
   grand_total: { type: Number, min: 0 },
   loyalty_points_earned: { type: Number, min: 0, default: 0 },
   notes: { type: String }

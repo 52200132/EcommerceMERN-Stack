@@ -6,6 +6,7 @@ const Product = ({ product }) => {
 	const {
 		_id,
 		product_name,
+		short_description,
 		image,
 		category_name = "category",
 		price_min,
@@ -63,6 +64,7 @@ const Product = ({ product }) => {
 					<h4 className="title">
 						<Link to={`/${categorySlug}/${_id}`}>{product_name}</Link>
 					</h4>
+					<span className="short_desc">{short_description}</span>
 					<ul className="review">
 						{renderStars(rating)}
 						<li><span>{rating} • Đã bán {quantity_sold}</span></li>

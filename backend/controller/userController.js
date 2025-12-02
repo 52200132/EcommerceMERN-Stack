@@ -5,7 +5,6 @@ import Product from "../models/Product.js";
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 
-const CART_TAX_RATE = 0.08;
 const SHIPPING_OPTIONS = [
   { method: "Ship Nhanh", fee: 30000, note: "Nhận từ 2-3 ngày" },
   { method: "Hỏa tốc", fee: 60000, note: "Nhận trong ngày" },
@@ -21,9 +20,8 @@ const buildCartTotals = (carts = []) => {
     const price = item?.variant?.price || 0;
     return sum + price * item.quantity;
   }, 0);
-  const tax = Math.round(subtotal * CART_TAX_RATE);
   const itemsCount = carts.reduce((sum, item) => sum + item.quantity, 0);
-  return { subtotal, tax, itemsCount };
+  return { subtotal, itemsCount };
 };
 
 const toPlain = (doc) => {

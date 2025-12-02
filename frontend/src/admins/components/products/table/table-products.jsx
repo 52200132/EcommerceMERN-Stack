@@ -17,7 +17,9 @@ import {
   IoChevronDown,
   IoChevronForward,
   IoAlertCircle,
+  IoStorefront,
 } from 'react-icons/io5';
+import { toast } from 'react-toastify';
 
 import slugify from 'slugify';
 
@@ -27,8 +29,9 @@ import { useDispatch } from 'react-redux';
 import { useDeleteProductAdminMutation, useLazyGetProductByIdAdminQuery } from 'services/admin-services';
 import { useNavigate } from 'react-router-dom';
 import { updateProduct } from 'redux-tps/features/index-features';
-import { confirmation } from 'utils/confirmation';
 import { db } from 'indexed-db';
+import ConfirmDialog from 'admins/components/common/confirm-dialog';
+import { userModalDialogStore, useShallow } from '#custom-hooks';
 
 const columnHelper = createColumnHelper();
 // Get stock badge
@@ -49,6 +52,10 @@ const TableProducts = ({ products, isLoading, onAddVariant, onEditVariant, onDel
   const [triggerGetProductById] = useLazyGetProductByIdAdminQuery();
   const [deleteProduct] = useDeleteProductAdminMutation();
   const navigate = useNavigate()
+  const { push, reset: resetModal } = userModalDialogStore(useShallow((zs) => ({
+    push: zs.push,
+    reset: zs.reset,
+  })));
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [expanded, setExpanded] = useState([]);
 
@@ -123,7 +130,7 @@ const TableProducts = ({ products, isLoading, onAddVariant, onEditVariant, onDel
             </Button>
           )}
           <div>
-            <div className="fw-semibold">{getValue()}</div>
+            <div className="fw-normal">{getValue()}</div>
           </div>
         </div>
       )
@@ -193,10 +200,14 @@ const TableProducts = ({ products, isLoading, onAddVariant, onEditVariant, onDel
               <IoPencil size={14} className="me-2" />
               Sửa
             </Dropdown.Item>
-            <Dropdown.Item as="li" onClick={() => console.log("Duplicate", row.original._id)}>
+            <Dropdown.Item as="li" onClick={() => handleOpenWarehouse(row.original._id)}>
+              <IoStorefront size={14} className="me-2" />
+              Kho hàng
+            </Dropdown.Item>
+            {/* <Dropdown.Item as="li" onClick={() => console.log("Duplicate", row.original._id)}>
               <IoCopy size={14} className="me-2" />
               Nhân bản
-            </Dropdown.Item>
+            </Dropdown.Item> */}
             <Dropdown.Divider />
             <Dropdown.Item as="li"
               className="text-danger"
@@ -241,22 +252,43 @@ const TableProducts = ({ products, isLoading, onAddVariant, onEditVariant, onDel
         console.error('Failed to fetch product:', error);
       });
   }
-  const handleDeleteProductClick = async (productId, productName) => {
-    const confirmed = await confirmation({
+  const handleDeleteProductClick = (productId, productName) => {
+    push({
       title: 'Xác nhận xóa sản phẩm',
-      message: (<p>Bạn có chắc chắn muốn xóa sản phẩm <strong>{productName}</strong> không?</p>),
-      confirmText: 'Có',
-      cancelText: 'Không',
-      variant: 'danger',
-    })
-    if (confirmed) {
-      try {
-        await deleteProduct(productId).unwrap();
-      } catch (error) {
-        console.error('Failed to delete product', error);
-      }
-    }
-  }
+      bodyComponent: ConfirmDialog,
+      bodyProps: {
+        message: (
+          <p>
+            Bạn có chắc chắn muốn xóa sản phẩm <strong>{productName}</strong> không?
+          </p>
+        )
+      },
+      size: 'sm',
+      buttons: [
+        <Button
+          key="confirm"
+          variant="danger"
+          onClick={async () => {
+            try {
+              await deleteProduct(productId).unwrap();
+              toast.success('Đã xóa sản phẩm');
+            } catch (error) {
+              console.error('Failed to delete product', error);
+              toast.error(error?.em || 'Không thể xóa sản phẩm');
+            } finally {
+              resetModal();
+            }
+          }}
+        >
+          Xóa
+        </Button>,
+      ]
+    });
+  };
+
+  const handleOpenWarehouse = (productId) => {
+    navigate(`/admin/manage-products/warehouse/${productId}`);
+  };
 
   console.log('RENDER: table-products');
   return (

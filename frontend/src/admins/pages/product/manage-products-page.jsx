@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { PaginationControl } from 'react-bootstrap-pagination-control';
 import { Badge, Button, Form, Nav } from 'react-bootstrap';
 import { IoAdd, IoFilter, IoSearch, IoRefresh, IoStorefront, IoLayers, IoPricetag } from 'react-icons/io5';
@@ -27,6 +27,8 @@ import {
   useUpdateVariantAdminMutation,
 } from 'services/admin-services';
 import { userModalDialogStore, useShallow } from '#custom-hooks';
+import ConfirmDialog from 'admins/components/common/confirm-dialog';
+import WarehouseForm from 'admins/components/products/forms/warehouse-form';
 
 import './manage-products-layout.scss';
 
@@ -84,8 +86,9 @@ const ManageProductsPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, total, limit]);
 
-  const { data: categoriesData, isLoading: isLoadingCategories, refetch: refetchCategories } = useGetCategoriesAdminQuery();
+  const { data: categoriesData, isLoading: isLoadingCategories, refetch: refetchCategories } = useGetCategoriesAdminQuery({ includeProductStats: true });
   const categories = categoriesData?.dt || [];
+  const filterableCategories = useMemo(() => categories.filter((cate) => !cate.isVirtual), [categories]);
 
   const selectedInventoryProductId = inventoryProductId || (products[0]?._id ?? '');
   const {
@@ -101,6 +104,27 @@ const ManageProductsPage = () => {
     push: zs.push,
     reset: zs.reset,
   })));
+  const openConfirmDialog = useCallback(({ title, message, confirmText = 'Xác nhận', variant = 'danger', onConfirm }) => {
+    push({
+      title,
+      bodyComponent: ConfirmDialog,
+      bodyProps: { message },
+      size: 'sm',
+      buttons: [
+        <Button key="cancel" variant="secondary" onClick={resetModal}>Hủy</Button>,
+        <Button
+          key="confirm"
+          variant={variant}
+          onClick={async () => {
+            await onConfirm?.();
+            resetModal();
+          }}
+        >
+          {confirmText}
+        </Button>,
+      ],
+    });
+  }, [push, resetModal]);
 
   const [createVariant] = useCreateVariantAdminMutation();
   const [updateVariant] = useUpdateVariantAdminMutation();
@@ -178,19 +202,32 @@ const ManageProductsPage = () => {
     });
   };
 
-  const handleDeleteVariant = async (product, variant) => {
-    const confirmed = window.confirm(`Xóa biến thể ${variant.sku} của sản phẩm ${product.product_name}?`);
-    if (!confirmed) return;
-    try {
-      await deleteVariant({ productId: product._id, sku: variant.sku }).unwrap();
-      toast.success('Đã xóa biến thể');
-      refetch();
-    } catch (error) {
-      toast.error(error?.em || 'Không thể xóa biến thể');
-    }
+  const handleDeleteVariant = (product, variant) => {
+    openConfirmDialog({
+      title: 'Xóa biến thể',
+      message: (
+        <p>
+          Bạn có chắc muốn xóa SKU <strong>{variant.sku}</strong> của sản phẩm <strong>{product.product_name}</strong>?
+        </p>
+      ),
+      confirmText: 'Xóa biến thể',
+      onConfirm: async () => {
+        try {
+          await deleteVariant({ productId: product._id, sku: variant.sku }).unwrap();
+          toast.success('Đã xóa biến thể');
+          refetch();
+        } catch (error) {
+          toast.error(error?.em || 'Không thể xóa biến thể');
+        }
+      }
+    });
   };
 
   const openCategoryModal = (category) => {
+    if (category?.isVirtual) {
+      toast.info('Danh mục này được tổng hợp tự động từ sản phẩm chưa phân loại.');
+      return;
+    }
     push({
       title: category ? 'Chỉnh sửa danh mục' : 'Thêm danh mục',
       bodyComponent: CategoryForm,
@@ -215,16 +252,25 @@ const ManageProductsPage = () => {
     });
   };
 
-  const handleDeleteCategory = async (category) => {
-    const confirmed = window.confirm(`Xóa danh mục "${category.category_name}"?`);
-    if (!confirmed) return;
-    try {
-      await deleteCategory(category._id).unwrap();
-      toast.success('Đã xóa danh mục');
-      refetchCategories();
-    } catch (error) {
-      toast.error(error?.em || 'Không thể xóa danh mục');
+  const handleDeleteCategory = (category) => {
+    if (category?.isVirtual) {
+      toast.info('Không thể xóa danh mục ảo.');
+      return;
     }
+    openConfirmDialog({
+      title: 'Xóa danh mục',
+      message: `Xóa danh mục "${category.category_name}"?`,
+      confirmText: 'Xóa',
+      onConfirm: async () => {
+        try {
+          await deleteCategory(category._id).unwrap();
+          toast.success('Đã xóa danh mục');
+          refetchCategories();
+        } catch (error) {
+          toast.error(error?.em || 'Không thể xóa danh mục');
+        }
+      }
+    });
   };
 
   const handleAddWarehouse = () => {
@@ -253,15 +299,20 @@ const ManageProductsPage = () => {
   };
 
   const handleDeleteWarehouse = async (warehouse) => {
-    const confirmed = window.confirm(`Xóa kho "${warehouse.name}"?`);
-    if (!confirmed) return;
-    try {
-      await removeWarehouse({ productId: selectedInventoryProductId, warehouseId: warehouse._id }).unwrap();
-      toast.success('Đã xóa kho');
-      refetchWarehouses();
-    } catch (error) {
-      toast.error(error?.em || 'Không thể xóa kho');
-    }
+    openConfirmDialog({
+      title: 'Xóa kho hàng',
+      message: `Xóa kho "${warehouse.name}" khỏi sản phẩm này?`,
+      confirmText: 'Xóa',
+      onConfirm: async () => {
+        try {
+          await removeWarehouse({ productId: selectedInventoryProductId, warehouseId: warehouse._id }).unwrap();
+          toast.success('Đã xóa kho');
+          refetchWarehouses();
+        } catch (error) {
+          toast.error(error?.em || 'Không thể xóa kho');
+        }
+      }
+    });
   };
 
   const filteredCategories = useMemo(() => {
@@ -270,18 +321,25 @@ const ManageProductsPage = () => {
     return categories.filter((cate) => cate.category_name.toLowerCase().includes(keyword));
   }, [categories, categorySearchText]);
 
-  const categoryRows = useMemo(() => {
-    const stats = products.reduce((acc, prod) => {
+  const productStats = useMemo(() => {
+    return products.reduce((acc, prod) => {
       if (prod.category_id) {
         acc[prod.category_id] = (acc[prod.category_id] || 0) + 1;
       }
       return acc;
     }, {});
-    return filteredCategories.map((cate) => ({
-      ...cate,
-      productCount: stats[cate._id] || 0,
-    }));
-  }, [filteredCategories, products]);
+  }, [products]);
+
+  const categoryRows = useMemo(() => {
+    return filteredCategories.map((cate) => {
+      const countFromApi = typeof cate.productCount === 'number' ? cate.productCount : null;
+      const total = countFromApi ?? productStats[cate._id] ?? 0;
+      return {
+        ...cate,
+        productCount: total,
+      };
+    });
+  }, [filteredCategories, productStats]);
 
   const categoryColumns = useMemo(() => ([
     {
@@ -299,10 +357,10 @@ const ManageProductsPage = () => {
       meta: { thStyle: { width: '120px' } },
       cell: ({ row }) => (
         <div className="d-flex gap-2 justify-content-end">
-          <Button size="sm" variant="outline-secondary" onClick={() => openCategoryModal(row.original)}>
+          <Button size="sm" variant="outline-secondary" onClick={() => openCategoryModal(row.original)} disabled={row.original.isVirtual}>
             Sửa
           </Button>
-          <Button size="sm" variant="outline-danger" onClick={() => handleDeleteCategory(row.original)}>
+          <Button size="sm" variant="outline-danger" onClick={() => handleDeleteCategory(row.original)} disabled={row.original.isVirtual}>
             Xóa
           </Button>
         </div>
@@ -375,7 +433,6 @@ const ManageProductsPage = () => {
       <div className="page-header">
         <div>
           <h1 className="page-title">Quản lý sản phẩm</h1>
-          <p className="page-subtitle">Theo dõi danh sách, biến thể, kho hàng và danh mục</p>
         </div>
         <Button variant="outline-secondary" onClick={() => refetch()}>
           <IoRefresh size={16} />
@@ -385,9 +442,6 @@ const ManageProductsPage = () => {
       <Nav variant="tabs" activeKey={activeTab} onSelect={(key) => updateParams({ tab: key, page: 1 })} className="mb-3">
         <Nav.Item>
           <Nav.Link eventKey="products"><IoPricetag className="me-1" />Tất cả sản phẩm</Nav.Link>
-        </Nav.Item>
-        <Nav.Item>
-          <Nav.Link eventKey="inventory"><IoStorefront className="me-1" />Kho hàng</Nav.Link>
         </Nav.Item>
         <Nav.Item>
           <Nav.Link eventKey="categories"><IoLayers className="me-1" />Danh mục sản phẩm</Nav.Link>
@@ -424,7 +478,7 @@ const ManageProductsPage = () => {
                   disabled={isLoadingCategories}
                 >
                   <option value="all">Tất cả</option>
-                  {categories.map((cate) => (
+                  {filterableCategories.map((cate) => (
                     <option key={cate._id} value={cate._id}>{cate.category_name}</option>
                   ))}
                 </Form.Select>
@@ -484,84 +538,6 @@ const ManageProductsPage = () => {
                 ellipsis={1}
               />
             </div>
-          </div>
-        </>
-      )}
-
-      {activeTab === 'inventory' && (
-        <>
-          <div className="filters-panel">
-            <div className="filters-grid">
-              <div className="filter-item">
-                <label htmlFor="inventory-product">Chọn sản phẩm</label>
-                <Form.Select
-                  id="inventory-product"
-                  value={selectedInventoryProductId}
-                  onChange={(e) => updateParams({ inventoryProductId: e.target.value }, false)}
-                  disabled={!products.length}
-                >
-                  {products.map((p) => (
-                    <option key={p._id} value={p._id}>{p.product_name}</option>
-                  ))}
-                </Form.Select>
-              </div>
-              <div className="filter-item">
-                <label htmlFor="inventory-sku">Lọc theo SKU</label>
-                <Form.Control
-                  id="inventory-sku"
-                  value={inventorySku}
-                  placeholder="VD: SKU-001"
-                  onChange={(e) => updateParams({ sku: e.target.value }, false)}
-                />
-              </div>
-              <div className="filter-actions">
-                <Button variant="primary" onClick={handleAddWarehouse} disabled={!selectedInventoryProductId}>
-                  <IoAdd size={16} /> Thêm kho
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          <div className="table-container">
-            {isWarehouseFetching ? (
-              <div className="loading-state">
-                <div className="spinner" />
-                <p>Đang tải kho hàng...</p>
-              </div>
-            ) : (
-              <table className="table table-hover">
-                <thead className="table-light">
-                  {inventoryTable.getHeaderGroups().map((hg) => (
-                    <tr key={hg.id}>
-                      {hg.headers.map((header) => (
-                        <th key={header.id} style={header.column.columnDef.meta?.thStyle}>
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                        </th>
-                      ))}
-                    </tr>
-                  ))}
-                </thead>
-                <tbody>
-                  {inventoryRows.length === 0 ? (
-                    <tr>
-                      <td colSpan={inventoryTable.getAllColumns().length} className="text-center py-4 text-muted">
-                        Chưa có dữ liệu kho hàng
-                      </td>
-                    </tr>
-                  ) : (
-                    inventoryTable.getRowModel().rows.map((row) => (
-                      <tr key={row.id}>
-                        {row.getVisibleCells().map((cell) => (
-                          <td key={cell.id}>
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </td>
-                        ))}
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            )}
           </div>
         </>
       )}
@@ -654,38 +630,6 @@ const CategoryForm = ({ defaultValue, onSubmit }) => {
       <div className="d-flex justify-content-end">
         <Button type="submit" variant="success">
           Lưu
-        </Button>
-      </div>
-    </Form>
-  );
-};
-
-const WarehouseForm = ({ onSubmit, submitting }) => {
-  const { register, handleSubmit, formState: { errors } } = useForm({
-    defaultValues: { name: '', location: '' },
-  });
-  return (
-    <Form onSubmit={handleSubmit(onSubmit)}>
-      <Form.Group className="mb-3">
-        <Form.Label>Tên kho</Form.Label>
-        <Form.Control
-          {...register('name', { required: 'Vui lòng nhập tên kho' })}
-          isInvalid={!!errors.name}
-        />
-        <Form.Control.Feedback type="invalid">
-          {errors.name?.message}
-        </Form.Control.Feedback>
-      </Form.Group>
-      <Form.Group className="mb-3">
-        <Form.Label>Địa điểm</Form.Label>
-        <Form.Control
-          {...register('location')}
-          placeholder="(tùy chọn)"
-        />
-      </Form.Group>
-      <div className="d-flex justify-content-end">
-        <Button type="submit" variant="success" disabled={submitting}>
-          {submitting ? 'Đang lưu...' : 'Lưu'}
         </Button>
       </div>
     </Form>

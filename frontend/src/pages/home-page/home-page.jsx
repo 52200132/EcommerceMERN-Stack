@@ -61,11 +61,11 @@ const HomePage = () => {
 			/>
 
 			{/* Start Call Action Area */}
-			<CallAction />
+			{/* <CallAction /> */}
 			{/* End Call Action Area */}
 
 			{/* Start Banner Area */}
-			<BannerSection />
+			{/* <BannerSection /> */}
 			{/* End Banner Area */}
 
 			{/* Start Shipping Info */}

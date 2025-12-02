@@ -212,6 +212,40 @@ $variant-accent: #ffa000;
 }
 
 //---------------------------------------------------------------
+// Product Details Info Styles
+//---------------------------------------------------------------
+.tps-slider-loading {
+  min-height: 200px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 37%, #f0f0f0 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+
+  img:not(:first-child) {
+    display: none;
+  }
+
+  &#thumbnails {
+    min-height: 60px;
+
+    img {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 37%, #f0f0f0 63%);
+      background-size: 400% 100%;
+      animation: shimmer 1.4s ease infinite;
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+
+    100% {
+      background-position: -200% 0;
+    }
+  }
+}
+
+//---------------------------------------------------------------
 // Comments Component Styles
 //---------------------------------------------------------------
 .tps-comments-section {

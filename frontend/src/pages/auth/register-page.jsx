@@ -330,7 +330,7 @@ const RegisterPage = () => {
           )}
           <Alert show={isError} variant="danger" className="mt-3 text-wrap">
             {errorMessage}
-            <p>Hãy kiểm tra <Link target="_blank" to={`https://mail.google.com/mail/u/0/#search/${process.env.REACT_APP_APP_NAME}`}>email</Link></p>
+            {/* <p>Hãy kiểm tra <Link target="_blank" to={`https://mail.google.com/mail/u/0/#search/${process.env.REACT_APP_APP_NAME}`}>email</Link></p> */}
           </Alert>
           <Alert show={isSuccess} variant="info" className="mt-3 text-wrap">
             <p>Đăng ký tài khoản thành công! Vui lòng kiểm tra <Link target="_blank" to={`https://mail.google.com/mail/u/0/#search/${process.env.REACT_APP_APP_NAME}`}>email</Link> để lấy mật khẩu.</p>

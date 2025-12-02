@@ -117,7 +117,7 @@ export const userModalDialogStore = create(
             draft.buttons = [];
             draft.timeOutId = null;
           });
-        }, 3000);
+        }, 300);
         state.timeOutId = timeoutId;
       } else if (value && state.stack.length === 0 && state.bodyComponent) {
         state.stack.push({
@@ -210,7 +210,7 @@ export const userModalDialogStore = create(
           draft.buttons = [];
           draft.timeOutId = null;
         });
-      }, 3000);
+      }, 300);
       state.timeOutId = timeoutId;
     }),
   }))

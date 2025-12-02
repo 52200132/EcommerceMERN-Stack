@@ -14,6 +14,7 @@ import UserProfileLayout from "./pages/profile/user-profile-layout";
 
 import ManageProductsLayout from "admins/pages/product/manage-products-layout";
 import ManageProductsPage from "admins/pages/product/manage-products-page"
+import ProductWarehousePage from "admins/pages/product/warehouse-management-page";
 import CRUProduct from "admins/pages/product/cru-product-page";
 import CRUDetailsDescription from "./admins/pages/product/cru-dd-page";
 import ProfilePage from "pages/profile/profile-page";
@@ -26,6 +27,8 @@ import DashboardPage from "admins/pages/dashboard/dashboard-page";
 import OrderHistoryPage from "pages/profile/order-history-page";
 import OrderTrackingPage from "pages/profile/order-tracking";
 import PointsPage from "pages/profile/points-page";
+import NotFoundPage from "./pages/errors/not-found-page";
+import ForbiddenPage from "./pages/errors/forbidden-page";
 
 // import NotFoundPage from "./pages/NotFoundPage"; // Optional: Create a 404 page component
 // import "./App.css";
@@ -67,21 +70,8 @@ const App = () => {
           <Route path="about" element={<AboutPage />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
-          {/* Add more routes as needed */}
-          <Route path="*" element={
-            <div className="container section">
-              <div className="row">
-                <div className="col-12 text-center">
-                  <div className="alert alert-warning">
-                    <h1>404</h1>
-                    <h4>Page Not Found</h4>
-                    <p>The page you are looking for doesn"t exist.</p>
-                    <a href="/" className="btn btn-primary">Go Home</a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          } />
+          <Route path="khong-co-quyen" element={<ForbiddenPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
 
         <Route path="/admin/*" element={<AdminsLayout />}>
@@ -89,6 +79,7 @@ const App = () => {
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="manage-products" element={<ManageProductsLayout />}>
             <Route index element={<ManageProductsPage />} />
+            <Route path="warehouse/:productId" element={<ProductWarehousePage />} />
             <Route path="add-product" element={<CRUProduct action="create" />} />
             <Route path="edit-product/:productId" element={<CRUProduct action="update" />} />
             <Route path="edit-product/:productId/description" element={<CRUDetailsDescription />} />
@@ -97,6 +88,8 @@ const App = () => {
           <Route path="manage-orders" element={<ManageOrdersPage />} />
           <Route path="manage-users" element={<ManageUsersPage />} />
           <Route path="manage-discounts" element={<ManageDiscountCodePage />} />
+          <Route path="khong-co-quyen" element={<ForbiddenPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
 
       </Routes>

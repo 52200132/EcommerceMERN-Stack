@@ -1,0 +1,114 @@
+.product-warehouse-page {
+  padding: 24px;
+  background: #f8f9fa;
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 12px;
+
+    .page-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1f2937;
+    }
+
+    .page-subtitle {
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #6c757d;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+
+    .summary-label {
+      font-size: 13px;
+      color: #6c757d;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .summary-value {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 2px 0;
+    }
+
+    .summary-note {
+      font-size: 12px;
+    }
+  }
+
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .warehouse-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 12px;
+  }
+
+  .warehouse-card {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    border: 1px solid #e5e7eb;
+  }
+
+  .empty-card {
+    border: 1px dashed #ced4da;
+
+    .empty-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #e9f2ff, #edf1ff);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #0d6efd;
+      margin-bottom: 12px;
+    }
+  }
+
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    gap: 8px;
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 3px solid #e2e6ea;
+      border-top-color: #0d6efd;
+      animation: spinner 0.8s linear infinite;
+    }
+  }
+}
+
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}

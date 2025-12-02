@@ -123,7 +123,8 @@
       }
     }
 
-    .filters-actions {
+    .filters-actions,
+    .filter-actions {
       display: flex;
       justify-content: flex-end;
     }
@@ -193,6 +194,7 @@
       tbody {
         tr {
           td {
+            font-weight: 400;
             text-align: center;
             vertical-align: middle;
           }

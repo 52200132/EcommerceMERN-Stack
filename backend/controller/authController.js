@@ -130,50 +130,46 @@ const handleRegister = async (req, res) => {
 
     // Check if user exists
     const userExists = await User.findOne({ email });
-    if (userExists) {
+    if (userExists && userExists.isActive === false) {
+      userExists.username = username;
+      userExists.Addresses = Addresses;
+      userExists.isActive = true;
+      await userExists.save();
       await transporter.sendMail({
         from: `${process.env.APP_NAME} <${process.env.EMAIL_USER}>`,
         to: email,
-        subject: "Email đã tạo tài khoản",
-        text: `Xin chào ${userExists.email},
-          Hệ thống ghi nhận rằng email của bạn đã được sử dụng để tạo tài khoản nhằm hỗ trợ lưu trữ và quản lý đơn hàng.
-          Dưới đây là thông tin tài khoản của bạn:
-
-          - Username: ${userExists.username}
+        subject: "Đăng ký tài khoản thành công",
+        text: `Xin chào ${userExists.username},
+          Chúc mừng bạn đã đăng ký tài khoản thành công tại hệ thống của chúng tôi!
+          Thông tin tài khoản:
           - Email: ${userExists.email}
-          - Password mặc định: ${process.env.USER_PASSWORD_DEFAULT}
-
-          Vui lòng đăng nhập và đổi mật khẩu ngay sau khi truy cập để đảm bảo an toàn bảo mật.
-
-          Nếu bạn không phải là người thực hiện hành động này, vui lòng liên hệ ngay với đội ngũ hỗ trợ để được kiểm tra và xử lý.
-
+          - Mật khẩu tạm thời: ${process.env.USER_PASSWORD_DEFAULT}
+          Vui lòng đăng nhập và đổi mật khẩu ngay để đảm bảo an toàn bảo mật.
+          Nếu bạn không thực hiện đăng ký này, vui lòng liên hệ ngay với chúng tôi để được hỗ trợ.
           Trân trọng,
           ${process.env.APP_NAME} Team
           `,
         html: `<div style="width:100%; background:#f5f5f5; padding:20px 0; font-family:Arial, sans-serif;">
           <div style="max-width:600px; background:#ffffff; margin:auto; padding:25px; border-radius:8px; box-shadow:0 0 8px rgba(0,0,0,0.05);">
 
-            <h2 style="text-align:center; color:#333; margin-bottom:5px;">Thông báo tạo tài khoản tự động</h2>
-            <p style="text-align:center; margin:0; color:#666;">Email của bạn đã được sử dụng để tạo tài khoản.</p>
+            <h2 style="text-align:center; color:#333; margin-bottom:5px;">Đăng ký tài khoản thành công</h2>
+            <p style="text-align:center; margin:0; color:#666;">Chào mừng bạn đến với hệ thống của chúng tôi!</p>
 
             <p style="margin-top:25px;">
-              Xin chào <strong>${userExists.username || userExists.email}</strong>,
+              Xin chào <strong>${userExists.username}</strong>,
             </p>
 
-            <p>
-              Hệ thống đã tự động tạo tài khoản cho bạn nhằm lưu trữ thông tin đơn hàng và hỗ trợ quá trình mua sắm.
-              Dưới đây là thông tin tài khoản:
-            </p>
+            <p>Cảm ơn bạn đã tạo tài khoản tại hệ thống của chúng tôi. Dưới đây là thông tin tài khoản của bạn:</p>
 
-            <h3 style="margin-top:25px; color:#333;">👤 Thông tin tài khoản</h3>
-
+            <!-- User Info -->
+            <h3 style="margin-top:25px; color:#333;">👤 Thông tin người dùng</h3>
             <table width="100%" style="border-collapse:collapse; margin-top:10px;">
               <tr>
                 <td style="padding:8px 0; color:#555;">Email:</td>
                 <td style="padding:8px 0; text-align:right; font-weight:bold;">${userExists.email}</td>
               </tr>
               <tr>
-                <td style="padding:8px 0; color:#555;">Mật khẩu mặc định:</td>
+                <td style="padding:8px 0; color:#555;">Mật khẩu tạm thời:</td>
                 <td style="padding:8px 0; text-align:right; font-weight:bold; color:#d9534f;">
                   ${process.env.USER_PASSWORD_DEFAULT}
                 </td>
@@ -181,24 +177,35 @@ const handleRegister = async (req, res) => {
             </table>
 
             <p style="margin-top:20px;">
-              Vui lòng đăng nhập và <strong>đổi mật khẩu ngay</strong> để đảm bảo an toàn thông tin.
+              Vui lòng đăng nhập và <strong>đổi mật khẩu ngay</strong> để đảm bảo an toàn tài khoản.
             </p>
 
-            <p style="margin-top:15px;">
-              Nếu bạn không phải là người thực hiện hành động này, vui lòng liên hệ với đội ngũ hỗ trợ của chúng tôi để được kiểm tra và xử lý ngay.
+            <p style="margin-top:20px;">
+              Nếu bạn không thực hiện đăng ký này, vui lòng liên hệ ngay với đội ngũ hỗ trợ của chúng tôi.
             </p>
 
             <p style="margin-top:30px; text-align:center;">
-              <b>Trân trọng,<br>${process.env.APP_NAME} Team</b>
+              <b>Cảm ơn bạn đã tin tưởng sử dụng dịch vụ!</b>
             </p>
 
           </div>
         </div>
         `,
       });
-      return res.status(400).json({ ec: 400, em: "Email đã tạo tài khoản, xin hãy đăng nhập. Hoặc nếu bạn chưa tạo, hãy check email của chúng tôi." });
-    }
-    else {
+      return res.status(200).json({
+        ec: 0,
+        em: 'Kích hoạt lại user thành công',
+        dt: {
+          _id: userExists._id,
+          username: userExists.username,
+          email: userExists.email,
+          isManager: userExists.isManager,
+          token: generateToken(userExists._id), // trả về token khi đăng ký thành công
+        }
+      });
+    } else if (userExists && userExists.isActive === true) {
+      return res.status(400).json({ ec: 400, em: "Email đã tồn tại" });
+    } else {
       // Create ramdom password
       const randomPassword = crypto.randomBytes(4).toString("hex");
       console.log(randomPassword);
@@ -210,7 +217,9 @@ const handleRegister = async (req, res) => {
         username,
         email,
         password: hashedPassword,
-        Addresses
+        Addresses,
+        isActive: true,
+        resetPasswordFirstTime: false,
       });
 
       // Gửi email thông báo thông tin đăng ký tài khoản

@@ -48,6 +48,7 @@ export const productDetailsHooks = {
           }
         },
       });
+
       mainSliderRef.current = mainSlider;
       thumbnailsSliderRef.current = thumbnailsSlider;
       return () => {

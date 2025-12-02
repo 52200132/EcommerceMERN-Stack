@@ -17,6 +17,7 @@ import { toast } from "react-toastify";
 import { deleteCartFromList, updateCartList } from "#features/user-profile-slice";
 
 const GUEST_CART_KEY = "guest_cart";
+const SELECTED_CART_KEY = "selected_cart_items";
 const DEFAULT_SHIPPING = [
   { method: "Ship Nhanh", fee: 30000, note: "Nhận từ 2-3 ngày" },
   { method: "Hỏa tốc", fee: 60000, note: "Nhận trong ngày" },
@@ -24,9 +25,8 @@ const DEFAULT_SHIPPING = [
 
 const buildTotals = (items = []) => {
   const subtotal = items.reduce((sum, item) => sum + (item?.variant?.price || 0) * item.quantity, 0);
-  const tax = Math.round(subtotal * 0.08);
   const itemsCount = items.reduce((sum, item) => sum + item.quantity, 0);
-  return { subtotal, tax, itemsCount };
+  return { subtotal, itemsCount };
 };
 
 const loadGuestCart = () => {
@@ -35,6 +35,18 @@ const loadGuestCart = () => {
   } catch (error) {
     return [];
   }
+};
+
+const loadSelectedCart = () => {
+  try {
+    return JSON.parse(localStorage.getItem(SELECTED_CART_KEY)) || [];
+  } catch (error) {
+    return [];
+  }
+};
+
+const persistSelectedCart = (items) => {
+  localStorage.setItem(SELECTED_CART_KEY, JSON.stringify(items));
 };
 
 const persistGuestCart = (items) => {
@@ -51,6 +63,7 @@ const CartPage = () => {
   const [guestCart, setGuestCart] = useState(() => loadGuestCart());
   const [shippingMethod, setShippingMethod] = useState(DEFAULT_SHIPPING[0]);
   const [refreshGuestInfo] = useGetProductsInfoForOrderMutation();
+  const [selectedProducts, setSelectedProducts] = useState([]);
 
   const cart_list = useSelector((state) => state.userProfile.cart_list);
   // const { data: cartDataRes, isLoading, isFetching } = useGetCartQuery(undefined, { skip: !isLoggedIn || cart_list.length !== 0 });
@@ -108,6 +121,25 @@ const CartPage = () => {
   const carts = isLoggedIn ? cart_list || [] : guestCart;
   const shippingOptions = isLoggedIn ? cartData?.dt?.shippingOptions || DEFAULT_SHIPPING : DEFAULT_SHIPPING;
 
+  // keep selected items synced with current cart data (and persisted for checkout)
+  useEffect(() => {
+    if (isLoggedIn && !cartData) return;
+    if (!carts?.length) {
+      setSelectedProducts([]);
+      persistSelectedCart([]);
+      return;
+    }
+    const savedSelection = loadSelectedCart();
+    if (!savedSelection.length) return;
+    const matched = carts.filter((item) =>
+      savedSelection.some(
+        (saved) => saved.product_id === item.product_id && saved.variant?.sku === item.variant?.sku
+      )
+    );
+    setSelectedProducts(matched);
+    persistSelectedCart(matched);
+  }, [carts, isLoggedIn, cartData]);
+
   useEffect(() => {
     if (!shippingOptions.length) return;
     setShippingMethod((prev) => {
@@ -118,13 +150,13 @@ const CartPage = () => {
   }, [shippingOptions]);
 
   const totals = useMemo(() => {
-    const baseTotals = isLoggedIn ? cartData?.dt?.totals : buildTotals(guestCart);
+    // const baseTotals = isLoggedIn ? cartData?.dt?.totals : buildTotals(guestCart);
+    const baseTotals = buildTotals(selectedProducts);
     const shippingFee = shippingMethod?.fee || 0;
     const subtotal = baseTotals?.subtotal || 0;
-    const tax = baseTotals?.tax || 0;
-    const estimatedTotal = subtotal + tax + shippingFee;
+    const estimatedTotal = subtotal + shippingFee;
     return { ...baseTotals, shippingFee, estimatedTotal };
-  }, [isLoggedIn, cartData, guestCart, shippingMethod]);
+  }, [isLoggedIn, cartData, guestCart, shippingMethod, selectedProducts]);
 
   const handleQuantityChange = (item, nextQty) => {
     if (nextQty <= 0) {
@@ -151,6 +183,34 @@ const CartPage = () => {
     persistGuestCart(updated);
   };
 
+  const toggleSelection = (item, isChecked) => {
+    setSelectedProducts((prev) => {
+      if (isChecked) {
+        const exists = prev.some(
+          (p) => p.product_id === item.product_id && p.variant?.sku === item.variant?.sku
+        );
+        const next = exists ? prev : [...prev, item];
+        persistSelectedCart(next);
+        return next;
+      }
+      const next = prev.filter(
+        (p) => !(p.product_id === item.product_id && p.variant?.sku === item.variant?.sku)
+      );
+      persistSelectedCart(next);
+      return next;
+    });
+  };
+
+  const removeFromSelection = (item) => {
+    setSelectedProducts((prev) => {
+      const next = prev.filter(
+        (p) => !(p.product_id === item.product_id && p.variant?.sku === item.variant?.sku)
+      );
+      persistSelectedCart(next);
+      return next;
+    });
+  };
+
   const handleRemove = (item) => {
     if (isLoggedIn) {
       deleteCartItem({ product_id: item.product_id, sku: item.variant.sku })
@@ -158,6 +218,7 @@ const CartPage = () => {
         .then((data) => {
           dispatch(deleteCartFromList(data?.dt?.removed_item))
           setCartData(data)
+          removeFromSelection(item);
         })
         .catch((e) => { console.error("Failed to remove cart item:", e); toast.error("Không thể xóa sản phẩm"); });
       return;
@@ -167,6 +228,7 @@ const CartPage = () => {
     );
     setGuestCart(filtered);
     persistGuestCart(filtered);
+    removeFromSelection(item);
   };
 
   // const isBusy = isLoading || isFetching || isUpdatingCart || isDeleting;
@@ -174,7 +236,11 @@ const CartPage = () => {
   const isEmpty = !carts || carts.length === 0;
 
   const onCheckout = () => {
-    if (isEmpty) return;
+    if (isEmpty || !selectedProducts.length) {
+      toast.warn("Vui lòng chọn sản phẩm muốn mua");
+      return;
+    }
+    persistSelectedCart(selectedProducts);
     persistGuestCart(guestCart);
     navigate("/checkout");
   };
@@ -211,67 +277,84 @@ const CartPage = () => {
             <Col lg={8}>
               <div className="cart-items-wrapper">
                 {carts.map((item) => (
-                  <CartItemRow
-                    key={`${item.product_id}-${item.variant?.sku}`}
-                    item={item}
-                    onQuantityChange={handleQuantityChange}
-                    onRemove={handleRemove}
-                  />
+                  <div key={`${item.product_id}-${item.variant?.sku}`}>
+                    <Form.Check
+                      type="checkbox"
+                      className="mb-2"
+                      label="Chọn sản phẩm này"
+                      checked={selectedProducts.some(
+                        (p) => p.product_id === item.product_id && p.variant?.sku === item.variant?.sku
+                      )}
+                      onChange={(e) => {
+                        const isChecked = e.target.checked;
+                        toggleSelection(item, isChecked);
+                      }}
+                    />
+                    <CartItemRow
+                      item={item}
+                      onQuantityChange={handleQuantityChange}
+                      onRemove={handleRemove}
+                    />
+                  </div>
                 ))}
               </div>
             </Col>
             <Col lg={4}>
               <Card className="cart-summary">
-                <Card.Body>
-                  <Card.Title>Tóm tắt đơn</Card.Title>
-                  <div className="d-flex justify-content-between">
-                    <span>Tạm tính</span>
-                    <strong>{formatCurrency(totals.subtotal || 0)}</strong>
-                  </div>
-                  <div className="d-flex justify-content-between mt-2">
-                    <span>Thuế (8%)</span>
-                    <strong>{formatCurrency(totals.tax || 0)}</strong>
-                  </div>
+                {selectedProducts.length > 0 ? (
+                  <Card.Body>
+                    <Card.Title>Tóm tắt đơn</Card.Title>
+                    <div className="d-flex justify-content-between">
+                      <span>Tạm tính</span>
+                      <strong>{formatCurrency(totals.subtotal || 0)}</strong>
+                    </div>
 
-                  <Form.Group className="mt-3">
-                    <Form.Label>Phương thức vận chuyển</Form.Label>
-                    <Form.Select
-                      value={shippingMethod?.method}
-                      onChange={(e) =>
-                        setShippingMethod(
-                          shippingOptions.find((opt) => opt.method === e.target.value) || shippingOptions[0]
-                        )
-                      }
+                    <Form.Group className="mt-3">
+                      <Form.Label>Phương thức vận chuyển</Form.Label>
+                      <Form.Select
+                        value={shippingMethod?.method}
+                        onChange={(e) =>
+                          setShippingMethod(
+                            shippingOptions.find((opt) => opt.method === e.target.value) || shippingOptions[0]
+                          )
+                        }
+                      >
+                        {shippingOptions.map((opt) => (
+                          <option key={opt.method} value={opt.method}>
+                            {opt.method} (+{formatCurrency(opt.fee)})
+                          </option>
+                        ))}
+                      </Form.Select>
+                      {shippingMethod?.note && <small className="text-muted">{shippingMethod.note}</small>}
+                    </Form.Group>
+
+                    <div className="d-flex justify-content-between mt-3">
+                      <span>Phí vận chuyển</span>
+                      <strong>{formatCurrency(totals.shippingFee || 0)}</strong>
+                    </div>
+                    <div className="d-flex justify-content-between mt-3 total-line">
+                      <span>Tổng cộng</span>
+                      <strong>{formatCurrency(totals.estimatedTotal || 0)}</strong>
+                    </div>
+
+                    <Button
+                      className="w-100 mt-3"
+                      onClick={onCheckout}
+                      disabled={isEmpty || isBusy || !selectedProducts.length}
                     >
-                      {shippingOptions.map((opt) => (
-                        <option key={opt.method} value={opt.method}>
-                          {opt.method} (+{formatCurrency(opt.fee)})
-                        </option>
-                      ))}
-                    </Form.Select>
-                    {shippingMethod?.note && <small className="text-muted">{shippingMethod.note}</small>}
-                  </Form.Group>
-
-                  <div className="d-flex justify-content-between mt-3">
-                    <span>Phí vận chuyển</span>
-                    <strong>{formatCurrency(totals.shippingFee || 0)}</strong>
-                  </div>
-                  <div className="d-flex justify-content-between mt-3 total-line">
-                    <span>Tổng cộng</span>
-                    <strong>{formatCurrency(totals.estimatedTotal || 0)}</strong>
-                  </div>
-
-                  <Button
-                    className="w-100 mt-3"
-                    onClick={onCheckout}
-                    disabled={isEmpty || isBusy}
-                  >
-                    Tiến hành thanh toán
-                  </Button>
-                  <Alert variant="light" className="mt-3 mb-0">
-                    Phí và giảm giá sẽ được áp dụng ở bước thanh toán.
-                  </Alert>
-                </Card.Body>
+                      Tiến hành thanh toán
+                    </Button>
+                    <Alert variant="light" className="mt-3 mb-0">
+                      Phí và giảm giá sẽ được áp dụng ở bước thanh toán.
+                    </Alert>
+                  </Card.Body>
+                ) : (
+                  <Card.Body>
+                    <Alert variant="warning">
+                      Vui lòng chọn ít nhất một sản phẩm để tiếp tục thanh toán.
+                    </Alert>
+                  </Card.Body>
+                )}
               </Card>
             </Col>
           </Row>

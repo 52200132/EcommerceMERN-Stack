@@ -226,10 +226,6 @@ const OrderDetailModal = ({ orderId, onStatusUpdated }) => {
                   <span className="text-muted">Phí vận chuyển</span>
                   <span>{formatCurrency(order.shipment?.fee || 0)}</span>
                 </div>
-                <div className="d-flex justify-content-between w-100 w-md-75">
-                  <span className="text-muted">Thuế</span>
-                  <span>{formatCurrency(order.tax_fee || 0)}</span>
-                </div>
                 <div className="d-flex justify-content-between w-100 w-md-75 text-success">
                   <span>Giảm giá</span>
                   <span>- {formatCurrency(order.discount || 0)}</span>

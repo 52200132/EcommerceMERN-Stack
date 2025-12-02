@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Row, Col, Container, Form } from "react-bootstrap";
 import { useLocation } from "react-router-dom";
@@ -10,10 +10,12 @@ import Comments from "#components/product-details/Comments";
 import { formatCurrency } from "#utils";
 import { useScrollTo, useTpsSelector } from "#custom-hooks";
 import { productDetailsHooks } from "#component-hooks/use-product-details-hooks";
-import { clearProductDetails, setProduct, setRatings } from "#features/product-details-slice";
+import { setProduct, setRatings } from "#features/product-details-slice";
 import { useAddToCartMutation, useGetRatingsByProductQuery } from "#services";
 import { useGetProductByIdQuery } from "#services/product-services";
 import { toast } from "react-toastify";
+import { tns } from "tiny-slider";
+import { set } from "lodash";
 // import { useGetProductByIdQuery } from "#services/admin-services";
 
 const GUEST_CART_KEY = "guest_cart";
@@ -52,9 +54,13 @@ const ProductDetails = () => {
   const { product } = useTpsSelector(state => state.productDetails, {
     includeProps: ["product"],
   });
-  const {
-    imagesSlider
-  } = productDetailsHooks.useInitTinySlider("#product-imgs-slider", "#thumbnails", product);
+  // const {
+  //   imagesSlider
+  // } = productDetailsHooks.useInitTinySlider("#product-imgs-slider", "#thumbnails", product);
+  const imagesSlider = useMemo(() => ([
+    product?.Images?.map(img => img.url),
+    product?.Variants?.flatMap(variant => variant.Images.map(img => img.url))].flat())
+    , [product]);
   const {
     productVariants, selectedVariant, setSelectedVariant
   } = productDetailsHooks.useProductVariants(product);
@@ -226,6 +232,67 @@ const ProductDetails = () => {
 }
 
 const ProductImagesSlider = ({ images }) => {
+  useEffect(() => {
+    console.log("Init tiny slider for images, images:", images.length);
+    if (!images || images.length === 0) return;
+    let mainSlider, thumbnailsSlider;
+    const timeoutId = setTimeout(() => {
+      mainSlider = tns({
+        mode: 'gallery',
+        nav: true,
+        container: "#product-imgs-slider",
+        controls: false,
+        mouseDrag: true,
+        navContainer: "#thumbnails",
+        navAsThumbnails: true,
+        // fixedWidth: 400,
+        items: 1,
+        swipeAngle: 15,
+      });
+      thumbnailsSlider = tns({
+        container: "#thumbnails",
+        items: 3,
+        slideBy: 3,
+        gutter: 8,
+        nav: false,
+        controls: true,
+        controlsContainer: '#controls-thumbnails',
+        mouseDrag: true,
+        swipeAngle: 15,
+        loop: false,
+        rewind: false,
+        fixedWidth: false,
+        responsive: {
+          767: {
+            items: 5,
+            slideBy: 5,
+          }
+        },
+      });
+    }, 500);
+
+    return () => {
+      if (typeof mainSlider !== 'undefined' && mainSlider !== null) {
+        mainSlider.destroy();
+      }
+      if (typeof thumbnailsSlider !== 'undefined' && thumbnailsSlider !== null) {
+        thumbnailsSlider.destroy();
+      }
+      clearTimeout(timeoutId);
+    };
+  }, [images]);
+
+  // useEffect(() => {
+  //   return () => {
+  //     if (typeof mainSliderRef.current !== 'undefined' && mainSliderRef.current !== null) {
+  //       mainSliderRef.current.destroy();
+  //     }
+  //     if (typeof thumbnailsSliderRef.current !== 'undefined' && thumbnailsSliderRef.current !== null) {
+  //       thumbnailsSliderRef.current.destroy();
+  //     }
+  //   };
+  // }, []);
+
   return (
     <div className="product-images">
       <div id="gallery">

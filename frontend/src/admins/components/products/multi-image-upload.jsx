@@ -30,7 +30,10 @@ const MultiImageUpload = ({ maxNumber = 10, ...props }) => {
   const Images = useTpsGetState(selector, false);
   const imagesT = _.isEqual(Images, [{ url: '', is_primary: false }]) ? [] : Images;
   const [images, setImages] = useState(imagesT);
-  const [isPrimaryIndex, setIsPrimaryIndex] = useState(images.findIndex(img => img.is_primary) || 0);
+  const [isPrimaryIndex, setIsPrimaryIndex] = useState(() => {
+    const idx = images.findIndex(img => img.is_primary);
+    return idx >= 0 ? idx : 0;
+  });
   const [activeId, setActiveId] = useState(null);
   const uniqueId = useMemo(() => nanoid(), []);
 
@@ -43,10 +46,8 @@ const MultiImageUpload = ({ maxNumber = 10, ...props }) => {
         if (img.file) {
           try {
             const uploadResult = await uploadSingleImageApi(img.file);
-            console.log('Upload result:', uploadResult);
             newImages.push({ is_primary: img.is_primary, url: uploadResult.url });
           } catch (error) {
-            console.error('Error uploading image:', error);
             newImages.push({ url: img.url, is_primary: img.is_primary }); // giữ nguyên ảnh cũ nếu upload lỗi
           }
         } else {
@@ -62,13 +63,25 @@ const MultiImageUpload = ({ maxNumber = 10, ...props }) => {
     }
   }, [dispatch, action, images, setUploader, removeUploader, uniqueId]);
 
+  useEffect(() => {
+    const normalizedImages = _.isEqual(Images, [{ url: '', is_primary: false }]) ? [] : (Images || []);
+    setImages(normalizedImages);
+    const nextPrimary = normalizedImages.findIndex((img) => img.is_primary);
+    setIsPrimaryIndex(nextPrimary >= 0 ? nextPrimary : 0);
+  }, [Images]);
+
   const onChange = (imageList) => {
-    setIsPrimaryIndex(prev => {
+    const nextPrimaryIndex = (() => {
       if (imageList.length === 0) return 0;
-      if (prev >= imageList.length) return imageList.length - 1;
-      return prev;
-    });
-    const newImages = imageList.map((img, index) => ({ is_primary: index === isPrimaryIndex, url: img.url, file: img.file }));
+      const bounded = Math.min(isPrimaryIndex, imageList.length - 1);
+      return bounded < 0 ? 0 : bounded;
+    })();
+    setIsPrimaryIndex(nextPrimaryIndex);
+    const newImages = imageList.map((img, index) => ({
+      is_primary: index === nextPrimaryIndex,
+      url: img.url,
+      file: img.file
+    }));
     setImages(newImages);
   };
 
@@ -83,8 +96,14 @@ const MultiImageUpload = ({ maxNumber = 10, ...props }) => {
     if (!over || active.id === over.id) return;
     const activeIndex = parseInt(active.id.split('-')[1], 10);
     const overIndex = parseInt(over.id.split('-')[1], 10);
-    console.log('DRAG END: ', activeIndex, overIndex);
-    const newImages = arrayMove(images, activeIndex, overIndex);
+    const reordered = arrayMove(images, activeIndex, overIndex);
+    const primaryIdx = reordered.findIndex((img) => img.is_primary);
+    const normalizedPrimary = primaryIdx >= 0 ? primaryIdx : 0;
+    const newImages = reordered.map((img, index) => ({
+      ...img,
+      is_primary: index === normalizedPrimary,
+    }));
+    setIsPrimaryIndex(normalizedPrimary);
     setImages(newImages);
   };
   const handleDragStart = (event) => {
@@ -95,7 +114,6 @@ const MultiImageUpload = ({ maxNumber = 10, ...props }) => {
     setActiveId(null);
   }
 
-  console.log('RENDER: multi-img-upload');
   return (
     <>
       <ImageUploading

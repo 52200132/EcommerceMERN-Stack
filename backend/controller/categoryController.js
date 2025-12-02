@@ -19,10 +19,45 @@ export const createCategory = async (req, res) => {
   }
 };
 
-export const getAllCategories = async (_req, res) => {
+export const getAllCategories = async (req, res) => {
   try {
+    const includeProductStats = String(req.query.includeProductStats) === "true";
     const categories = await Category.find().sort({ category_name: 1 });
-    res.status(200).json({ ec: 0, em: "Categories retrieved successfully", dt: categories });
+
+    if (!includeProductStats) {
+      return res.status(200).json({ ec: 0, em: "Categories retrieved successfully", dt: categories });
+    }
+
+    const productStats = await Product.aggregate([
+      {
+        $group: {
+          _id: "$category_id",
+          productCount: { $sum: 1 },
+        }
+      }
+    ]);
+    const statsMap = productStats.reduce((acc, curr) => {
+      const key = curr._id ? String(curr._id) : "uncategorized";
+      acc[key] = curr.productCount;
+      return acc;
+    }, {});
+
+    const uncategorizedCount = statsMap["uncategorized"] || 0;
+    const enrichedCategories = categories.map((cate) => ({
+      ...cate.toObject(),
+      productCount: statsMap[String(cate._id)] || 0,
+    }));
+
+    if (uncategorizedCount > 0) {
+      enrichedCategories.push({
+        _id: "uncategorized",
+        category_name: "Chưa phân loại",
+        productCount: uncategorizedCount,
+        isVirtual: true,
+      });
+    }
+
+    res.status(200).json({ ec: 0, em: "Categories retrieved successfully", dt: enrichedCategories });
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
   }

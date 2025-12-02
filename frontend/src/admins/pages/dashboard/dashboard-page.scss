@@ -95,7 +95,7 @@
       gap: 12px;
     }
 
-    .filter-field {
+    .filter-field-admin {
       display: flex;
       flex-direction: column;
 
@@ -306,6 +306,7 @@
   0% {
     background-position: 200% 0;
   }
+
   100% {
     background-position: -200% 0;
   }

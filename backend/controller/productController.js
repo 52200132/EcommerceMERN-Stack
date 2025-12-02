@@ -575,7 +575,7 @@ export const updateWarehouseVariantBySku = async (req, res) => {
     const { sku } = req.query;
     const { quantity, waiting_for_delivery } = req.body;
 
-    const product = await Product.UpdateOne(
+    const product = await Product.findOneAndUpdate(
       { _id: id, "Warehouses._id": warehouse_id, "Warehouses.warehouse_variants.sku": sku },
       {
         $set: {
@@ -584,10 +584,19 @@ export const updateWarehouseVariantBySku = async (req, res) => {
         }
       },
       {
-        arrayFilters: [{ "wv.sku": sku }]
+        arrayFilters: [{ "wv.sku": sku }],
+        new: true
       }
     );
-    res.json({ ec: 0, em: "Warehouse Variant updated", dt: product.Warehouses.id(warehouse_id) });
+    if (!product) {
+      return res.status(404).json({ ec: 404, em: "Warehouse or variant not found" });
+    }
+    const warehouse = product.Warehouses.id(warehouse_id);
+    if (!warehouse) {
+      return res.status(404).json({ ec: 404, em: "Warehouse not found" });
+    }
+    const updatedVariant = warehouse.warehouse_variants.find((v) => v.sku === sku);
+    res.json({ ec: 0, em: "Warehouse Variant updated", dt: { warehouse, variant: updatedVariant } });
   } catch (error) {
     res.status(500).json({ ec: 500, em: error.message });
   }

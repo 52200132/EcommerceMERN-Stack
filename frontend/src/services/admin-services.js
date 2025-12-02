@@ -203,7 +203,7 @@ export const adminApi = backendApi.injectEndpoints({
         method: "POST",
         data: payload,
       }),
-      invalidatesTags: [{ type: "Product", id: "LIST" }]
+      invalidatesTags: [{ type: "Product", id: "LIST" }, { type: "Category", id: "LIST" }]
     }),
     updateProductAdmin: builder.mutation({
       query: ({ _id, ...payload }) => ({
@@ -214,6 +214,7 @@ export const adminApi = backendApi.injectEndpoints({
       invalidatesTags: (result, error, { _id }) => [
         { type: "Product", id: _id },
         { type: "Product", id: "LIST" },
+        { type: "Category", id: "LIST" },
       ]
     }),
     deleteProductAdmin: builder.mutation({
@@ -224,6 +225,7 @@ export const adminApi = backendApi.injectEndpoints({
       invalidatesTags: (result, error, id) => [
         { type: "Product", id },
         { type: "Product", id: "LIST" },
+        { type: "Category", id: "LIST" },
       ]
     }),
     createVariantAdmin: builder.mutation({
@@ -353,9 +355,10 @@ export const adminApi = backendApi.injectEndpoints({
 
     /** Categories */
     getCategoriesAdmin: builder.query({
-      query: () => ({
+      query: ({ includeProductStats = false } = {}) => ({
         url: "/categories",
         method: "GET",
+        params: includeProductStats ? { includeProductStats: true } : undefined,
       }),
       providesTags: (result) => {
         const categories = result?.dt || [];

@@ -132,8 +132,6 @@ Sau khi import dữ liệu mẫu:
 ```bash
 npm start          # Chạy production
 npm run dev        # Chạy development với nodemon
-node seeder.js     # Import dữ liệu mẫu
-node seeder.js -d  # Xóa dữ liệu
 ```
 
 ### Frontend
@@ -141,7 +139,6 @@ node seeder.js -d  # Xóa dữ liệu
 ```bash
 npm start          # Chạy development server
 npm run build      # Build production
-npm test           # Chạy tests
 ```
 
 ## 📁 Cấu trúc thư mục
@@ -237,5 +234,4 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## 📞 Contact
 
-- Email: info@techstore.com
 - GitHub: [52200132](https://github.com/52200132)

@@ -66,7 +66,7 @@ const PointsPage = () => {
             </div>
           </div>
         </div>
-        <div className="points-summary__item">
+        {/* <div className="points-summary__item">
           <div className="points-summary__label">Điểm đã dùng</div>
           <div className="points-summary__value text-danger">
             {isLoadingOverview ? <Spinner size="sm" /> : formatPoints(overview.points_used)}
@@ -83,7 +83,7 @@ const PointsPage = () => {
           <div className="points-summary__value text-warning">
             {isLoadingOverview ? <Spinner size="sm" /> : formatPoints(overview.points_pending)}
           </div>
-        </div>
+        </div> */}
       </div>
 
       {historyErrorMsg ? (
@@ -123,10 +123,10 @@ const PointsPage = () => {
                         <td className="fw-semibold">{formatOrderCode(entry._id)}</td>
                         <td className={`text-end fw-semibold ${pendingLoyaltyPoints ? 'text-warning' : 'text-success'}`}>
                           {pendingLoyaltyPoints && <Badge bg="warning" className="me-1">Chờ xét</Badge>}
-                          {entry.loyalty_points_earned ? `+${formatPoints(entry.loyalty_points_earned)}` : "—"}
+                          {entry.loyalty_points_earned ? `+${formatPoints(entry.loyalty_points_earned)}` : ""}
                         </td>
                         <td className="text-end text-danger fw-semibold">
-                          {entry.points_used ? `-${formatPoints(entry.points_used)}` : "—"}
+                          {entry.points_used ? `-${formatPoints(entry.points_used)}` : "0"}
                         </td>
                         <td className="text-end">
                           <Badge bg={paymentMeta.variant}>{paymentMeta.label}</Badge>

@@ -27,14 +27,7 @@ const NAV_ITEMS = [
   //     { id: 'layout-custom', label: 'Layout + Custom Area', to: '#' },
   //   ],
   // },
-  {
-    id: 'manage-products', label: 'Quản lý sản phẩm', icon: 'bi-box',
-    children: [
-      { id: 'all-products', label: 'Tất cả sản phẩm', to: '/admin/manage-products' },
-      { id: 'manage-products-warehouse', label: 'Kho hàng', to: '/admin/manage-products/warehouse' },
-      { id: 'manage-products-categories', label: 'Danh mục sản phẩm', to: '/admin/manage-products/categories' },
-    ],
-  },
+  { id: 'manage-products', label: 'Quản lý sản phẩm', icon: 'bi-box', to: '/admin/manage-products' },
   { id: 'manage-orders', label: 'Quản lý đơn hàng', to: '/admin/manage-orders', icon: 'bi-bag-check' },
   { id: 'manage-users', label: 'Quản lý người dùng', to: '/admin/manage-users', icon: 'bi-people' },
   { id: 'manage-discounts', label: 'Quản lý mã giảm giá', to: '/admin/manage-discounts', icon: 'bi-ticket' },

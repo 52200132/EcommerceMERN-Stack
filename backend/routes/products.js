@@ -84,15 +84,26 @@ router.get("", async (req, res) => {
 
     const query = { ...keyword, ...hastag, ...categoryFilter };
 
-    const [count, products] = await Promise.all([
+    const [count, productsResult] = await Promise.all([
       Product.countDocuments(query),
       Product.find(query)
-        .select("-Warehouses -detail_description -createdAt -short_description") // Loại bỏ các trường không cần thiết
+        .select("-detail_description -createdAt -short_description") // Loại bỏ các trường không cần thiết
         .sort({ createdAt: -1 })
         // .lean() // Quan trọng: trả về plain objects thay vì Mongoose documents
         .limit(pageSize)
         .skip(pageSize * (page - 1))
     ]);
+
+    const products = Array.isArray(productsResult) ? productsResult : [];
+
+    if (products.length > 0) {
+      products.forEach((product) => {
+        if (typeof product.recalculateStock === "function") {
+          product.recalculateStock();
+        }
+      });
+      await Promise.all(products.map((product) => product.save()));
+    }
 
     res.json({
       ec: 0,

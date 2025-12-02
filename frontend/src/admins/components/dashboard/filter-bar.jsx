@@ -42,7 +42,7 @@ const FilterBar = ({ filters, onChange, onReset }) => {
         </div>
 
         <div className="filter-grid">
-          <div className="filter-field">
+          <div className="filter-field-admin">
             <label className="form-label">Năm</label>
             <select
               className="form-select"
@@ -59,7 +59,7 @@ const FilterBar = ({ filters, onChange, onReset }) => {
           </div>
 
           {filters.mode === "quarter" && (
-            <div className="filter-field">
+            <div className="filter-field-admin">
               <label className="form-label">Quý</label>
               <select
                 className="form-select"
@@ -76,7 +76,7 @@ const FilterBar = ({ filters, onChange, onReset }) => {
           )}
 
           {(filters.mode === "month" || filters.mode === "week") && (
-            <div className="filter-field">
+            <div className="filter-field-admin">
               <label className="form-label">Tháng</label>
               <select
                 className="form-select"
@@ -93,7 +93,7 @@ const FilterBar = ({ filters, onChange, onReset }) => {
           )}
 
           {filters.mode === "week" && (
-            <div className="filter-field">
+            <div className="filter-field-admin">
               <label className="form-label">Tuần</label>
               <select
                 className="form-select"
@@ -111,7 +111,7 @@ const FilterBar = ({ filters, onChange, onReset }) => {
 
           {filters.mode === "custom" && (
             <>
-              <div className="filter-field">
+              <div className="filter-field-admin">
                 <label className="form-label">Từ ngày</label>
                 <input
                   type="date"
@@ -120,7 +120,7 @@ const FilterBar = ({ filters, onChange, onReset }) => {
                   onChange={(e) => onChange({ rangeStart: e.target.value })}
                 />
               </div>
-              <div className="filter-field">
+              <div className="filter-field-admin">
                 <label className="form-label">Đến ngày</label>
                 <input
                   type="date"
@@ -132,7 +132,7 @@ const FilterBar = ({ filters, onChange, onReset }) => {
             </>
           )}
 
-          <div className="filter-field align-self-end">
+          <div className="filter-field-admin align-self-end">
             <button type="button" className="btn btn-outline-secondary w-100" onClick={onReset}>
               Đặt lại
             </button>

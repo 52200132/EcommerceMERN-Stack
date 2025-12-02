@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { Container, Row, Col, Card, Form, Button, Spinner, Alert, Badge } from 'react-bootstrap';
-import { Controller } from 'react-hook-form';
-import Select from 'react-select';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Container, Row, Col, Card, Form, Button, Spinner, Alert, Badge } from "react-bootstrap";
+import { Controller } from "react-hook-form";
+import Select from "react-select";
+import { useNavigate } from "react-router-dom";
 
 import {
   useGetCartQuery,
@@ -13,19 +13,20 @@ import {
   useApplyDiscountCodeMutation,
   useGetProductsInfoForOrderMutation,
   useGetProfileQuery,
-} from '#services';
-import { formatCurrency } from '#utils';
-import { useAddressForm } from '#custom-hooks';
+} from "#services";
+import { formatCurrency } from "#utils";
+import { useAddressForm } from "#custom-hooks";
+import { setCartList } from "#features/user-profile-slice";
 
-import './checkout-page.scss';
+import "./checkout-page.scss";
 
 const DEFAULT_SHIPPING = [
-  { method: 'Ship Nhanh', fee: 30000, note: 'Nhận từ 2-3 ngày' },
-  { method: 'Hỏa tốc', fee: 60000, note: 'Nhận trong ngày' },
+  { method: "Ship Nhanh", fee: 30000, note: "Nhận từ 2-3 ngày" },
+  { method: "Hỏa tốc", fee: 60000, note: "Nhận trong ngày" },
 ];
-const TAX_RATE = 0.08;
-const GUEST_CART_KEY = 'guest_cart';
-const DEFAULT_COUNTRY = 'Vietnam';
+const GUEST_CART_KEY = "guest_cart";
+const SELECTED_CART_KEY = "selected_cart_items";
+const DEFAULT_COUNTRY = "Vietnam";
 
 const loadGuestCart = () => {
   try {
@@ -35,34 +36,47 @@ const loadGuestCart = () => {
   }
 };
 
+const loadSelectedCart = () => {
+  try {
+    return JSON.parse(localStorage.getItem(SELECTED_CART_KEY)) || [];
+  } catch (error) {
+    return [];
+  }
+};
+
+const persistSelectedCart = (items) => {
+  localStorage.setItem(SELECTED_CART_KEY, JSON.stringify(items));
+};
+
 const buildTotalsFromItems = (items = [], shippingFee = 0, discount = 0, pointsUsed = 0) => {
   const subtotal = items.reduce((sum, item) => sum + (item?.variant?.price || 0) * item.quantity, 0);
-  const tax = Math.round(subtotal * TAX_RATE);
-  const grandTotal = Math.max(0, subtotal + tax + shippingFee - discount - pointsUsed * 1000);
-  return { subtotal, tax, grandTotal };
+  const grandTotal = Math.max(0, subtotal + shippingFee - discount - pointsUsed * 1000);
+  return { subtotal, grandTotal };
 };
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
   const isLoggedIn = !!user?.token;
 
   const [currentStep, setCurrentStep] = useState(1);
   const [shippingMethod, setShippingMethod] = useState(DEFAULT_SHIPPING[0]);
-  const [paymentMethod, setPaymentMethod] = useState('COD');
-  const [notes, setNotes] = useState('');
-  const [discountInput, setDiscountInput] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState("COD");
+  const [notes, setNotes] = useState("");
+  const [discountInput, setDiscountInput] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState(null);
-  const [discountError, setDiscountError] = useState('');
+  const [discountError, setDiscountError] = useState("");
   const [pointsToUse, setPointsToUse] = useState(0);
-  const [guestInfo, setGuestInfo] = useState({ username: '', email: '' });
+  const [guestInfo, setGuestInfo] = useState({ username: "", email: "" });
   const addressFormMethods = useAddressForm({ includeCountry: false });
   const [useNewAddress, setUseNewAddress] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
-  const [guestCart] = useState(() => loadGuestCart());
+  const [guestCart, setGuestCart] = useState(() => loadGuestCart());
+  const [selectedCartItems, setSelectedCartItems] = useState(() => loadSelectedCart());
   const [itemsForOrder, setItemsForOrder] = useState([]);
   const [orderResult, setOrderResult] = useState(null);
-  const [stepError, setStepError] = useState('');
+  const [stepError, setStepError] = useState("");
 
   const { data: cartData, isLoading: loadingCart } = useGetCartQuery(undefined, { skip: !isLoggedIn });
   const { data: addressesData, refetch: refetchAddresses } = useGetAddressesQuery(undefined, { skip: !isLoggedIn });
@@ -76,17 +90,37 @@ const CheckoutPage = () => {
   } = addressFormMethods;
 
   const [addAddress, { isLoading: isAddingAddress }] = useAddAddressMutation();
-  const [createOrder, { isLoading: isPlacingOrder }] = useCreateOrderMutation();
+  const [createOrder, { isLoading: isPlacingOrder, isError: isOrderError, data: dataCreatedOrder }] = useCreateOrderMutation();
   const [applyDiscountCode, { isLoading: isApplyingCode }] = useApplyDiscountCodeMutation();
   const [fetchProductsInfo, { isLoading: loadingItemsInfo }] = useGetProductsInfoForOrderMutation();
 
+  const allCartItems = isLoggedIn ? cartData?.dt?.carts || [] : guestCart;
   const shippingOptions = isLoggedIn ? cartData?.dt?.shippingOptions || DEFAULT_SHIPPING : DEFAULT_SHIPPING;
-  const sourceCartItems = isLoggedIn ? cartData?.dt?.carts || [] : guestCart;
-  const hasNoItems = !sourceCartItems || sourceCartItems.length === 0;
+  const hasNoItems = !selectedCartItems || selectedCartItems.length === 0;
+
+  const isSameItem = (a, b) => a.product_id === b.product_id && a.variant?.sku === b.variant?.sku;
+
+  useEffect(() => {
+    if (isLoggedIn && !cartData) return;
+    if (!allCartItems?.length) {
+      setSelectedCartItems([]);
+      persistSelectedCart([]);
+      return;
+    }
+    const savedSelection = loadSelectedCart();
+    const baseSelection = savedSelection.length ? savedSelection : allCartItems;
+    const matched = allCartItems.filter((item) =>
+      baseSelection.some(
+        (selected) => selected.product_id === item.product_id && selected.variant?.sku === item.variant?.sku
+      )
+    );
+    setSelectedCartItems(matched);
+    persistSelectedCart(matched);
+  }, [allCartItems, isLoggedIn, cartData]);
 
   useEffect(() => {
     if (!isLoggedIn) {
-      setAddressValue('isDefault', true);
+      setAddressValue("isDefault", true);
     }
   }, [isLoggedIn, setAddressValue]);
 
@@ -107,11 +141,11 @@ const CheckoutPage = () => {
 
   // Fetch normalized items for order (price, variant info)
   useEffect(() => {
-    if (!sourceCartItems || !sourceCartItems.length) {
+    if (!selectedCartItems || !selectedCartItems.length) {
       setItemsForOrder([]);
       return;
     }
-    const payload = sourceCartItems
+    const payload = selectedCartItems
       .filter((item) => item?.variant?.sku && item.product_id)
       .map((item) => ({ product_id: item.product_id, sku: item.variant.sku, qty: item.quantity }));
     fetchProductsInfo(payload)
@@ -119,7 +153,7 @@ const CheckoutPage = () => {
       .then((res) => {
         const info = res?.dt || [];
         const merged = info.map((infoItem) => {
-          const matched = sourceCartItems.find(
+          const matched = selectedCartItems.find(
             (ci) => ci.product_id === infoItem.product_id && ci.variant?.sku === infoItem.variant?.sku
           );
           return { ...infoItem, image_url: matched?.image_url || infoItem.image_url };
@@ -127,7 +161,7 @@ const CheckoutPage = () => {
         setItemsForOrder(merged);
       })
       .catch(() => { });
-  }, [sourceCartItems, fetchProductsInfo]);
+  }, [selectedCartItems, fetchProductsInfo]);
 
   const discountValue = appliedDiscount?.discount || 0;
   const totals = useMemo(() => {
@@ -135,7 +169,10 @@ const CheckoutPage = () => {
     return { ...baseTotals, shippingFee: shippingMethod?.fee || 0 };
   }, [itemsForOrder, shippingMethod, discountValue, pointsToUse]);
 
-  const maxPointByTotal = Math.max(0, Math.floor((totals.subtotal + totals.tax + (shippingMethod?.fee || 0) - discountValue) / 1000));
+  const maxPointByTotal = Math.max(
+    0,
+    Math.floor((totals.subtotal + (shippingMethod?.fee || 0) - discountValue) / 1000)
+  );
   const maxUsablePoints = Math.min(availablePoints, maxPointByTotal);
 
   useEffect(() => {
@@ -147,17 +184,17 @@ const CheckoutPage = () => {
     try {
       const res = await applyDiscountCode({ code: discountInput, total_amount: totals.subtotal }).unwrap();
       setAppliedDiscount({ code: discountInput, ...res.dt });
-      setDiscountError('');
+      setDiscountError("");
     } catch (error) {
       setAppliedDiscount(null);
-      setDiscountError(error?.em || 'Không áp dụng được mã giảm giá');
+      setDiscountError(error?.em || "Không áp dụng được mã giảm giá");
     }
   };
 
   const validateAddressForm = async () => {
     const isValid = await triggerAddressForm();
     if (!isValid) {
-      setStepError('Vui long kiem tra dia chi giao hang');
+      setStepError("Vui long kiem tra dia chi giao hang");
       return null;
     }
     return { country: DEFAULT_COUNTRY, ...getAddressValues() };
@@ -167,7 +204,7 @@ const CheckoutPage = () => {
     try {
       if (isLoggedIn) {
         if (!useNewAddress && !selectedAddressId) {
-          setStepError('Vui long chon dia chi nhan hang');
+          setStepError("Vui long chon dia chi nhan hang");
           return;
         }
         if (useNewAddress) {
@@ -183,23 +220,23 @@ const CheckoutPage = () => {
         const addressPayload = await validateAddressForm();
         if (!addressPayload) return;
         if (!guestInfo.username || !guestInfo.email) {
-          setStepError('Vui long nhap ho ten va email');
+          setStepError("Vui long nhap ho ten va email");
           return;
         }
       }
-      setStepError('');
+      setStepError("");
       setCurrentStep(2);
     } catch (error) {
-      setStepError(error?.em || 'Khong the luu dia chi');
+      setStepError(error?.em || "Khong the luu dia chi");
     }
   };
 
   const handlePlaceOrder = async () => {
     if (!itemsForOrder.length) {
-      setStepError('Giỏ hàng trống.');
+      setStepError("Giỏ hàng trống.");
       return;
     }
-    setStepError('');
+    setStepError("");
     const payload = {
       Items: itemsForOrder,
       discount_code: appliedDiscount?.code || undefined,
@@ -222,24 +259,36 @@ const CheckoutPage = () => {
       const res = await createOrder(payload).unwrap();
       setOrderResult(res?.dt);
       setCurrentStep(4);
-      localStorage.removeItem(GUEST_CART_KEY);
-      window.dispatchEvent(new Event('guest-cart-updated'));
+      if (isLoggedIn) {
+        const remainingItems = allCartItems.filter(
+          (cartItem) => !selectedCartItems.some((selected) => isSameItem(cartItem, selected))
+        );
+        dispatch(setCartList(remainingItems));
+      } else {
+        const remainingGuestItems = guestCart.filter(
+          (cartItem) => !selectedCartItems.some((selected) => isSameItem(cartItem, selected))
+        );
+        setGuestCart(remainingGuestItems);
+        localStorage.setItem(GUEST_CART_KEY, JSON.stringify(remainingGuestItems));
+        window.dispatchEvent(new Event("guest-cart-updated"));
+      }
+      localStorage.removeItem(SELECTED_CART_KEY);
     } catch (error) {
-      setStepError(error?.em || 'Không thể tạo đơn hàng, vui lòng thử lại');
+      setStepError(error?.em || "Không thể tạo đơn hàng, vui lòng thử lại");
     }
   };
 
   const steps = [
-    { id: 1, label: 'Địa chỉ giao hàng' },
-    { id: 2, label: 'Thanh toán & vận chuyển' },
-    { id: 3, label: 'Xác nhận' },
+    { id: 1, label: "Địa chỉ giao hàng" },
+    { id: 2, label: "Thanh toán & vận chuyển" },
+    { id: 3, label: "Xác nhận" },
   ];
 
   const renderStepBadge = (step) => {
     const isActive = step.id === currentStep;
     const isDone = step.id < currentStep;
     return (
-      <div key={step.id} className={`step-badge${isActive ? ' active' : ''}${isDone ? ' done' : ''}`}>
+      <div key={step.id} className={`step-badge${isActive ? " active" : ""}${isDone ? " done" : ""}`}>
         <span className="step-badge__number">{step.id}</span>
         <span className="step-badge__label">{step.label}</span>
       </div>
@@ -408,7 +457,7 @@ const CheckoutPage = () => {
           <div className="mb-2">
             <strong>Nguoi nhan: </strong>
             {isLoggedIn
-              ? addressesData?.dt?.find((a) => a._id === selectedAddressId)?.receiver || 'Chua chon'
+              ? addressesData?.dt?.find((a) => a._id === selectedAddressId)?.receiver || "Chua chon"
               : guestInfo.username}
           </div>
           <div className="mb-2"><strong>Dia chi:</strong> {isLoggedIn
@@ -428,7 +477,7 @@ const CheckoutPage = () => {
         <Container>
           <Card className="p-4 text-center">
             <h5>Giỏ hàng trống</h5>
-            <Button variant="primary" onClick={() => navigate('/products')}>
+            <Button variant="primary" onClick={() => navigate("/san-pham")}>
               Tiếp tục mua sắm
             </Button>
           </Card>
@@ -503,8 +552,8 @@ const CheckoutPage = () => {
                 <div className="mb-2">Mã đơn hàng: <strong>{orderResult?._id}</strong></div>
                 <div className="mb-3">Tổng thanh toán: <strong>{formatCurrency(orderResult?.grand_total || totals.grandTotal)}</strong></div>
                 <div className="d-flex gap-2 justify-content-center">
-                  <Button variant="primary" onClick={() => navigate('/cart')}>Tiếp tục mua sắm</Button>
-                  {isLoggedIn && <Button variant="outline-primary" onClick={() => navigate('/user-info')}>Xem đơn của tôi</Button>}
+                  <Button variant="primary" onClick={() => navigate("/san-pham")}>Tiếp tục mua sắm</Button>
+                  {isLoggedIn && <Button variant="outline-primary" onClick={() => navigate("/thong-tin-ca-nhan/lich-su-mua-hang")}>Xem đơn của tôi</Button>}
                 </div>
               </Card>
             </Col>
@@ -518,12 +567,12 @@ const CheckoutPage = () => {
 const selectControlStyles = (hasError) => ({
   control: (base) => ({
     ...base,
-    fontSize: '1rem',
-    fontWeight: '400',
-    boxShadow: 'var(--bs-box-shadow-inset)',
-    borderColor: hasError ? 'var(--bs-form-invalid-border-color)' : 'var(--bs-border-color)',
-    cursor: 'text',
-    '&:hover': { borderColor: hasError ? 'var(--bs-danger)' : 'var(--bs-border-color)' },
+    fontSize: "1rem",
+    fontWeight: "400",
+    boxShadow: "var(--bs-box-shadow-inset)",
+    borderColor: hasError ? "var(--bs-form-invalid-border-color)" : "var(--bs-border-color)",
+    cursor: "text",
+    "&:hover": { borderColor: hasError ? "var(--bs-danger)" : "var(--bs-border-color)" },
   }),
 });
 
@@ -542,14 +591,14 @@ const CheckoutAddressForm = ({ form }) => {
     districtCode,
   } = form;
 
-  const isDefault = watch('isDefault');
+  const isDefault = watch("isDefault");
 
   return (
     <Row className="g-3 mt-1">
       <Col md={6}>
         <Form.Group>
           <Form.Label>Nguoi nhan</Form.Label>
-          <Form.Control isInvalid={!!errors.receiver} {...register('receiver')} />
+          <Form.Control isInvalid={!!errors.receiver} {...register("receiver")} />
           <Form.Control.Feedback type="invalid" className="d-block">
             {errors.receiver && errors.receiver.message}
           </Form.Control.Feedback>
@@ -558,7 +607,7 @@ const CheckoutAddressForm = ({ form }) => {
       <Col md={6}>
         <Form.Group>
           <Form.Label>So dien thoai</Form.Label>
-          <Form.Control isInvalid={!!errors.phone} {...register('phone')} />
+          <Form.Control isInvalid={!!errors.phone} {...register("phone")} />
           <Form.Control.Feedback type="invalid" className="d-block">
             {errors.phone && errors.phone.message}
           </Form.Control.Feedback>
@@ -628,7 +677,7 @@ const CheckoutAddressForm = ({ form }) => {
                 isLoading={wardsLoading}
                 options={wardsOptions}
                 value={wardsOptions.find((option) => option.value === value) || null}
-                onChange={(selectedOption) => onChange(selectedOption?.value || '')}
+                onChange={(selectedOption) => onChange(selectedOption?.value || "")}
                 inputRef={ref}
                 isDisabled={!districtCode}
                 styles={selectControlStyles(!!errors.ward)}
@@ -644,7 +693,7 @@ const CheckoutAddressForm = ({ form }) => {
       <Col md={6}>
         <Form.Group>
           <Form.Label>Duong</Form.Label>
-          <Form.Control isInvalid={!!errors.street} {...register('street')} />
+          <Form.Control isInvalid={!!errors.street} {...register("street")} />
           <Form.Control.Feedback type="invalid" className="d-block">
             {errors.street && errors.street.message}
           </Form.Control.Feedback>
@@ -653,7 +702,7 @@ const CheckoutAddressForm = ({ form }) => {
       <Col md={6}>
         <Form.Group>
           <Form.Label>Ma buu chinh</Form.Label>
-          <Form.Control isInvalid={!!errors.postalCode} {...register('postalCode')} />
+          <Form.Control isInvalid={!!errors.postalCode} {...register("postalCode")} />
           <Form.Control.Feedback type="invalid" className="d-block">
             {errors.postalCode && errors.postalCode.message}
           </Form.Control.Feedback>
@@ -664,9 +713,9 @@ const CheckoutAddressForm = ({ form }) => {
           type="switch"
           id="checkoutAddressDefault"
           label="Dat lam dia chi mac dinh"
-          {...register('isDefault')}
+          {...register("isDefault")}
           checked={!!isDefault}
-          onChange={(event) => setValue('isDefault', event.target.checked)}
+          onChange={(event) => setValue("isDefault", event.target.checked)}
           className="mb-2"
         />
       </Col>
@@ -694,10 +743,6 @@ const OrderSummary = ({ items = [], totals = {}, discount, shippingMethod, point
         <div className="d-flex justify-content-between">
           <span>Tạm tính</span>
           <span>{formatCurrency(totals.subtotal || 0)}</span>
-        </div>
-        <div className="d-flex justify-content-between mt-2">
-          <span>Thuế (8%)</span>
-          <span>{formatCurrency(totals.tax || 0)}</span>
         </div>
         <div className="d-flex justify-content-between mt-2">
           <span>Vận chuyển</span>

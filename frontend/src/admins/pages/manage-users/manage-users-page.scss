@@ -85,6 +85,10 @@
   .table {
     margin: 0;
 
+    td: {
+      font-weight: 400;
+    }
+
     th,
     td {
       vertical-align: middle;

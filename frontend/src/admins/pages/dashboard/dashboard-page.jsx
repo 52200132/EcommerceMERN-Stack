@@ -151,7 +151,7 @@ const DashboardPage = () => {
     <div className="tps-dashboard-page">
       <div className="page-header mb-3">
         <div>
-          <h1 className="page-title">Tổng quan & phân tích nâng cao</h1>
+          <h1 className="page-title">Tổng quan</h1>
           <p className="page-subtitle">
             Theo dõi nhanh doanh thu, lợi nhuận, đơn hàng và cơ cấu sản phẩm theo thời gian.
           </p>
@@ -188,13 +188,13 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      {/* <div className="section-head mt-4">
+      <div className="section-head mt-4">
         <div>
-          <div className="card-eyebrow text-muted">Advanced dashboard</div>
-          <h4 className="section-title">Bộ lọc linh hoạt & biểu đồ</h4>
-          <div className="text-muted small">Thay đổi khung thời gian để phân tích sâu.</div>
+          {/* <div className="card-eyebrow text-muted">Advanced dashboard</div> */}
+          <h2>Phân tích nâng cao</h2>
+          {/* <div className="text-muted small">Thay đổi khung thời gian để phân tích sâu.</div> */}
         </div>
-      </div> */}
+      </div>
 
       <FilterBar filters={filters} onChange={handleFilterChange} onReset={handleReset} />
 
