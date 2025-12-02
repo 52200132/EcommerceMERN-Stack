@@ -1,27 +1,37 @@
 networks:
   app-network:
-    driver: bridge
+    driver: overlay
 
 services:
   backend:
-    container_name: backend_api
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
-    ports:
-    - "5000:5000"
+    image: phuocphung/backend_api:latest
     env_file:
       - ./backend/.env
     networks:
       - app-network
+    ports:
+      - "5000:5000"
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 30s
+      update_config:
+        parallelism: 1
+        delay: 5s
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
   frontend:
-    container_name: frontend_app
-    build:
-      context: .
-      dockerfile: frontend/Dockerfile
+    image: phuocphung/frontend_app:latest
     networks:
       - app-network
     ports:
       - "3000:80"
-    depends_on:
-      - backend
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
