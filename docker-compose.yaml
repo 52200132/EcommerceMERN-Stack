@@ -26,7 +26,7 @@ services:
           cpus: "0.50"
           memory: 512M
   frontend:
-    image: frontend-debug:latest
+    image: phuocphung/frontend_app:latest
     networks:
       - app-network
     ports:
