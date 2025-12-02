@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useDispatch } from 'react-redux';
@@ -37,12 +37,14 @@ const openWindowPopup = (url) => {
 
 export const useLoginForm = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [loginUser, { isSuccess }] = useLoginUserMutation();
   const dispatch = useDispatch();
   const formMethods = useForm({
     resolver: zodResolver(loginSchema),
     mode: 'all',
   });
+  const redirectPath = location.state?.from?.pathname || '/';
 
   /**
    * Handler cho submit form
@@ -54,7 +56,7 @@ export const useLoginForm = () => {
       axiosBaseQueryUtil.overlay = overlayPreloader;
       axiosBaseQueryUtil.callbackfn = (data, hasError) => {
         if (hasError) return;
-        navigate('/');
+        navigate(redirectPath, { replace: true });
         dispatch(updateCredentials(data?.dt));
       };
       axiosBaseQueryUtil.flowMessages = [
@@ -77,6 +79,8 @@ export const useLoginHandlers = () => {
   const [loginWithGoogle] = useLoginGoogleUserMutation();
   const popupRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectPath = location.state?.from?.pathname || '/';
   const dispatch = useDispatch();
 
   const handleGoogleLogin = () => {
@@ -122,7 +126,7 @@ export const useLoginHandlers = () => {
         if (data?.em) toast.success('Đăng nhập thành công');
         sessionStorage.setItem('user', data?.dt);
         dispatch(updateCredentials(data?.dt));
-        navigate('/');
+        navigate(redirectPath, { replace: true });
       } else {
         console.error('Lỗi', data?.em);
         if (data?.ec === 404) {

@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { FaStar, FaClock } from 'react-icons/fa';
 import { Container } from 'react-bootstrap';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-import { useTpsSelector } from '#custom-hooks';
+import { useTpsSelector, userModalDialogStore, useShallow } from '#custom-hooks';
 import { useFilterRatings } from '#component-hooks/use-product-details-hooks';
 import { formatDateTime } from '#utils';
 
@@ -14,6 +15,18 @@ const Ratings = () => {
     state => state.productDetails.ratings || {},
     { includeProps: ['rating_counts', 'ratings', 'rating_of_me'] }
   );
+  const { isLoggedIn } = useTpsSelector(
+    (state) => state.auth.user || {},
+    { includeProps: ["isLoggedIn"] }
+  );
+  const { push, reset } = userModalDialogStore(
+    useShallow((zs) => ({
+      push: zs.push,
+      reset: zs.reset,
+    }))
+  );
+  const navigate = useNavigate();
+  const location = useLocation();
   const product = useTpsSelector(
     state => state.productDetails.product,
     {
@@ -52,6 +65,33 @@ const Ratings = () => {
   // const safeAverage = product.rating || 0;
   const safeAverage = (Object.entries(ratingCounts).reduce((acc, [star, count]) => acc + (parseInt(star, 10) * count), 0) / (totalReviews || 1));
 
+  const handleOpenRating = () => {
+    if (!isLoggedIn) {
+      push({
+        size: "sm",
+        title: "Yêu cầu đăng nhập",
+        bodyComponent: () => (
+          <p className="mb-0">Vui lòng đăng nhập để viết đánh giá cho sản phẩm này.</p>
+        ),
+        buttons: [
+          <button
+            key="confirm-login"
+            type="button"
+            className="btn btn-primary"
+            onClick={() => {
+              reset();
+              navigate("/login", { state: { from: location } });
+            }}
+          >
+            Đồng ý
+          </button>,
+        ],
+      });
+      return;
+    }
+    setShowRatingModal(true);
+  };
+
   return (
     <div className="tps-ratings-section">
       <Container>
@@ -74,7 +114,7 @@ const Ratings = () => {
                 <span>{totalReviews} lượt đánh giá</span>
               </div>
               <div className="tps-ratings-write">
-                <button className="tps-write-review-btn" onClick={() => setShowRatingModal(true)}>
+                <button className="tps-write-review-btn" onClick={handleOpenRating}>
                   Viết đánh giá
                 </button>
               </div>

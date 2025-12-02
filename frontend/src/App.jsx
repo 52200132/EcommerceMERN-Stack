@@ -29,6 +29,9 @@ import OrderTrackingPage from "pages/profile/order-tracking";
 import PointsPage from "pages/profile/points-page";
 import NotFoundPage from "./pages/errors/not-found-page";
 import ForbiddenPage from "./pages/errors/forbidden-page";
+import AdminLoginPage from "admins/pages/auth/admin-login-page";
+import ProtectedRoute from "./components/auth/protected-route";
+import AdminRouteGuard from "./components/auth/admin-route-guard";
 
 // import NotFoundPage from "./pages/NotFoundPage"; // Optional: Create a 404 page component
 // import "./App.css";
@@ -55,14 +58,16 @@ const App = () => {
           <Route path="/san-pham/:categorySlug" element={<ProductsFilterPage />} />
           <Route path="/san-pham/:categorySlug/:productNameSlug" element={<ProductDetails />} />
           <Route index element={<HomePage />} />
-          <Route path="thong-tin-ca-nhan" element={<UserProfileLayout />} >
-            <Route index element={<ProfilePage />} />
-            <Route path="ho-so" element={<ProfilePage />} />
-            <Route path="danh-sach-dia-chi" element={<AddressPage />} />
-            <Route path="doi-mat-khau" element={<PasswordChangePage />} />
-            <Route path="lich-su-mua-hang" element={<OrderHistoryPage />} />
-            <Route path="theo-doi-don-hang" element={<OrderTrackingPage />} />
-            <Route path="tich-diem" element={<PointsPage />} />
+          <Route element={<ProtectedRoute redirectTo="/login" />}>
+            <Route path="thong-tin-ca-nhan" element={<UserProfileLayout />} >
+              <Route index element={<ProfilePage />} />
+              <Route path="ho-so" element={<ProfilePage />} />
+              <Route path="danh-sach-dia-chi" element={<AddressPage />} />
+              <Route path="doi-mat-khau" element={<PasswordChangePage />} />
+              <Route path="lich-su-mua-hang" element={<OrderHistoryPage />} />
+              <Route path="theo-doi-don-hang" element={<OrderTrackingPage />} />
+              <Route path="tich-diem" element={<PointsPage />} />
+            </Route>
           </Route>
           <Route path="cart" element={<CartPage />} />
           <Route path="checkout" element={<CheckoutPage />} />
@@ -74,22 +79,26 @@ const App = () => {
           <Route path="*" element={<NotFoundPage />} />
         </Route>
 
-        <Route path="/admin/*" element={<AdminsLayout />}>
-          <Route index element={<DashboardPage />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="manage-products" element={<ManageProductsLayout />}>
-            <Route index element={<ManageProductsPage />} />
-            <Route path="warehouse/:productId" element={<ProductWarehousePage />} />
-            <Route path="add-product" element={<CRUProduct action="create" />} />
-            <Route path="edit-product/:productId" element={<CRUProduct action="update" />} />
-            <Route path="edit-product/:productId/description" element={<CRUDetailsDescription />} />
-            <Route path="add-product/description" element={<CRUDetailsDescription />} />
+        <Route path="/admin/login" element={<AdminLoginPage />} />
+
+        <Route element={<AdminRouteGuard />}>
+          <Route path="/admin/*" element={<AdminsLayout />}>
+            <Route index element={<DashboardPage />} />
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="manage-products" element={<ManageProductsLayout />}>
+              <Route index element={<ManageProductsPage />} />
+              <Route path="warehouse/:productId" element={<ProductWarehousePage />} />
+              <Route path="add-product" element={<CRUProduct action="create" />} />
+              <Route path="edit-product/:productId" element={<CRUProduct action="update" />} />
+              <Route path="edit-product/:productId/description" element={<CRUDetailsDescription />} />
+              <Route path="add-product/description" element={<CRUDetailsDescription />} />
+            </Route>
+            <Route path="manage-orders" element={<ManageOrdersPage />} />
+            <Route path="manage-users" element={<ManageUsersPage />} />
+            <Route path="manage-discounts" element={<ManageDiscountCodePage />} />
+            <Route path="khong-co-quyen" element={<ForbiddenPage />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Route>
-          <Route path="manage-orders" element={<ManageOrdersPage />} />
-          <Route path="manage-users" element={<ManageUsersPage />} />
-          <Route path="manage-discounts" element={<ManageDiscountCodePage />} />
-          <Route path="khong-co-quyen" element={<ForbiddenPage />} />
-          <Route path="*" element={<NotFoundPage />} />
         </Route>
 
       </Routes>

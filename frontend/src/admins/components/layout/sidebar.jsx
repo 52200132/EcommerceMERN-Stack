@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { Collapse, Offcanvas } from 'react-bootstrap';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { logout } from '#features/auth-slice';
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 
 const scrollbarOptions = {
@@ -33,7 +35,7 @@ const NAV_ITEMS = [
   { id: 'manage-discounts', label: 'Quản lý mã giảm giá', to: '/admin/manage-discounts', icon: 'bi-ticket' },
 ];
 
-const SidebarNav = ({ expanded, onToggle, collapsed }) => {
+const SidebarNav = ({ expanded, onToggle, collapsed, onLogout }) => {
   const navItems = useMemo(() => NAV_ITEMS, []);
 
   return (
@@ -112,6 +114,15 @@ const SidebarNav = ({ expanded, onToggle, collapsed }) => {
               </div>
             );
           })}
+          {/* Đăng xuất */}
+          <button
+            type="button"
+            className={`admin-sidebar__link admin-sidebar__link--logout ${collapsed ? 'is-collapsed' : ''}`}
+            onClick={onLogout}
+          >
+            <span className="admin-sidebar__icon bi bi-box-arrow-right" aria-hidden="true" />
+            {!collapsed && <span className="admin-sidebar__label">Đăng xuất</span>}
+          </button>
         </nav>
       </OverlayScrollbarsComponent>
     </div>
@@ -119,6 +130,8 @@ const SidebarNav = ({ expanded, onToggle, collapsed }) => {
 };
 
 const Sidebar = ({ isMobile, show = false, onHide, collapsed }) => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [expandedSections, setExpandedSections] = useState(() =>
     NAV_ITEMS.reduce((acc, item) => {
       if (item.children?.length) {
@@ -128,12 +141,22 @@ const Sidebar = ({ isMobile, show = false, onHide, collapsed }) => {
     }, {})
   );
 
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate('/admin/login', { replace: true });
+  };
+
   const handleToggleSection = (sectionId) => {
     setExpandedSections((prev) => ({ ...prev, [sectionId]: !prev[sectionId] }));
   };
 
   const content = (
-    <SidebarNav expanded={expandedSections} onToggle={handleToggleSection} collapsed={collapsed} />
+    <SidebarNav
+      expanded={expandedSections}
+      onToggle={handleToggleSection}
+      collapsed={collapsed}
+      onLogout={handleLogout}
+    />
   );
 
   if (isMobile) {
