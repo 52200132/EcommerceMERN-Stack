@@ -6,7 +6,7 @@ export const commentApi = backendApi.injectEndpoints({
       query: ({ productId, content, parentCommentId, displayName, guestId }) => ({
         url: `comments/product/${productId}`,
         method: "POST",
-        body: { content, parent_comment_id: parentCommentId, user_displayed_name: displayName, guest_id: guestId },
+        data: { content, parent_comment_id: parentCommentId, user_displayed_name: displayName, guest_id: guestId },
       }),
     }),
     getCommentsByProduct: builder.query({
@@ -17,16 +17,17 @@ export const commentApi = backendApi.injectEndpoints({
       }),
     }),
     updateComment: builder.mutation({
-      query: ({ commentId, content }) => ({
+      query: ({ commentId, content, guestId }) => ({
         url: `comments/${commentId}`,
         method: "PUT",
-        body: { content },
+        data: { content, guest_id: guestId },
       }),
     }),
     deleteComment: builder.mutation({
-      query: (commentId) => ({
+      query: ({ commentId, guestId }) => ({
         url: `comments/${commentId}`,
         method: "DELETE",
+        data: { guest_id: guestId },
       }),
     }),
   }), overrideExisting: false,

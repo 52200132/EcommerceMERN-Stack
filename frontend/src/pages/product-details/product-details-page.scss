@@ -218,6 +218,15 @@ $variant-accent: #ffa000;
   background-color: #f9f9f9;
   margin-bottom: 40px;
 
+  .tps-admin-badge {
+    background-color: #e74c3c;
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.1rem 0.3rem;
+    border-radius: 4px;
+    margin-left: 0.5rem;
+  }
+
   .tps-comments-header {
     display: flex;
     align-items: flex-start;
@@ -319,15 +328,9 @@ $variant-accent: #ffa000;
       .tps-comment-avatar {
         width: 40px;
         height: 40px;
-        background-color: $primary-color;
-        color: #fff;
         border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
         margin-right: 1rem;
-        flex-shrink: 0;
+        overflow: hidden;
       }
 
       .tps-comment-content {
@@ -363,7 +366,8 @@ $variant-accent: #ffa000;
           font-weight: 400;
         }
 
-        .tps-comment-actions {
+        .tps-comment-actions,
+        .tps-reply-actions {
           display: flex;
           align-items: center;
           margin-bottom: 1rem;
@@ -411,15 +415,9 @@ $variant-accent: #ffa000;
       .tps-reply-avatar {
         width: 32px;
         height: 32px;
-        background-color: $primary-color;
-        color: #fff;
         border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
         margin-right: 1rem;
-        flex-shrink: 0;
+        overflow: hidden;
 
         &.tps-admin {
           background-color: #e74c3c;
@@ -449,15 +447,6 @@ $variant-accent: #ffa000;
             align-items: center;
           }
 
-          .tps-admin-badge {
-            background-color: #e74c3c;
-            color: white;
-            font-size: 0.7rem;
-            padding: 0.1rem 0.3rem;
-            border-radius: 4px;
-            margin-left: 0.5rem;
-          }
-
           .tps-reply-date {
             color: $text-light;
             font-size: 0.85rem;
@@ -475,29 +464,6 @@ $variant-accent: #ffa000;
           color: $text-color;
           margin-bottom: 0.5rem;
           line-height: 1.5;
-        }
-
-        .tps-reply-actions {
-          button {
-            background: none;
-            border: none;
-            color: $primary-color;
-            cursor: pointer;
-            font-size: 0.85rem;
-            display: flex;
-            align-items: center;
-            padding: 0;
-
-            &:hover {
-              color: $hover-color;
-              text-decoration: underline;
-            }
-
-            svg {
-              margin-right: 0.25rem;
-              font-size: 0.8rem;
-            }
-          }
         }
       }
     }

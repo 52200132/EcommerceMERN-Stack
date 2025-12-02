@@ -20,7 +20,7 @@ commentSchema.virtual("replies", {
   ref: "Comment",
   localField: "_id",
   foreignField: "parent_comment_id",
-  justOne: true
+  justOne: false
 });
 
 commentSchema.virtual("reply_count", {

@@ -320,7 +320,7 @@ export const getBasicProfile = async (req, res) => {
   try {
     if (req.user) {
       const { username, email, isManager, _id, token, image, resetPasswordFirstTime } = req.user;
-      const basicInfo = { username, email, isManager, _id, token, image };
+      const basicInfo = { username, email, isManager, _id, token, image, resetPasswordFirstTime };
       res.status(200).json({
         ec: 0,
         em: 'Lấy thông tin thành công',

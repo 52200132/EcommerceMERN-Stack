@@ -15,15 +15,36 @@ const updateMeanRating = async (product_id) => {
 	await Product.findByIdAndUpdate(product_id, { rating: meanRating });
 };
 
+const parseRating = (value, { required = true } = {}) => {
+	if (value === undefined || value === null) {
+		return required ? { error: "Rating is required" } : { value: undefined };
+	}
+	const parsed = Number(value);
+	if (!Number.isFinite(parsed) || parsed < 1 || parsed > 5) {
+		return { error: "Rating must be a number between 1 and 5" };
+	}
+	return { value: parsed };
+};
+
 const createRating = async (req, res) => {
 	try {
 		const user_id = req.user._id;
 		const product_id = req.params.product_id;
 		const { rating, comment } = req.body;
 
+		if (!mongoose.Types.ObjectId.isValid(product_id)) {
+			return res.status(400).json({ ec: 400, em: "Invalid product id" });
+		}
+		const { value: parsedRating, error: ratingError } = parseRating(rating);
+		if (ratingError) {
+			return res.status(400).json({ ec: 400, em: ratingError });
+		}
+
 		const checkRating = await Rating.findOne({ "product_id": product_id, "user_id": user_id });
 		if (checkRating) {
-			const updateRating = await Rating.findByIdAndUpdate(checkRating._id, { rating, comment }, { new: true, runValidators: true });
+			const updatePayload = { rating: parsedRating };
+			if (comment !== undefined) updatePayload.comment = comment;
+			const updateRating = await Rating.findByIdAndUpdate(checkRating._id, updatePayload, { new: true, runValidators: true });
 			await updateMeanRating(product_id);
 			return res.status(201).json({ ec: 0, em: "Rating updated successfully", dt: updateRating });
 		}
@@ -31,7 +52,7 @@ const createRating = async (req, res) => {
 			const newRating = new Rating({
 				product_id,
 				user_id,
-				rating,
+				rating: parsedRating,
 				comment
 			})
 			await newRating.save();
@@ -48,8 +69,25 @@ const updateRating = async (req, res) => {
 	try {
 		const rating_id = req.params.rating_id;
 		const { rating, comment } = req.body;
-		const updateRating = await Rating.findByIdAndUpdate(rating_id, { rating, comment }, { new: true, runValidators: true });
-		res.status(201).json({ ec: 0, em: "Rating updated successfully", dt: updateRating });
+		if (!mongoose.Types.ObjectId.isValid(rating_id)) {
+			return res.status(400).json({ ec: 400, em: "Invalid rating id" });
+		}
+		const { value: parsedRating, error: ratingError } = parseRating(rating, { required: false });
+		if (ratingError) {
+			return res.status(400).json({ ec: 400, em: ratingError });
+		}
+		const updatePayload = {};
+		if (parsedRating !== undefined) updatePayload.rating = parsedRating;
+		if (comment !== undefined) updatePayload.comment = comment;
+		if (Object.keys(updatePayload).length === 0) {
+			return res.status(400).json({ ec: 400, em: "No fields to update" });
+		}
+		const updatedRating = await Rating.findByIdAndUpdate(rating_id, updatePayload, { new: true, runValidators: true });
+		if (!updatedRating) {
+			return res.status(404).json({ ec: 404, em: "Rating not found" });
+		}
+		await updateMeanRating(updatedRating.product_id);
+		res.status(201).json({ ec: 0, em: "Rating updated successfully", dt: updatedRating });
 	} catch (error) {
 		res.status(500).json({ ec: 500, em: error.message });
 	}
@@ -58,7 +96,14 @@ const updateRating = async (req, res) => {
 const deleteRating = async (req, res) => {
 	try {
 		const rating_id = req.params.rating_id;
-		await Rating.findByIdAndDelete(rating_id);
+		if (!mongoose.Types.ObjectId.isValid(rating_id)) {
+			return res.status(400).json({ ec: 400, em: "Invalid rating id" });
+		}
+		const deletedRating = await Rating.findByIdAndDelete(rating_id);
+		if (!deletedRating) {
+			return res.status(404).json({ ec: 404, em: "Rating not found" });
+		}
+		await updateMeanRating(deletedRating.product_id);
 		res.status(201).json({ ec: 0, em: "Rating deleted successfully" });
 	} catch (error) {
 		res.status(500).json({ ec: 500, em: error.message });

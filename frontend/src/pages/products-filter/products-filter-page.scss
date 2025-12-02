@@ -78,10 +78,8 @@ $tps-card-shadow: 0 18px 40px rgba(1, 103, 243, 0.08);
   // }
   .filter-section {
     display: flex;
-
-    .fillter-subsection {
-      margin-bottom: 16px;
-    }
+    flex-wrap: wrap;
+    gap: 11px;
   }
 
   .filter-sidebar {
@@ -462,6 +460,84 @@ $tps-card-shadow: 0 18px 40px rgba(1, 103, 243, 0.08);
       justify-content: center;
       gap: 8px;
       font-weight: 700;
+    }
+  }
+}
+
+//==================== Filter Layout ====================//
+.filter-field {
+  border: 1px solid $tps-border;
+  background: #fff;
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: $tps-ink;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+
+  &.active,
+  &:hover {
+    background: $tps-primary;
+    color: #fff;
+    border-color: $tps-primary;
+    box-shadow: 0 8px 20px rgba(1, 103, 243, 0.25);
+  }
+}
+
+.pill-list {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 9px;
+  gap: 8px;
+
+  .pill {
+    border: 1px solid $tps-border;
+    background: #fff;
+    color: $tps-ink;
+    padding: 6px 10px;
+    border-radius: 12px;
+    font-size: 13px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+
+    &.active,
+    &:hover {
+      color: $tps-primary;
+      border-color: $tps-primary;
+      box-shadow: 0 8px 20px rgba(1, 103, 243, 0.25);
+    }
+  }
+}
+
+.feild-filter-actions {
+  padding: 9px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+
+  button {
+    cursor: pointer;
+    text-align: center;
+    width: 50%;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  .close-button {
+    border: 1px solid $tps-border;
+  }
+
+  .apply-button {
+    background: $tps-primary;
+    border: none;
+    color: #fff;
+
+    &:hover {
+      background: darken($tps-primary, 5%);
     }
   }
 }

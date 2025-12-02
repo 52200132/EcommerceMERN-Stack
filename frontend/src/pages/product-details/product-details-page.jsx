@@ -8,7 +8,7 @@ import "./product-details-page.scss";
 import Ratings from "#components/product-details/ratings";
 import Comments from "#components/product-details/Comments";
 import { formatCurrency } from "#utils";
-import { useRenderCount, useTpsGetState, useTpsSelector } from "#custom-hooks";
+import { useRenderCount, useScrollTo, useTpsGetState, useTpsSelector } from "#custom-hooks";
 import { productDetailsHooks } from "#component-hooks/use-product-details-hooks";
 import { setProduct, setRatings } from "#features/product-details-slice";
 import { useAddToCartMutation, useGetRatingsByProductQuery } from "#services";
@@ -114,9 +114,7 @@ const ProductDetails = () => {
     );
   };
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+  useScrollTo(200, "instant");
 
   return (
     <>

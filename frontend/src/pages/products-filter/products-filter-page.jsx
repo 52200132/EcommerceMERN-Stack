@@ -15,7 +15,8 @@ import {
 import { formatCurrency } from "#utils";
 import { useGetProductFilterQuery } from "#services/product-services";
 import { axiosInstance } from "services/axios-config";
-import { filterOptions, LABTOP_SLUG } from "./filter";
+import { LABTOP_SLUG } from "#components/product-filter/filter";
+import FilterSection from "#components/product-filter/filter-section";
 
 import "./products-filter-page.scss";
 
@@ -34,81 +35,6 @@ const ratingOptions = [
   { value: 4, label: "Từ 4 ★" },
   { value: 3, label: "Từ 3 ★" },
 ];
-
-const FilterSection = ({ title, categorySlug }) => {
-  // console.log(filterOptions[categorySlug]);
-  const [activeSubsection, setActiveSubsection] = useState([]);
-  const [filterState, setFilterState] = useState(() => {
-    const tmep2 = Array.isArray(filterOptions[categorySlug]?.filterFields) ?
-      filterOptions[categorySlug]?.filterFields.reduce((temp3, field) => {
-        temp3[field.attribute] = {
-          active: false,
-          selectedValues: new Set(),
-          getOrigin: () => field,
-        };
-        return temp3;
-      }, {}) : {};
-    // for test
-    tmep2["screen_size"].active = true;
-    tmep2["screen_size"].selectedValues.add("15.6 inch");
-    tmep2["screen_size"].selectedValues.add("15.6 asdfa sd");
-    console.log('tmep2', tmep2);
-    return tmep2;
-  });
-
-  const handleDeleteFilterActive = (attribute) => {
-    setActiveSubsection(prev => [...prev.filter(attr => attr !== attribute)]);
-    setFilterState(prev => ({ ...prev, [attribute]: { ...prev[attribute], active: false, selectedValues: new Set() } }));
-  }
-
-  const handleDeleteAllFilterActive = () => {
-    setActiveSubsection([]);
-    setFilterState(prev => {
-      const next = prev;
-      activeSubsection.forEach(attr => {
-        next[attr].active = false;
-        next[attr].selectedValues = new Set();
-      });
-      return next;
-    });
-  }
-
-  useEffect(() => {
-    console.log('filterState changed', filterState);
-  }, [filterState]);
-
-  return (
-    <>
-      <div className="filter-section mb-3">
-        {filterOptions[categorySlug]?.filterFields.map((field) => {
-          return (
-            <div key={field.attribute} className={`filter-subsection ${filterState[field.attribute]?.active ? "active" : ""}`}>
-              <div className="section-title">{field.label}
-                {/* {field.values?.map((value => (<div>{value} </div>)))} */}
-              </div>
-              {/* Render filter controls based on field.type */}
-            </div>
-          )
-        })}
-      </div>
-      <div className=" mb-3">
-        {activeSubsection.map((subsec) => {
-          const activeField = filterState[subsec];
-          const fieldLabel = activeField?.getOrigin().label || "";
-          return (
-            <div key={subsec} className="filter-subsection active">
-              <div className="section-title">
-                {fieldLabel + ": "}
-                {[...activeField.selectedValues].join(" | ")}
-              </div>
-              <span onClick={() => handleDeleteFilterActive(subsec)}>x</span>
-            </div>
-          )
-        })}
-      </div>
-    </>
-  );
-};
 
 const ProductsFilterPage = () => {
   const { categorySlug = LABTOP_SLUG } = useParams();
@@ -312,8 +238,8 @@ const ProductsFilterPage = () => {
 
   return (
     <div className="tps-product-filter-page">
-      <FilterSection categorySlug={categorySlug} />
       <Container>
+        <FilterSection categorySlug={categorySlug} />
         <div className="page-hero-card mb-3">
           <div>
             <p className="eyebrow"><IoFilterSharp /> Bộ lọc & sắp xếp</p>
@@ -333,7 +259,7 @@ const ProductsFilterPage = () => {
           </div>
         </div>
 
-        <div className="filter-sidebar mb-3">
+        {/* <div className="filter-sidebar mb-3">
           <div className="filter-header">
             <div>
               <p className="eyebrow">Bộ lọc</p>
@@ -342,7 +268,7 @@ const ProductsFilterPage = () => {
             <Button variant="link" className="reset-btn" onClick={handleResetFilters}>Xóa tất cả</Button>
           </div>
 
-          <div className="filter-section">
+          <div className="filter-subsection">
             <div className="section-title">Danh mục</div>
             <div className="pill-list">
               <button
@@ -365,7 +291,7 @@ const ProductsFilterPage = () => {
             </div>
           </div>
 
-          <div className="filter-section">
+          <div className="filter-subsection">
             <div className="section-title">Thương hiệu</div>
             <div className="checkbox-list">
               {brandOptions.map((brand) => (
@@ -384,7 +310,7 @@ const ProductsFilterPage = () => {
             </div>
           </div>
 
-          <div className="filter-section">
+          <div className="filter-subsection">
             <div className="section-title">Khoảng giá</div>
             <div className="price-range">
               <div className="input-group">
@@ -435,7 +361,7 @@ const ProductsFilterPage = () => {
               ))}
             </div>
           </div>
-        </div>
+        </div> */}
 
         <div className="catalog-wrapper">
           <div className="toolbar">
