@@ -19,10 +19,10 @@ export const filterOptions = {
         values: [10000000, 50000000]
       },
       {
-        attribute: "screen_size",
+        attribute: "Screen Size",
         label: "Kích thước màn hình",
         type: "multiple",
-        values: ["13 inch", "14 inch", "15.6 inch", "16 inch", "17 inch"]
+        values: ["13 inches", "14 inches", "15.6 inches", "16 inches", "17 inches"]
       },
       {
         attribute: "resolution",
@@ -31,7 +31,7 @@ export const filterOptions = {
         values: ["Full HD (1920x1080)", "2K (2560x1440)", "4K (3840x2160)", "Retina"]
       },
       {
-        attribute: "gpu",
+        attribute: "Graphics Card",
         label: "Card đồ họa",
         type: "multiple",
         values: ["Intel UHD", "Intel Iris Xe", "NVIDIA GeForce GTX", "NVIDIA GeForce RTX", "AMD Radeon"]
@@ -49,7 +49,7 @@ export const filterOptions = {
       //   values: ["Văn phòng", "Đồ họa - Kỹ thuật", "Gaming", "Mỏng nhẹ", "Cao cấp - Sang trọng"]
       // },
       {
-        attribute: "ram",
+        attribute: "RAM Capacity",
         label: "Dung lượng RAM",
         type: "multiple",
         values: ["8GB", "16GB", "32GB", "64GB"]

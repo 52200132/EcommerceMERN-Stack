@@ -12,6 +12,7 @@ export const productApi = backendApi.injectEndpoints({
       // providesTags: [{ type: "Product", id: "FILTER" }],
     }),
     getProductById: builder.query({
+      keepUnusedDataFor: 10 * 60,
       query: (id) => ({ url: `products/${id}`, method: 'GET' }),
       providesTags: (result, error, id) => [{ type: 'Product', id }],
     }),

@@ -2,6 +2,29 @@ import Product from "../models/Product.js";
 import Category from "../models/Category.js";
 import mongoose from "mongoose";
 
+const escapeRegExp = (value = "") => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const normalizeVariantFilters = (rawValue) => {
+  if (!rawValue) return [];
+  try {
+    let parsed = rawValue;
+    if (Array.isArray(parsed)) {
+      parsed = parsed[0];
+    }
+    if (typeof parsed === "string") {
+      parsed = JSON.parse(parsed);
+    }
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((item) => ({
+        attribute: typeof item?.attribute === "string" ? item.attribute.trim() : "",
+        values: Array.isArray(item?.values) ? item.values.filter(Boolean) : []
+      }))
+      .filter((item) => item.attribute && item.values.length);
+  } catch (error) {
+    return [];
+  }
+};
+
 /** Lấy danh sách sản phẩm để hiện trên giao diện */
 export const getProducts = async (req, res) => {
   const {
@@ -9,6 +32,7 @@ export const getProducts = async (req, res) => {
     category_name,
     brand_names,
     variants_filters,
+
     sort_by, // price_asc, price_desc, name_asc, name_desc, quantity_sold_desc, rating_desc
     price_min,
     price_max,
@@ -77,10 +101,25 @@ export const getProducts = async (req, res) => {
     priceMatch.price_min = { ...(priceMatch.price_min || {}), $lte: maxPrice };
   }
   const hasPriceFilter = Object.keys(priceMatch).length > 0;
+  const normalizedVariantFilters = normalizeVariantFilters(variants_filters);
+  const variantFilterConditions = normalizedVariantFilters.map((vf) => ({
+    Attributes: {
+      $elemMatch: {
+        attribute: vf.attribute,
+        value: { $in: vf.values.map((val) => new RegExp(`^${escapeRegExp(String(val))}$`, "i")) }
+      }
+    }
+  }));
+  const hasVariantFilters = variantFilterConditions.length > 0;
 
   try {
     const pipeline = [
       { $match: query },
+      ...(hasVariantFilters ? [{
+        $match: {
+          Variants: { $elemMatch: { $and: variantFilterConditions } }
+        }
+      }] : []),
       ...(hasPriceFilter ? [{ $match: priceMatch }] : []),
 
       // LUÔN LUÔN lookup brand và category để lấy tên

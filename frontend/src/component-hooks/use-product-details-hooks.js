@@ -10,9 +10,12 @@ export const productDetailsHooks = {
       product?.Variants?.flatMap(variant => variant.Images.map(img => img.url))].flat())
       , [product]);
     const mainSliderRef = useRef(null);
-
+    const thumbnailsSliderRef = useRef(null);
+    // const [imgsTinySliderComponent] = useState(null);
     useEffect(() => {
       if (!imagesSlider || imagesSlider.length === 0) return;
+      console.log('Initializing Tiny Slider for product images', imagesSlider);
+
       const mainSlider = tns({
         mode: 'gallery',
         nav: true,
@@ -25,7 +28,6 @@ export const productDetailsHooks = {
         items: 1,
         swipeAngle: 15,
       });
-
       const thumbnailsSlider = tns({
         container: selectorThumbnails,
         items: 3,
@@ -47,10 +49,15 @@ export const productDetailsHooks = {
         },
       });
       mainSliderRef.current = mainSlider;
+      thumbnailsSliderRef.current = thumbnailsSlider;
       return () => {
-        mainSlider?.destroy();
-        thumbnailsSlider?.destroy();
-      }
+        if (typeof mainSlider !== 'undefined' && mainSlider !== null) {
+          mainSlider.destroy();
+        }
+        if (typeof thumbnailsSlider !== 'undefined' && thumbnailsSlider !== null) {
+          thumbnailsSlider.destroy();
+        }
+      };
     }, [imagesSlider, selectorProductImagesSlider, selectorThumbnails]);
 
     return { imagesSlider, mainSliderRef }

@@ -1,3 +1,4 @@
+import { setCartList } from "#features/user-profile-slice";
 import { backendApi } from "./backend-api";
 
 export const userApi = backendApi.injectEndpoints({
@@ -87,6 +88,14 @@ export const userApi = backendApi.injectEndpoints({
         url: "/users/cart",
         method: "GET",
       }),
+      onQueryStarted: async (arg, { dispatch, queryFulfilled }) => {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(setCartList(data?.dt?.carts || []));
+        } catch (error) {
+          console.error("Error fetching cart data:", error);
+        }
+      },
       // providesTags: ["Cart"],
     }),
     addToCart: builder.mutation({
@@ -95,6 +104,14 @@ export const userApi = backendApi.injectEndpoints({
         method: "POST",
         data: payload,
       }),
+      onQueryStarted: async (arg, { dispatch, queryFulfilled }) => {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(setCartList(data?.dt?.carts || []));
+        } catch (error) {
+          console.error("Error fetching cart data:", error);
+        }
+      },
       // invalidatesTags: ["Cart"],
     }),
     updateCartItem: builder.mutation({

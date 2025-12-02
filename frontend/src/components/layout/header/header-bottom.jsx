@@ -1,3 +1,4 @@
+import { BAN_PHIM_SLUG, LABTOP_SLUG, TAI_NGHE_CHUP_TAI_SLUG } from '#components/product-filter/filter';
 import { useState } from 'react';
 import { Col, Container, Navbar, Row } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
@@ -28,16 +29,19 @@ const HeaderBottom = () => {
               <Navbar.Collapse>
                 <ul id="nav" className="navbar-nav ms-auto">
                   <li className="nav-item">
-                    <Link to="#" className="nav-link">Top bán nhiều</Link>
+                    <Link to="/san-pham?page=1&sort=quantity_sold_desc" className="nav-link">Top bán nhiều</Link>
                   </li>
                   <li className="nav-item">
-                    <Link to="#" className="nav-link">Sản phẩm mới</Link>
+                    <Link to="/san-pham?page=1&sort=created_at_desc" className="nav-link">Sản phẩm mới</Link>
                   </li>
                   <li className="nav-item">
-                    <Link to="#" className="nav-link">Comming soon 3</Link>
+                    <Link to={`/san-pham/${LABTOP_SLUG}?category=Laptop&page=1&sort=quantity_sold_desc`} className="nav-link">Máy tính xách tay</Link>
                   </li>
                   <li className="nav-item">
-                    <Link to="#" className="nav-link">Comming soon 4</Link>
+                    <Link to={`/san-pham/${TAI_NGHE_CHUP_TAI_SLUG}?category=Tai nghe - chụp tai&page=1&sort=quantity_sold_desc`} className="nav-link">Tai nghe chụp tai</Link>
+                  </li>
+                  <li className="nav-item">
+                    <Link to={`/san-pham/${BAN_PHIM_SLUG}?category=Bàn phím&page=1&sort=quantity_sold_desc`} className="nav-link">Bàn phím</Link>
                   </li>
                   {/* <Temp /> */}
                 </ul>

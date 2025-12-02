@@ -76,6 +76,10 @@ $tps-card-shadow: 0 18px 40px rgba(1, 103, 243, 0.08);
   //   margin-top: 18px;
   //   align-items: flex-start;
   // }
+  .filter-panel {
+    margin-bottom: 12px;
+  }
+
   .filter-section {
     display: flex;
     flex-wrap: wrap;
@@ -248,9 +252,30 @@ $tps-card-shadow: 0 18px 40px rgba(1, 103, 243, 0.08);
       font-weight: 600;
       color: $tps-muted;
 
-      select {
-        min-width: 180px;
-        border-radius: 10px;
+      .sort-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .sort-pill {
+        border: 1px solid $tps-border;
+        background: #fff;
+        color: $tps-ink;
+        padding: 6px 12px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        cursor: pointer;
+
+        &.active,
+        &:hover {
+          background: $tps-primary;
+          color: #fff;
+          border-color: $tps-primary;
+          box-shadow: 0 8px 20px rgba(1, 103, 243, 0.25);
+        }
       }
     }
 
@@ -277,6 +302,58 @@ $tps-card-shadow: 0 18px 40px rgba(1, 103, 243, 0.08);
       border: 1px solid $tps-border;
       border-radius: 12px;
       background: #f0f5ff;
+      color: $tps-ink;
+      padding: 6px 10px;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+
+      span {
+        font-weight: 700;
+      }
+
+      &:hover {
+        border-color: $tps-primary;
+        color: $tps-primary;
+      }
+    }
+  }
+
+  .filter-active {
+    border: 1px solid $tps-border;
+    background: $tps-soft;
+    padding: 10px 12px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 6px 0 10px;
+
+    &__label {
+      font-weight: 700;
+      color: $tps-ink;
+    }
+
+    &__chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      flex: 1;
+    }
+
+    &__reset {
+      color: $tps-primary;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .filter-pill {
+      border: 1px solid $tps-border;
+      border-radius: 12px;
+      background: #fff;
       color: $tps-ink;
       padding: 6px 10px;
       font-size: 13px;
@@ -507,6 +584,39 @@ $tps-card-shadow: 0 18px 40px rgba(1, 103, 243, 0.08);
       border-color: $tps-primary;
       box-shadow: 0 8px 20px rgba(1, 103, 243, 0.25);
     }
+  }
+}
+
+.filter-popover {
+  min-width: 340px;
+  border: 1px solid $tps-border;
+  border-radius: 14px;
+  box-shadow: $tps-card-shadow;
+
+  .filter-popover__title {
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: $tps-ink;
+  }
+}
+
+.price-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 300px;
+
+  .slider-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-weight: 600;
+    color: $tps-ink;
+  }
+
+  .price-note {
+    font-size: 12px;
+    color: $tps-muted;
   }
 }
 

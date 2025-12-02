@@ -26,9 +26,6 @@ const initialState = {
   comments: {}
 };
 
-// Mock data
-// Object.assign(initialState.product, productData);
-// Object.assign(initialState.ratings, ratingsData);
 export const productDetailsSlice = createSlice({
   name: 'productDetails',
   initialState,
@@ -39,11 +36,14 @@ export const productDetailsSlice = createSlice({
     },
     setRatings: (state, action) => {
       Object.assign(state.ratings, action.payload);
+    },
+    clearProductDetails: (state) => {
+      Object.assign(state, initialState);
     }
   }
 });
 
 export const {
-  setProduct, setRatings
+  setProduct, setRatings, clearProductDetails
 } = productDetailsSlice.actions;
 export default productDetailsSlice.reducer;

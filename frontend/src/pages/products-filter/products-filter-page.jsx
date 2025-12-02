@@ -1,21 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { Badge, Button, Container, Form, Spinner } from "react-bootstrap";
+import { Badge, Button, Container, Spinner } from "react-bootstrap";
 import slugify from "slugify";
-import {
-  IoArrowDownCircleOutline,
-  IoFilterSharp,
-  IoPricetagOutline,
-  IoRefresh,
-  IoSearch,
-  IoStar,
-  IoFlash
-} from "react-icons/io5";
+import { IoArrowDownCircleOutline, IoSearch, IoStar, IoFlash } from "react-icons/io5";
 
 import { formatCurrency } from "#utils";
 import { useGetProductFilterQuery } from "#services/product-services";
 import { axiosInstance } from "services/axios-config";
-import { LABTOP_SLUG } from "#components/product-filter/filter";
+import filterOptions, { LABTOP_SLUG } from "#components/product-filter/filter";
 import FilterSection from "#components/product-filter/filter-section";
 
 import "./products-filter-page.scss";
@@ -30,11 +22,21 @@ const sortOptions = [
   { value: "price_desc", label: "Giá giảm dần", server: true },
 ];
 
-const ratingOptions = [
-  { value: 4.5, label: "Từ 4.5 ★" },
-  { value: 4, label: "Từ 4 ★" },
-  { value: 3, label: "Từ 3 ★" },
-];
+const parseVariantFilters = (rawValue) => {
+  if (!rawValue) return [];
+  try {
+    const parsed = typeof rawValue === "string" ? JSON.parse(rawValue) : rawValue;
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((item) => ({
+        attribute: typeof item?.attribute === "string" ? item.attribute.trim() : "",
+        values: Array.isArray(item?.values) ? item.values.filter(Boolean) : []
+      }))
+      .filter((item) => item.attribute && item.values.length);
+  } catch {
+    return [];
+  }
+};
 
 const ProductsFilterPage = () => {
   const { categorySlug = LABTOP_SLUG } = useParams();
@@ -47,15 +49,14 @@ const ProductsFilterPage = () => {
   const priceMinParam = searchParams.get("price_min") || "";
   const priceMaxParam = searchParams.get("price_max") || "";
   const ratingParam = searchParams.get("rating") || "";
+  const variantFilters = useMemo(() => parseVariantFilters(searchParams.get("variants_filters")), [searchParams]);
+  const filterConfig = filterOptions[categorySlug] || filterOptions[LABTOP_SLUG];
 
   const [searchValue, setSearchValue] = useState(qParam);
-  const [priceDraft, setPriceDraft] = useState({ min: priceMinParam, max: priceMaxParam });
   const [products, setProducts] = useState([]);
   const [brandOptions, setBrandOptions] = useState([]);
-  const [categoryOptions, setCategoryOptions] = useState([]);
 
   useEffect(() => setSearchValue(qParam), [qParam]);
-  useEffect(() => setPriceDraft({ min: priceMinParam, max: priceMaxParam }), [priceMinParam, priceMaxParam]);
 
   useEffect(() => {
     let mounted = true;
@@ -75,7 +76,6 @@ const ProductsFilterPage = () => {
   }, []);
 
   const updateParams = useCallback((nextEntries, resetPage = true) => {
-    console.log('updateParams called');
     const next = new URLSearchParams(searchParams);
     Object.entries(nextEntries).forEach(([key, value]) => {
       next.delete(key);
@@ -98,17 +98,23 @@ const ProductsFilterPage = () => {
   const priceMinNumber = priceMinParam !== "" && !Number.isNaN(Number(priceMinParam)) ? Number(priceMinParam) : undefined;
   const priceMaxNumber = priceMaxParam !== "" && !Number.isNaN(Number(priceMaxParam)) ? Number(priceMaxParam) : undefined;
   const minRating = ratingParam && !Number.isNaN(Number(ratingParam)) ? Number(ratingParam) : 0;
+  const variantFiltersKey = useMemo(() => JSON.stringify(variantFilters), [variantFilters]);
 
-  const queryArgs = useMemo(() => ({
-    page,
-    limit: PAGE_SIZE,
-    q: qParam || undefined,
-    brand_names: selectedBrands.length ? selectedBrands : undefined,
-    category_name: categoryParam !== "all" ? categoryParam : undefined,
-    sort_by: activeSort?.server ? activeSort.value : undefined,
-    price_min: priceMinNumber,
-    price_max: priceMaxNumber,
-  }), [page, qParam, categoryParam, activeSort, priceMinNumber, priceMaxNumber, selectedBrands.join("|")]);
+  const queryArgs = useMemo(() => {
+    const apiPage = page > 1 ? 1 : page;
+    const apiLimit = PAGE_SIZE * page;
+    return {
+      page: apiPage,
+      limit: apiLimit,
+      q: qParam || undefined,
+      brand_names: selectedBrands.length ? selectedBrands : undefined,
+      category_name: categoryParam !== "all" ? categoryParam : undefined,
+      sort_by: activeSort?.server ? activeSort.value : undefined,
+      price_min: priceMinNumber,
+      price_max: priceMaxNumber,
+      variants_filters: variantFilters.length ? JSON.stringify(variantFilters) : undefined,
+    };
+  }, [page, qParam, categoryParam, activeSort, priceMinNumber, priceMaxNumber, selectedBrands.join("|"), variantFilters]);
 
   const filterKey = useMemo(() => JSON.stringify({
     q: qParam,
@@ -118,7 +124,8 @@ const ProductsFilterPage = () => {
     priceMin: priceMinParam,
     priceMax: priceMaxParam,
     rating: minRating,
-  }), [qParam, categoryParam, selectedBrands.join("|"), activeSort?.value, priceMinParam, priceMaxParam, minRating]);
+    variantFilters: variantFiltersKey,
+  }), [qParam, categoryParam, selectedBrands.join("|"), activeSort?.value, priceMinParam, priceMaxParam, minRating, variantFiltersKey]);
 
   const { data, isLoading, isFetching, error, refetch } = useGetProductFilterQuery(queryArgs);
 
@@ -129,26 +136,8 @@ const ProductsFilterPage = () => {
   useEffect(() => {
     if (!data?.dt) return;
     const incoming = data.dt.products || [];
-    setProducts((prev) => {
-      if (page === 1) return incoming;
-      const existingIds = new Set(prev.map((p) => p._id));
-      const merged = [...prev];
-      incoming.forEach((item) => {
-        if (!existingIds.has(item._id)) {
-          merged.push(item);
-        }
-      });
-      return merged;
-    });
-
-    setCategoryOptions((prev) => {
-      const next = new Set(prev);
-      incoming.forEach((item) => {
-        if (item?.category_name) next.add(item.category_name);
-      });
-      return Array.from(next);
-    });
-  }, [data, page]);
+    setProducts(incoming);
+  }, [data]);
 
   const displayProducts = useMemo(() => {
     let list = [...products];
@@ -205,28 +194,23 @@ const ProductsFilterPage = () => {
         onClear: () => updateParams({ rating: null }),
       });
     }
+    variantFilters.forEach((vf) => {
+      const label = filterConfig?.filterFields?.find((field) => field.attribute === vf.attribute)?.label || vf.attribute;
+      pills.push({
+        key: `vf-${vf.attribute}`,
+        label: `${label}: ${vf.values.join(" | ")}`,
+        onClear: () => {
+          const next = variantFilters.filter((item) => item.attribute !== vf.attribute);
+          updateParams({ variants_filters: next.length ? JSON.stringify(next) : null });
+        },
+      });
+    });
     return pills;
-  }, [selectedBrands, categoryParam, priceMinNumber, priceMaxNumber, minRating, updateParams]);
+  }, [selectedBrands, categoryParam, priceMinNumber, priceMaxNumber, minRating, variantFilters, filterConfig, updateParams]);
 
   const handleSearch = (event) => {
     event.preventDefault();
     updateParams({ q: searchValue.trim() || null });
-  };
-
-  const handlePriceApply = () => {
-    const safeMin = priceDraft.min !== "" && !Number.isNaN(Number(priceDraft.min)) ? Math.max(Number(priceDraft.min), 0) : null;
-    const safeMax = priceDraft.max !== "" && !Number.isNaN(Number(priceDraft.max)) ? Math.max(Number(priceDraft.max), 0) : null;
-    updateParams({
-      price_min: safeMin,
-      price_max: safeMax,
-    });
-  };
-
-  const handleBrandToggle = (brand) => {
-    const next = new Set(selectedBrands);
-    if (next.has(brand)) next.delete(brand);
-    else next.add(brand);
-    updateParams({ brand: Array.from(next) });
   };
 
   const handleResetFilters = () => {
@@ -239,129 +223,19 @@ const ProductsFilterPage = () => {
   return (
     <div className="tps-product-filter-page">
       <Container>
-        <FilterSection categorySlug={categorySlug} />
+        <FilterSection categorySlug={categorySlug} brandOptions={brandOptions} />
         <div className="page-hero-card mb-3">
           <div>
-            <p className="eyebrow"><IoFilterSharp /> Bộ lọc & sắp xếp</p>
             <h1>Danh sách sản phẩm</h1>
             <p className="subtitle">
               Tìm kiếm, lọc theo thương hiệu, khoảng giá và sắp xếp để khám phá sản phẩm phù hợp nhất.
             </p>
             <div className="stats">
               <Badge bg="primary" className="me-2">Hiển thị {displayProducts.length}</Badge>
-              <Badge bg="light" text="dark">Tổng server {totalFromApi}</Badge>
+              <Badge bg="light" text="dark">Tổng {totalFromApi}</Badge>
             </div>
-          </div>
-          <div className="hero-action">
-            <Button variant="outline-primary" onClick={() => refetch()} disabled={isFetching}>
-              <IoRefresh /> Làm mới
-            </Button>
           </div>
         </div>
-
-        {/* <div className="filter-sidebar mb-3">
-          <div className="filter-header">
-            <div>
-              <p className="eyebrow">Bộ lọc</p>
-              <h3>Thu hẹp lựa chọn</h3>
-            </div>
-            <Button variant="link" className="reset-btn" onClick={handleResetFilters}>Xóa tất cả</Button>
-          </div>
-
-          <div className="filter-subsection">
-            <div className="section-title">Danh mục</div>
-            <div className="pill-list">
-              <button
-                className={`pill ${categoryParam === "all" ? "active" : ""}`}
-                onClick={() => updateParams({ category: null })}
-                type="button"
-              >
-                Tất cả
-              </button>
-              {categoryOptions.map((category) => (
-                <button
-                  key={category}
-                  className={`pill ${categoryParam === category ? "active" : ""}`}
-                  onClick={() => updateParams({ category })}
-                  type="button"
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="filter-subsection">
-            <div className="section-title">Thương hiệu</div>
-            <div className="checkbox-list">
-              {brandOptions.map((brand) => (
-                <label key={brand} className="checkbox-item">
-                  <input
-                    type="checkbox"
-                    checked={selectedBrands.includes(brand)}
-                    onChange={() => handleBrandToggle(brand)}
-                  />
-                  <span>{brand}</span>
-                </label>
-              ))}
-              {brandOptions.length === 0 && (
-                <p className="muted">Chưa có dữ liệu thương hiệu.</p>
-              )}
-            </div>
-          </div>
-
-          <div className="filter-subsection">
-            <div className="section-title">Khoảng giá</div>
-            <div className="price-range">
-              <div className="input-group">
-                <span>Từ</span>
-                <Form.Control
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  value={priceDraft.min}
-                  onChange={(e) => setPriceDraft((prev) => ({ ...prev, min: e.target.value }))}
-                />
-              </div>
-              <div className="input-group">
-                <span>Đến</span>
-                <Form.Control
-                  type="number"
-                  min="0"
-                  placeholder="10.000.000"
-                  value={priceDraft.max}
-                  onChange={(e) => setPriceDraft((prev) => ({ ...prev, max: e.target.value }))}
-                />
-              </div>
-              <Button size="sm" variant="primary" onClick={handlePriceApply}>
-                <IoPricetagOutline /> Áp dụng
-              </Button>
-            </div>
-          </div>
-
-          <div className="filter-section">
-            <div className="section-title">Đánh giá</div>
-            <div className="pill-list">
-              <button
-                type="button"
-                className={`pill ${minRating === 0 ? "active" : ""}`}
-                onClick={() => updateParams({ rating: null })}
-              >
-                Tất cả
-              </button>
-              {ratingOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  className={`pill ${minRating === option.value ? "active" : ""}`}
-                  onClick={() => updateParams({ rating: option.value })}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div> */}
 
         <div className="catalog-wrapper">
           <div className="toolbar">
@@ -378,19 +252,21 @@ const ProductsFilterPage = () => {
 
             <div className="sort-control">
               <span>Sắp xếp</span>
-              <Form.Select
-                size="sm"
-                value={activeSort?.value}
-                onChange={(e) => updateParams({ sort: e.target.value })}
-              >
-                {sortOptions.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </Form.Select>
-            </div>
-
-            <div className="summary">
-              <IoFlash /> Đang hiển thị {displayProducts.length}/{totalFromApi} sản phẩm
+              <div className="sort-options">
+                {sortOptions.map((option) => {
+                  const isActive = activeSort?.value === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      className={`sort-pill ${isActive ? "active" : ""}`}
+                      onClick={() => updateParams({ sort: option.value })}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
@@ -459,7 +335,7 @@ const ProductCard = ({ product }) => {
 
   return (
     <Link
-      className="product-card" to={detailPath}
+      className="product-card" to={`${detailPath}`}
       state={{
         productId: product?._id,
       }}

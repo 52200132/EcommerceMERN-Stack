@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { useGetProductFilterQuery } from "#services/product-services";
 import Product from "#components/common/product";
 import { Col, Container, Row } from "react-bootstrap";
-import { de } from "zod/v4/locales";
 
 const ProductLanding = ({ query, title = "Tiêu đề", description = "Mô tả" }) => {
 

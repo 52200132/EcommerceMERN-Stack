@@ -49,6 +49,7 @@ const App = () => {
               />
             ))} */}
           <Route path="/san-pham" element={<ProductsFilterPage />} />
+          <Route path="/san-pham/:categorySlug" element={<ProductsFilterPage />} />
           <Route path="/san-pham/:categorySlug/:productNameSlug" element={<ProductDetails />} />
           <Route index element={<HomePage />} />
           <Route path="thong-tin-ca-nhan" element={<UserProfileLayout />} >

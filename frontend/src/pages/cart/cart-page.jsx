@@ -13,9 +13,8 @@ import { formatCurrency } from "#utils";
 import CartItemRow from "#components/cart/cart-item-row";
 
 import "./cart-page.scss";
-import { useRenderCount } from "#custom-hooks";
 import { toast } from "react-toastify";
-import { deleteCartFromList, setCartList, updateCartList } from "#features/user-profile-slice";
+import { deleteCartFromList, updateCartList } from "#features/user-profile-slice";
 
 const GUEST_CART_KEY = "guest_cart";
 const DEFAULT_SHIPPING = [
@@ -44,7 +43,6 @@ const persistGuestCart = (items) => {
 };
 
 const CartPage = () => {
-  useRenderCount("CartPage", "ui");
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
@@ -67,7 +65,6 @@ const CartPage = () => {
       .then((data) => {
         const cartDataRes = data?.data;
         setCartData(cartDataRes || {});
-        dispatch(setCartList(cartDataRes?.dt?.carts || []));
       });
   }, [dispatch, getCartDataRes]);
 
@@ -191,7 +188,7 @@ const CartPage = () => {
             <p className="text-muted mb-0">Xem lại các sản phẩm bạn đã thêm</p>
           </Col>
           <Col className="text-end">
-            <Link to="/products" className="btn btn-outline-primary btn-sm">Tiếp tục mua sắm</Link>
+            <Link to="/san-pham" className="btn btn-outline-primary btn-sm">Tiếp tục mua sắm</Link>
           </Col>
         </Row>
 
@@ -205,7 +202,7 @@ const CartPage = () => {
           <Card className="p-4 text-center">
             <h5>Giỏ hàng của bạn đang trống</h5>
             <p className="text-muted">Hãy thêm vài sản phẩm để bắt đầu thanh toán.</p>
-            <Link to="/products" className="btn btn-primary">Khám phá sản phẩm</Link>
+            <Link to="/san-pham" className="btn btn-primary">Khám phá sản phẩm</Link>
           </Card>
         )}
 

@@ -1,18 +1,19 @@
 import { useEffect } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Row, Col, Container, Form } from "react-bootstrap";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import parse from "html-react-parser";
 
 import "./product-details-page.scss";
 import Ratings from "#components/product-details/ratings";
 import Comments from "#components/product-details/Comments";
 import { formatCurrency } from "#utils";
-import { useRenderCount, useScrollTo, useTpsGetState, useTpsSelector } from "#custom-hooks";
+import { useScrollTo, useTpsSelector } from "#custom-hooks";
 import { productDetailsHooks } from "#component-hooks/use-product-details-hooks";
-import { setProduct, setRatings } from "#features/product-details-slice";
+import { clearProductDetails, setProduct, setRatings } from "#features/product-details-slice";
 import { useAddToCartMutation, useGetRatingsByProductQuery } from "#services";
 import { useGetProductByIdQuery } from "#services/product-services";
+import { toast } from "react-toastify";
 // import { useGetProductByIdQuery } from "#services/admin-services";
 
 const GUEST_CART_KEY = "guest_cart";
@@ -30,16 +31,14 @@ const persistGuestCart = (items) => {
 };
 
 const ProductDetails = () => {
-  useRenderCount("ProductDetails", "ui");
-  const userToken = useTpsGetState(state => state?.auth?.user?.token, false);
-  const userId = useTpsGetState(state => state?.auth?.user?._id, false);
-  const { state: { productId } } = useLocation();
+  const userToken = useSelector(state => state.auth?.user?.token);
+  const userId = useSelector(state => state.auth?.user?._id);
   const dispatch = useDispatch();
+  const { state: { productId } } = useLocation();
   const [addToCart, { isLoading: isAddingCart }] = useAddToCartMutation();
-  const { data } = useGetProductByIdQuery(productId)
-  const { data: ratingData } = useGetRatingsByProductQuery({ productId: productId, userId });
+  const { data } = useGetProductByIdQuery(productId, { skip: !productId });
+  const { data: ratingData } = useGetRatingsByProductQuery({ productId: productId, userId }, { skip: !productId });
   useEffect(() => {
-    console.log(data, userId);
     if (!data?.dt) return;
     dispatch(setProduct(data?.dt || {}));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -69,7 +68,9 @@ const ProductDetails = () => {
       quantity: 1,
     };
     if (userToken) {
-      addToCart(payload);
+      addToCart(payload).unwrap()
+        .then(() => toast.success("Đã thêm vào giỏ hàng"))
+        .catch(() => toast.warn("Hiện tại không thể thêm vào giỏ hàng. Vui lòng thử lại sau."));
       return;
     }
     const current = loadGuestCart();
@@ -94,6 +95,8 @@ const ProductDetails = () => {
     }
     persistGuestCart(current);
   };
+  // useEffect(() => { return dispatch(clearProductDetails()) }, [dispatch]);
+  useScrollTo(200, "instant");
 
   const renderTechnical = (attrArr = []) => {
     const visibleAttrs = attrArr.filter(attr => attr.is_show_in_table);
@@ -114,7 +117,16 @@ const ProductDetails = () => {
     );
   };
 
-  useScrollTo(200, "instant");
+
+  if (!productId) {
+    return (
+      <section className="item-details section">
+        <Container>
+          <p>Không tìm thấy sản phẩm. Vui lòng quay lại trang trước.</p>
+        </Container>
+      </section>
+    );
+  }
 
   return (
     <>
