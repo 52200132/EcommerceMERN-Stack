@@ -1,12 +1,7 @@
-import { useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
 import { useDispatch } from 'react-redux';
 
 import { OverlayTrigger, Popover } from 'react-bootstrap';
-import { useLazyLinkGoogleAccountQuery } from '#services';
-import { BASE_URL } from '#services/axios-config';
-import { closeOverlayPreloader } from '#utils';
 import { useTpsSelector } from '#custom-hooks';
 import { logout } from '#features/auth-slice';
 
@@ -33,12 +28,12 @@ import unknownAvatar from '../../../assets/images/cat-avatar.jpg';
 //   return popup;
 // }
 
-const UserActions = () => {
+const UserActions = ({ setPassChanged }) => {
   const dispatch = useDispatch();
-  const popupRef = useRef(null);
+  // const popupRef = useRef(null);
   const navigate = useNavigate();
   const user = useTpsSelector((state) => state.auth.user, { includeProps: ['token', 'username', 'image'] });
-  const [linkGoogleAccount] = useLazyLinkGoogleAccountQuery();
+  // const [linkGoogleAccount] = useLazyLinkGoogleAccountQuery();
 
   // const handleLinkGoogleAccount = () => {
   //   axiosBaseQueryUtil.configBehaviors = {
@@ -59,31 +54,33 @@ const UserActions = () => {
 
   const handleLogout = () => {
     dispatch(logout());
+    setPassChanged(false);
+    navigate("/", { replace: true });
   };
 
-  useEffect(() => {
-    const handleMessage = (event) => {
-      // Kiểm tra origin backend
-      if (event.origin !== BASE_URL.replace('/api', '')) return;
-      const data = event.data;
-      console.log('Received message from popup:', data);
+  // useEffect(() => {
+  //   const handleMessage = (event) => {
+  //     // Kiểm tra origin backend
+  //     if (event.origin !== BASE_URL.replace('/api', '')) return;
+  //     const data = event.data;
+  //     console.log('Received message from popup:', data);
 
-      if (data?.ec === 0) {
-        if (data?.em) toast.info(data.em);
-      } else {
-        console.error('Lỗi liên kết tài khoản Google:', data?.em);
-        toast.error('Lỗi liên kết tài khoản Google');
-      }
-      if (data?.dt?.feRedirectUri) navigate(data.dt.feRedirectUri);
-      if (typeof popupRef?.current?.close === 'function') popupRef.current.close();
-      closeOverlayPreloader();
-    };
-    window.addEventListener('message', handleMessage);
-    return () => {
-      window.removeEventListener('message', handleMessage);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  //     if (data?.ec === 0) {
+  //       if (data?.em) toast.info(data.em);
+  //     } else {
+  //       console.error('Lỗi liên kết tài khoản Google:', data?.em);
+  //       toast.error('Lỗi liên kết tài khoản Google');
+  //     }
+  //     if (data?.dt?.feRedirectUri) navigate(data.dt.feRedirectUri);
+  //     if (typeof popupRef?.current?.close === 'function') popupRef.current.close();
+  //     closeOverlayPreloader();
+  //   };
+  //   window.addEventListener('message', handleMessage);
+  //   return () => {
+  //     window.removeEventListener('message', handleMessage);
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, []);
 
   return (
     <>

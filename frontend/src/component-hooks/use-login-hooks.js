@@ -125,7 +125,7 @@ export const useLoginHandlers = () => {
       if (data?.ec === 0) {
         if (data?.em) toast.success('Đăng nhập thành công');
         sessionStorage.setItem('user', data?.dt);
-        dispatch(updateCredentials(data?.dt));
+        dispatch(updateCredentials({ ...data?.dt, isLoggedIn: true }));
         navigate(redirectPath, { replace: true });
       } else {
         console.error('Lỗi', data?.em);

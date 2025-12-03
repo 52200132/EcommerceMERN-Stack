@@ -12,7 +12,7 @@ import { useSelector } from 'react-redux';
 import { useGetCartQuery } from '#services';
 import SearchBox from './search-box';
 
-const Header = () => {
+const Header = ({ setPassChanged }) => {
   const user = useSelector((state) => state.auth.user);
   const isLoggedIn = !!user?.token;
   const [guestCartCount, setGuestCartCount] = useState(0);
@@ -159,7 +159,7 @@ const Header = () => {
             <Col lg={4} md={3} xs={5}>
               <div className="middle-right-area">
 
-                <UserActions />
+                <UserActions setPassChanged={setPassChanged} />
 
                 <div className="navbar-cart">
                   <div className="wishlist">

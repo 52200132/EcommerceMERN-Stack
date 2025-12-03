@@ -498,6 +498,7 @@ export const handleGoogleLoginCallback = async (req, res) => {
       username: user.username,
       email: user.email,
       isManager: user.isManager,
+      resetPasswordFirstTime: user.resetPasswordFirstTime,
       token: generateToken(user._id),
     };
 
