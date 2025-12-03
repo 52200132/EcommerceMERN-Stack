@@ -30,12 +30,12 @@ const selectControlStyles = (hasError) => ({
   })
 });
 
-const CountDown = ({ children, durationSeconds, callback }) => {
+export const CountDown = ({ children, durationSeconds, callback }) => {
   if (!durationSeconds) durationSeconds = 7; // seconds
   const [currentSeconds, setCurrentSeconds] = useState(durationSeconds);
   useEffect(() => {
     if (currentSeconds <= 0) {
-      if (callback) callback();
+      if (callback) setTimeout(callback, 500);
       return;
     }
     const timerId = setTimeout(() => {

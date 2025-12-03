@@ -16,7 +16,7 @@ const columnHelper = createColumnHelper();
 export const STATUS_META = {
   pending: { label: "Chờ xác nhận", variant: "warning" },
   processing: { label: "Đang xử lý", variant: "info" },
-  shipped: { label: "Đã gửi", variant: "primary" },
+  shipped: { label: "Đang giao", variant: "primary" },
   delivered: { label: "Đã giao", variant: "success" },
   cancelled: { label: "Đã hủy", variant: "secondary" },
 };

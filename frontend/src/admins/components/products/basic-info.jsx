@@ -13,7 +13,7 @@ import parse from 'html-react-parser';
 import { z } from "zod";
 
 import { updateProduct } from 'redux-tps/features/index-features';
-import { useDebounceSubscribeValues, useRenderCount, useTpsGetState, useTpsSelector } from '#custom-hooks';
+import { useDebounceSubscribeValues, useTpsGetState, useTpsSelector } from '#custom-hooks';
 import { useGetBrandsAdminQuery, useGetCategoriesAdminQuery } from 'services/admin-services';
 import { db } from 'indexed-db';
 
@@ -42,7 +42,6 @@ const basicInfoSchema = z.object({
 });
 
 const BasicInfo = ({ selector, action = 'create' }) => {
-  useRenderCount('basic-info', 'both');
   const dispatch = useDispatch();
   const product = useTpsGetState(selector, { includeProps: ['product_name', 'brand_id', 'category_id', 'hashtag', 'short_description', 'detail_description', 'is_active'] });
   const { data: brandsData, isLoading: isLoadingBrands } = useGetBrandsAdminQuery();

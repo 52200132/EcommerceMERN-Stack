@@ -5,9 +5,9 @@ import { useDispatch } from 'react-redux';
 
 import { OverlayTrigger, Popover } from 'react-bootstrap';
 import { useLazyLinkGoogleAccountQuery } from '#services';
-import { axiosBaseQueryUtil, BASE_URL } from '#services/axios-config';
-import { closeOverlayPreloader, overlayPreloader } from '#utils';
-import { useRenderCount, useTpsSelector } from '#custom-hooks';
+import { BASE_URL } from '#services/axios-config';
+import { closeOverlayPreloader } from '#utils';
+import { useTpsSelector } from '#custom-hooks';
 import { logout } from '#features/auth-slice';
 
 import unknownAvatar from '../../../assets/images/cat-avatar.jpg';
@@ -34,7 +34,6 @@ import unknownAvatar from '../../../assets/images/cat-avatar.jpg';
 // }
 
 const UserActions = () => {
-  // useRenderCount('user-actions', 'ui');
   const dispatch = useDispatch();
   const popupRef = useRef(null);
   const navigate = useNavigate();

@@ -14,10 +14,9 @@ import {
 } from "services/admin-services";
 
 import "./manage-users-page.scss";
-import { useRenderCount, userModalDialogStore, useShallow } from "#custom-hooks";
+import { userModalDialogStore, useShallow } from "#custom-hooks";
 
 const ManageUsersPage = () => {
-  useRenderCount("ManageUsersPage", "ui");
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Math.max(parseInt(searchParams.get("page") || "1", 10), 1);
   const limit = Math.max(parseInt(searchParams.get("limit") || "10", 10), 1);

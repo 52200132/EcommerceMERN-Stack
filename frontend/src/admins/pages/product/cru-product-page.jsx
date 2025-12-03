@@ -7,7 +7,7 @@ import { store } from 'redux-tps/store';
 import { useCreateProductAdminMutation, useUpdateProductAdminMutation } from 'services/admin-services';
 
 import BackButton from 'admins/components/back-btn';
-import { useRenderCount, useUploadersRegistry } from '#custom-hooks';
+import { useUploadersRegistry } from '#custom-hooks';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 
@@ -35,7 +35,6 @@ const optionActions = {
 }
 
 const CRUProduct = ({ action = 'create' }) => {
-  useRenderCount('CRUProduct', 'both');
   const backBtnRef = useRef(null);
   const dispatch = store.dispatch;
   const option = optionActions[action];

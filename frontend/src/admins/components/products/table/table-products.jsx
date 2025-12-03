@@ -12,7 +12,6 @@ import {
   IoAdd,
   IoEllipsisVertical,
   IoPencil,
-  IoCopy,
   IoTrash,
   IoChevronDown,
   IoChevronForward,

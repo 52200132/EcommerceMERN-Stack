@@ -2,20 +2,20 @@ import { useEffect, useMemo, useState } from "react";
 import { Badge, Button, Form, Spinner, Table } from "react-bootstrap";
 import { IoRefresh } from "react-icons/io5";
 import { toast } from "react-toastify";
-
+import { STATUS_META } from "./order-table.jsx";
 import {
   useGetOrderDetailQuery,
   useUpdateOrderStatusAdminMutation,
 } from "services/admin-services";
 import { formatCurrency, formatDateTime } from "utils/format";
 
-const STATUS_MAP = {
-  pending: { label: "Chờ xác nhận", variant: "warning" },
-  processing: { label: "Đang xử lý", variant: "primary" },
-  shipped: { label: "Đang giao", variant: "info" },
-  delivered: { label: "Đã giao", variant: "success" },
-  cancelled: { label: "Đã hủy", variant: "danger" },
-};
+// const STATUS_META = {
+//   pending: { label: "Chờ xác nhận", variant: "warning" },
+//   processing: { label: "Đang xử lý", variant: "primary" },
+//   shipped: { label: "Đang giao", variant: "info" },
+//   delivered: { label: "Đã giao", variant: "success" },
+//   cancelled: { label: "Đã hủy", variant: "danger" },
+// };
 
 const PAYMENT_METHOD_LABELS = {
   COD: "Thanh toán khi nhận hàng",
@@ -23,7 +23,23 @@ const PAYMENT_METHOD_LABELS = {
   credit_card: "Thẻ tín dụng / ghi nợ",
 };
 
-const getStatusMeta = (status) => STATUS_MAP[status] || { label: status || "Không rõ", variant: "secondary" };
+const NEXT_STATUS = {
+  pending: ["processing", "cancelled"],
+  processing: ["shipped", "cancelled"],
+  shipped: ["delivered"],
+  delivered: [],
+  cancelled: [],
+}
+
+const ALL_STATUS_OPTIONS = {
+  pending: { value: "pending", label: "Chờ xác nhận" },
+  processing: { value: "processing", label: "Đang xử lý" },
+  shipped: { value: "shipped", label: "Đang giao" },
+  delivered: { value: "delivered", label: "Đã giao" },
+  cancelled: { value: "cancelled", label: "Đã hủy" },
+}
+
+const getStatusMeta = (status) => STATUS_META[status] || { label: status || "Không rõ", variant: "secondary" };
 
 const OrderDetailModal = ({ orderId, onStatusUpdated }) => {
   const [updateStatus, { isLoading: isUpdating }] = useUpdateOrderStatusAdminMutation();
@@ -37,14 +53,12 @@ const OrderDetailModal = ({ orderId, onStatusUpdated }) => {
   }, [order?.order_status]);
 
   const statusOptions = useMemo(
-    () => [
-      { value: "pending", label: "Chờ xác nhận" },
-      { value: "processing", label: "Đang xử lý" },
-      { value: "shipped", label: "Đang giao" },
-      { value: "delivered", label: "Đã giao" },
-      { value: "cancelled", label: "Đã hủy" },
-    ],
-    []
+    () => {
+      if (!order?.order_status) return [];
+      const nextStatuses = NEXT_STATUS[order.order_status] || [];
+      return nextStatuses.map((status) => ALL_STATUS_OPTIONS[status]);
+    },
+    [order?.order_status, NEXT_STATUS, ALL_STATUS_OPTIONS]
   );
 
   const handleUpdateStatus = async () => {
@@ -252,7 +266,10 @@ const OrderDetailModal = ({ orderId, onStatusUpdated }) => {
           <div className="card h-100">
             <div className="card-body">
               <h6 className="fw-bold mb-3">Cập nhật trạng thái</h6>
-              <div className="d-flex flex-column flex-sm-row gap-2 align-items-start align-items-sm-center">
+              <div className="mb-2">
+                <p className="fw-fw-semibold">Trạng thái hiện tại: <Badge bg={getStatusMeta(order.order_status).variant}>{getStatusMeta(order.order_status).label}</Badge></p>
+              </div>
+              {statusOptions.length > 0 && (<div className="d-flex align-items-center gap-2">
                 <Form.Select
                   value={nextStatus}
                   onChange={(e) => setNextStatus(e.target.value)}
@@ -270,7 +287,7 @@ const OrderDetailModal = ({ orderId, onStatusUpdated }) => {
                 >
                   {isUpdating ? "Đang cập nhật..." : "Lưu"}
                 </Button>
-              </div>
+              </div>)}
             </div>
           </div>
         </div>

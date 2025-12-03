@@ -34,6 +34,22 @@ export const authApi = createApi({
         method: 'GET',
       }),
     }),
+
+    resetPasswordRequest: build.mutation({
+      query: (payload) => ({
+        url: '/auth/reset-password',
+        method: 'POST',
+        data: payload,
+      }),
+    }),
+
+    confirmResetPassword: build.mutation({
+      query: (payload) => ({
+        url: '/auth/reset-password/confirm',
+        method: 'POST',
+        data: payload,
+      }),
+    }),
   })
 })
 
@@ -41,6 +57,7 @@ export const {
   useLazyLinkGoogleAccountQuery,
   useRegisterUserMutation,
   useLoginUserMutation,
-  useLoginGoogleUserMutation
+  useLoginGoogleUserMutation,
+  useResetPasswordRequestMutation,
+  useConfirmResetPasswordMutation
 } = authApi 
-

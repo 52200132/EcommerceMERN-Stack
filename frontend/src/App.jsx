@@ -8,6 +8,7 @@ import ContactPage from "./pages/ContactPage";
 import AboutPage from "./pages/home-page/about-page";
 import LoginPage from "./pages/auth/login-page";
 import RegisterPage from "./pages/auth/register-page";
+import ResetPasswordPage from "./pages/auth/reset-password-page";
 import ProductDetails from "./pages/product-details/product-details-page";
 import ProductsFilterPage from "./pages/products-filter/products-filter-page";
 import UserProfileLayout from "./pages/profile/user-profile-layout";
@@ -75,6 +76,9 @@ const App = () => {
           <Route path="about" element={<AboutPage />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
+          <Route path="forgot-password" element={<ResetPasswordPage />} />
+          <Route path="reset-password" element={<ResetPasswordPage />} />
+          <Route path="reset-password/:token" element={<ResetPasswordPage />} />
           <Route path="khong-co-quyen" element={<ForbiddenPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>

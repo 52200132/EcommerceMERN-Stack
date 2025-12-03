@@ -7,7 +7,6 @@ import { setAddressList } from "#features/user-profile-slice";
 import { useLazyGetAddressesQuery, useUpdateAddressMutation, useDeleteAddressMutation } from "#services/user-services";
 
 const AddressPage = () => {
-  // useRenderCount("AddressPage", 'console');
   const dispatch = useDispatch();
   const { setShowOffCanvas, setOffCanvasBody, setDefaultFormValues } = useOffCanvasStore(
     useShallow((zs) => ({

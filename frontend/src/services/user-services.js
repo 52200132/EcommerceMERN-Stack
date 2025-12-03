@@ -16,6 +16,7 @@ export const userApi = backendApi.injectEndpoints({
       },
       providesTags: ["Auth"],
     }),
+
     /** profile endpoints */
     getProfile: builder.query({
       query: () => ({

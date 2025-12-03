@@ -34,7 +34,7 @@ const generateResetToken = (userId) => {
   return jwt.sign(
     { id: userId, purpose: "reset" },
     process.env.RESET_PASSWORD_SECRET,
-    { expiresIn: "1d" } // 1 day for testing
+    { expiresIn: "2m" } // 2 minutes
   );
 };
 
@@ -70,17 +70,17 @@ const resetPassword = async (req, res) => {
     await transporter.sendMail({
       from: `${process.env.APP_NAME} <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: "Reset Password",
-      text: `You requested a password reset. Your reset link is valid for 2 minutes.
-      Click here to reset your password: ${resetLink}`,
+      subject: "Đặt lại mật khẩu",
+      text: `Bạn đã yêu cầu đặt lại mật khẩu. Liên kết đặt lại của bạn có hiệu lực trong 2 phút.
+      Nhấp vào đây để đặt lại mật khẩu của bạn: ${resetLink}`,
       html: `
-        <p>You requested a password reset.</p>
-        <p>Your reset link is valid for 2 minutes.</p>
-        <p>Click the link to reset your password: <a href="${resetLink}">${resetLink}</a></p>
+        <p>Bạn đã yêu cầu đặt lại mật khẩu.</p>
+        <p>Liên kết đặt lại của bạn có hiệu lực trong 2 phút.</p>
+        <p>Nhấp vào liên kết để đặt lại mật khẩu của bạn: <a href="${resetLink}">${resetLink}</a></p>
       `,
     });
 
-    res.json({ message: "Reset email sent" });
+    res.json({ message: "Đã gửi email đặt lại mật khẩu" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

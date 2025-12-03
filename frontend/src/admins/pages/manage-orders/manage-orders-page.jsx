@@ -9,7 +9,7 @@ import OrderTable, { STATUS_META } from "admins/components/manage-orders/order-t
 import OrderDetailModal from "admins/components/manage-orders/order-detail-modal";
 import { formatDisplayDate } from "utils/format";
 import { useGetOrdersOverviewQuery, useGetOrdersQuery } from "services/admin-services";
-import { useRenderCount, userModalDialogStore, useShallow } from "#custom-hooks";
+import { userModalDialogStore, useShallow } from "#custom-hooks";
 
 import "./manage-orders-page.scss";
 
@@ -73,7 +73,6 @@ const diffDaysInclusive = (start, end) => {
 };
 
 const ManageOrdersPage = () => {
-  useRenderCount("ManageOrdersPage", "ui");
   const [searchParams, setSearchParams] = useSearchParams();
 
   const page = Math.max(parseInt(searchParams.get("page") || "1", 10), 1);

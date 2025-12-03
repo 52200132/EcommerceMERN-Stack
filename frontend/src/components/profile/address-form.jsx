@@ -30,7 +30,6 @@ const selectControlStyles = (hasError) => ({
 });
 
 const AddressForm = () => {
-  // useRenderCount('AddressForm', 'console');
   const dispatch = useDispatch();
   const setShowOffCanvas = useOffCanvasStore((zs) => zs.setShow);
   const address = useOffCanvasStore((zs) => zs.defaultFormValues);
