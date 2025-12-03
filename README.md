@@ -22,7 +22,7 @@
 
 - Link github: https://github.com/52200132/EcommerceMERN-Stack/graphs/contributors?selectedMetric=additions
 - Link mongoDb atlas truy cập bằng Compass - database Ecommerce : mongodb+srv://webnodejs:phuocphung@mydatabase.4frxdao.mongodb.net/
-- Link video:
+- Link video: https://drive.google.com/drive/folders/1UcJzFozN61ErFouoA90Bw3uf6NYnLSVV?usp=sharing
 
 # Hướng dẫn triển khai trên Docker Swarm
 

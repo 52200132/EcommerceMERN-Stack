@@ -6,12 +6,11 @@ const updateMeanRating = async (product_id) => {
 	const ratings = await Rating.find({ product_id });
 	const totalRatings = await Rating.countDocuments({ product_id });
 	if (totalRatings === 0) {
-		await Product.findByIdAndUpdate(product_id, { rating: 0 });
+		await Product.findByIdAndUpdate(product_id, { rating: "0" });
 		return;
 	}
-	const sumRatings = ratings.reduce((sum, r) => sum + r.rating, 0);
-	const meanRating = parseFloat((sumRatings / totalRatings).toFixed(1));
-	console.log("Mean Rating:", meanRating);
+	const sumRatings = ratings.reduce((sum, r) => sum + Number(r.rating), 0);
+	const meanRating = Number(sumRatings / totalRatings).toFixed(1);
 	await Product.findByIdAndUpdate(product_id, { rating: meanRating });
 };
 
@@ -82,7 +81,7 @@ const updateRating = async (req, res) => {
 		if (Object.keys(updatePayload).length === 0) {
 			return res.status(400).json({ ec: 400, em: "No fields to update" });
 		}
-		const updatedRating = await Rating.findByIdAndUpdate(rating_id, updatePayload, { new: true, runValidators: true });
+		const updatedRating = await Rating.findByIdAndUpdate(rating_id, updatePayload, { new: true });
 		if (!updatedRating) {
 			return res.status(404).json({ ec: 404, em: "Rating not found" });
 		}

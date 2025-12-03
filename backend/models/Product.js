@@ -53,7 +53,7 @@ const productSchema = new Schema({
   hashtag: { type: String },
   category_id: { type: Schema.Types.ObjectId, ref: "Category", required: true },
   quantity_sold: { type: Number, min: 0, default: 0 },
-  rating: { type: Number, min: 0.0, max: 5.0, default: 0.1 },
+  rating: { type: String, default: "0" },
   price_min: { type: Number, min: 0 },
   price_max: { type: Number, min: 0 },
   short_description: { type: String, required: true },
