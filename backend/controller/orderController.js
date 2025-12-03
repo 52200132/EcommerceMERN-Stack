@@ -799,7 +799,7 @@ export const updateOrderStatus = async (req, res) => {
 			change_at: new Date(),
 			change_by: req.user._id
 		});
-		await order.save();
+		// await order.save();
 
 		// Xử lý điểm khách hàng thân thiết
 		// Lấy user
@@ -809,12 +809,17 @@ export const updateOrderStatus = async (req, res) => {
 		};
 
 		// Nếu đơn được giao (delivered) thì cộng điểm
-		if (order.order_status === "delivered") {
+		if (newStatus === "delivered") {
 			// console.log("Points used before adding for user:", user.points);
 			user.points += parseInt((order.total_amount * 0.1) / 1000);
-			order.payment_status = "paid"; // đảm bảo đơn đã thanh toán
+			if (order.payment_method === "COD"){
+				order.payment_status = "paid"; // đảm bảo đơn đã thanh toán
+				// console.log(order.payment_status);
+			}
+				
 			// console.log(parseInt((order.total_amount * 0.1) / 1000))
 			// console.log("User points after delivery:", user.points);
+			
 			await user.save();
 
 			// Xử lý cập nhật stock và số lượng đã bán
@@ -836,7 +841,7 @@ export const updateOrderStatus = async (req, res) => {
 		}
 
 		// Nếu đơn bị hủy sau khi đã giao thì trừ điểm
-		else if (order.order_status === "cancelled") {
+		else if (newStatus === "cancelled") {
 			// console.log("Points used before refunding for user:", user.points);
 			user.points += parseInt(order.points_used); // hoàn trả điểm đã dùng
 			if (["banking", "credit_card"].includes(order.payment_method)) {
@@ -857,6 +862,7 @@ export const updateOrderStatus = async (req, res) => {
 				}
 			}
 		}
+		await order.save();
 		await order.populate("StatusHistory.change_by", "username isManager");
 
 		res.status(200).json({ ec: 0, em: "Order status updated successfully", dt: order });
@@ -904,14 +910,13 @@ export const userCancelOrder = async (req, res) => {
 			change_at: new Date(),
 			change_by: req.user._id,
 		});
-		await order.save();
 
 		const user = await User.findById(order.user_id).select("points");
 		if (!user) {
 			return res.status(404).json({ ec: 404, em: "User not found" });
 		}
 
-		if (order.order_status === "cancelled") {
+		if (newStatus === "cancelled") {
 			user.points += parseInt(order.points_used, 10) || 0;
 			if (user.points < 0) user.points = 0;
 			await user.save();
@@ -925,6 +930,7 @@ export const userCancelOrder = async (req, res) => {
 			}
 			await adjustDiscountUsage(order.discount_code, -1);
 		}
+		await order.save();
 		await order.populate("StatusHistory.change_by", "username isManager");
 
 		res.status(200).json({ ec: 0, em: "Order status updated successfully", dt: order });
